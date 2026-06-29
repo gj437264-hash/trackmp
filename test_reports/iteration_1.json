@@ -1,0 +1,32 @@
+{
+  "summary": "First end-to-end MVP test of TrackMP. Backend smoke tests + full UI flow (login → create politician → add promise → upvote → rate → comment → add work → logout) all pass. Auth (cookie + Bearer fallback) works, all CRUD endpoints respond correctly, stats endpoint reflects activity.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "Landing page loads with hero/stats",
+    "POST /api/auth/login (admin@trackmp.com/admin123) returns 200 with JWT token",
+    "GET /api/stats/overview returns counts (200)",
+    "Unauthenticated POST /api/politicians returns 401 (auth guard works)",
+    "POST /api/politicians creates politician (200)",
+    "POST /api/politicians/{id}/promises creates promise (title min 3 chars enforced)",
+    "POST /api/promises/{id}/vote with {value:1} → 200, upvotes increments",
+    "PATCH /api/promises/{id}/status with {status:delivered} → 200",
+    "POST /api/politicians/{id}/rate with {score:5} → 200, rating_avg updates",
+    "POST /api/politicians/{id}/works → 200",
+    "POST /api/politicians/{id}/comments → 200",
+    "UI: Login via /login with admin creds → redirected to /feed",
+    "UI: Feed shows search/filters/add-politician button",
+    "UI: Create politician via /politicians/new → redirected to detail page",
+    "UI: Add promise dialog → promise card appears",
+    "UI: Upvote promise (button toggle) works",
+    "UI: 5-star rating widget records rating (header shows 5 (1 ratings))",
+    "UI: Add comment → comment card appears",
+    "UI: Add work via dialog → work card appears",
+    "UI: Navbar logout clears auth and returns to / with Login/Sign up buttons visible"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Backend models require: PromiseIn.title >=3 chars, VoteIn uses field `value` (not `vote`), RatingIn uses field `score` (not `rating`). Frontend correctly sends the matching field names. Test credentials file present at /app/memory/test_credentials.md and accurate."
+}
