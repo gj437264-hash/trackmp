@@ -1,0 +1,25 @@
+{
+  "summary": "Verified bug-fix ('wealth is not defined') and new wealth/filter/sort features end-to-end. Backend smoke + frontend Playwright flow all green.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "Original problematic URL /politicians/5f6a2275-59bc-4a9e-9113-d4f4bb12a689 renders without 'wealth is not defined' runtime error (0 pageerrors)",
+    "Newly created politician detail page renders cleanly with Wealth tab and table",
+    "Tenure header shows 'In position: 7 yrs 1 mo (since 2019-05-23)' for politician with position_since",
+    "Wealth tab label shows correct count (Wealth (2) -> Wealth (3) after add)",
+    "Wealth table displays entries with per-row growth % (+50%, +33.3%)",
+    "Admin login (admin@trackmp.com/admin123) succeeds; AddWealth dialog adds row via UI (toast 'Wealth entry added')",
+    "Feed page exposes all 7 testids: feed-country/state/city/party/position/constituency/sort-filter",
+    "Sort dropdown contains 8 options including 'Highest net worth', 'Longest in position', 'Most delivered', etc.",
+    "Feed cards show 'Net worth $X +Y%' and 'In position: 7 yrs 1 mo' tenure",
+    "Backend POST /api/politicians with country/state/city/position_since -> 200 (state is required by existing schema)",
+    "Backend POST /api/politicians/{id}/wealth x2 -> 200; GET enriched politician returns latest_net_worth=750000, net_worth_growth_pct=50.0",
+    "GET /api/filters/distinct returns country/state/city/party/position arrays",
+    "GET /api/politicians?sort=wealth orders richest first (Wealth Tester 850000, Smoke Test Pol 750000, ...)"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Two 401 console errors on unauthenticated detail page load are expected (auth-only endpoints like /me, votes). 'state' remains a required field on POST /politicians per existing schema; not a regression."
+}

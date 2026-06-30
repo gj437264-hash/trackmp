@@ -26,16 +26,18 @@ export default function PoliticianDetail() {
   const [promises, setPromises] = useState([]);
   const [works, setWorks] = useState([]);
   const [comments, setComments] = useState([]);
+  const [wealth, setWealth] = useState([]);
   const [tab, setTab] = useState("promises");
 
   const loadAll = async () => {
-    const [p, pr, wk, cm] = await Promise.all([
+    const [p, pr, wk, cm, wl] = await Promise.all([
       api.get(`/politicians/${id}`),
       api.get(`/politicians/${id}/promises`),
       api.get(`/politicians/${id}/works`),
       api.get(`/politicians/${id}/comments`),
+      api.get(`/politicians/${id}/wealth`),
     ]);
-    setPol(p.data); setPromises(pr.data); setWorks(wk.data); setComments(cm.data);
+    setPol(p.data); setPromises(pr.data); setWorks(wk.data); setComments(cm.data); setWealth(wl.data);
   };
 
   useEffect(() => { loadAll().catch(() => toast.error("Failed to load")); /* eslint-disable-next-line */ }, [id]);
