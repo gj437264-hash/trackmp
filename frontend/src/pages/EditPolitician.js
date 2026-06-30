@@ -19,8 +19,9 @@ export default function EditPolitician() {
   useEffect(() => {
     api.get(`/politicians/${id}`).then(({ data }) => {
       setForm({
-        name: data.name, party: data.party, constituency: data.constituency,
-        state: data.state, position: data.position,
+        name: data.name, party: data.party, country: data.country || "", state: data.state,
+        city: data.city || "", constituency: data.constituency, position: data.position,
+        position_since: data.position_since || "",
         photo_url: data.photo_url || "", bio: data.bio || "",
       });
     }).catch(() => toast.error("Failed to load"));
@@ -59,8 +60,11 @@ export default function EditPolitician() {
           <div><Label>Full name *</Label><Input data-testid="edit-pol-name" required value={form.name} onChange={update("name")} /></div>
           <div><Label>Party *</Label><Input data-testid="edit-pol-party" required value={form.party} onChange={update("party")} /></div>
           <div><Label>Position *</Label><Input data-testid="edit-pol-position" required value={form.position} onChange={update("position")} /></div>
+          <div><Label>In position since</Label><Input data-testid="edit-pol-since" type="date" value={form.position_since} onChange={update("position_since")} /></div>
+          <div><Label>Country *</Label><Input data-testid="edit-pol-country" required value={form.country} onChange={update("country")} /></div>
           <div><Label>State / Region *</Label><Input data-testid="edit-pol-state" required value={form.state} onChange={update("state")} /></div>
-          <div className="sm:col-span-2"><Label>Constituency *</Label><Input data-testid="edit-pol-constituency" required value={form.constituency} onChange={update("constituency")} /></div>
+          <div><Label>City</Label><Input data-testid="edit-pol-city" value={form.city} onChange={update("city")} /></div>
+          <div><Label>Constituency *</Label><Input data-testid="edit-pol-constituency" required value={form.constituency} onChange={update("constituency")} /></div>
           <div className="sm:col-span-2"><Label>Photo URL</Label><Input data-testid="edit-pol-photo" value={form.photo_url} onChange={update("photo_url")} /></div>
           <div className="sm:col-span-2"><Label>Short bio</Label><Textarea data-testid="edit-pol-bio" rows={4} value={form.bio} onChange={update("bio")} /></div>
         </div>

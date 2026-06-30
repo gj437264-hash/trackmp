@@ -7,31 +7,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PoliticianCard from "@/components/PoliticianCard";
 import { Search, Plus } from "lucide-react";
 
+const SORTS = [
+  ["recent", "Recently added"],
+  ["name", "Name (A-Z)"],
+  ["tenure_long", "Longest in position"],
+  ["tenure_short", "Newest in position"],
+  ["rating", "Highest public rating"],
+  ["delivered", "Most delivered"],
+  ["promises", "Most promises"],
+  ["wealth", "Highest net worth"],
+];
+
+const FILTERS = ["country", "state", "city", "party", "position"];
+
 export default function Feed() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("recent");
-  const [state, setState] = useState("");
-  const [party, setParty] = useState("");
+  const [filters, setFilters] = useState({ country: "", state: "", city: "", party: "", position: "", constituency: "" });
+  const [distinct, setDistinct] = useState({ country: [], state: [], city: [], party: [], position: [] });
 
   const load = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { sort };
       if (q) params.q = q;
-      if (sort) params.sort = sort;
-      if (state) params.state = state;
-      if (party) params.party = party;
+      Object.entries(filters).forEach(([k, v]) => { if (v) params[k] = v; });
       const { data } = await api.get("/politicians", { params });
       setItems(data);
     } finally { setLoading(false); }
   };
 
+  useEffect(() => { api.get("/filters/distinct").then(({ data }) => setDistinct(data)).catch(() => {}); }, []);
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [sort]);
 
-  const states = [...new Set(items.map(i => i.state))].sort();
-  const parties = [...new Set(items.map(i => i.party))].sort();
+  const setF = (k) => (v) => setFilters({ ...filters, [k]: v === "all" ? "" : v });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -39,42 +50,35 @@ export default function Feed() {
         <div>
           <span className="text-xs uppercase tracking-wider font-medium text-zinc-500">The ledger</span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight mt-1">Politicians</h1>
-          <p className="text-zinc-600 mt-2">Search by name, constituency, or party.</p>
+          <p className="text-zinc-600 mt-2">Search by name, country, state, city, constituency, position.</p>
         </div>
         <Button asChild data-testid="feed-add-btn" className="bg-zinc-900 hover:bg-zinc-800">
           <Link to="/politicians/new"><Plus className="h-4 w-4 mr-1" /> Add politician</Link>
         </Button>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); load(); }} className="border border-zinc-200 rounded-md bg-white p-4 grid md:grid-cols-[1fr_180px_180px_180px_auto] gap-3 mb-8">
-        <div className="relative">
+      <form onSubmit={(e) => { e.preventDefault(); load(); }} className="border border-zinc-200 rounded-md bg-white p-4 grid md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+        <div className="relative md:col-span-3 lg:col-span-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-          <Input data-testid="feed-search-input" placeholder="Search name, party, constituency..." className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input data-testid="feed-search-input" placeholder="Search name, party, constituency, position..." className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <Select value={state || "all"} onValueChange={(v) => setState(v === "all" ? "" : v)}>
-          <SelectTrigger data-testid="feed-state-filter"><SelectValue placeholder="State" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All states</SelectItem>
-            {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={party || "all"} onValueChange={(v) => setParty(v === "all" ? "" : v)}>
-          <SelectTrigger data-testid="feed-party-filter"><SelectValue placeholder="Party" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All parties</SelectItem>
-            {parties.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {FILTERS.map((k) => (
+          <Select key={k} value={filters[k] || "all"} onValueChange={setF(k)}>
+            <SelectTrigger data-testid={`feed-${k}-filter`}><SelectValue placeholder={k[0].toUpperCase() + k.slice(1)} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All {k}s</SelectItem>
+              {(distinct[k] || []).map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ))}
+        <Input data-testid="feed-constituency-filter" placeholder="Constituency" value={filters.constituency} onChange={(e) => setFilters({ ...filters, constituency: e.target.value })} />
         <Select value={sort} onValueChange={setSort}>
           <SelectTrigger data-testid="feed-sort-filter"><SelectValue placeholder="Sort" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="recent">Recently added</SelectItem>
-            <SelectItem value="promises">Most promises</SelectItem>
-            <SelectItem value="delivered">Most delivered</SelectItem>
-            <SelectItem value="rating">Highest rated</SelectItem>
+            {SORTS.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button data-testid="feed-search-btn" type="submit" variant="outline">Search</Button>
+        <Button data-testid="feed-search-btn" type="submit" variant="outline">Apply</Button>
       </form>
 
       {loading ? (

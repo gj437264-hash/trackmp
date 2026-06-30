@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import PromiseCard from "@/components/PromiseCard";
 import StatusBadge, { STATUS_OPTIONS } from "@/components/StatusBadge";
-import { MapPin, BadgeCheck, Star, Plus, Briefcase, MessageSquare, Trash2, ExternalLink, CheckCircle2, XCircle, Clock, CircleDashed, Pencil, Share2, ShieldCheck } from "lucide-react";
+import { MapPin, BadgeCheck, Star, Plus, Briefcase, MessageSquare, Trash2, ExternalLink, CheckCircle2, XCircle, Clock, CircleDashed, Pencil, Share2, ShieldCheck, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { tenure, fmtMoney } from "@/lib/format";
 import { toast } from "sonner";
 
 const DEFAULT_AVATAR = "https://images.pexels.com/photos/11655430/pexels-photo-11655430.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=400&w=400";
@@ -96,10 +97,12 @@ export default function PoliticianDetail() {
               <span className="px-2 py-0.5 border border-zinc-200 rounded bg-zinc-50">{pol.party}</span>
               <span className="text-zinc-500">•</span>
               <span className="text-zinc-700">{pol.position}</span>
+              <span className="text-zinc-500">•</span>
+              <span className="text-zinc-700 inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> In position: <b>{tenure(pol.position_since)}</b>{pol.position_since ? ` (since ${pol.position_since})` : ""}</span>
             </div>
             <div className="flex items-center gap-1.5 text-sm text-zinc-600 mt-2">
               <MapPin className="h-3.5 w-3.5" />
-              {pol.constituency}, {pol.state}
+              {[pol.city, pol.constituency, pol.state, pol.country].filter(Boolean).join(", ")}
             </div>
             {pol.bio && <p className="text-zinc-700 mt-4 leading-relaxed">{pol.bio}</p>}
 
@@ -139,11 +142,21 @@ export default function PoliticianDetail() {
         </div>
 
         {/* Score cards */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-px bg-zinc-200 border border-zinc-200 rounded-md overflow-hidden">
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-px bg-zinc-200 border border-zinc-200 rounded-md overflow-hidden">
           <Stat label="Promises" value={total} Icon={null} />
           <Stat label="Delivered" value={pol.delivered_count} pct={deliveredPct} Icon={CheckCircle2} color="text-green-700" />
           <Stat label="In Progress / Pending" value={(pol.promises_count - pol.delivered_count - pol.broken_count)} Icon={Clock} color="text-amber-700" />
           <Stat label="Broken" value={pol.broken_count} Icon={XCircle} color="text-red-700" />
+          <div className="bg-white p-4">
+            <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-zinc-500"><Wallet className="h-3 w-3" />Net worth</div>
+            <div className="font-display font-bold text-2xl mt-1 tabular-nums">{fmtMoney(pol.latest_net_worth)}</div>
+            {pol.net_worth_growth_pct != null && (
+              <div className={`text-xs tabular-nums flex items-center gap-0.5 mt-0.5 ${pol.net_worth_growth_pct >= 0 ? "text-green-700" : "text-red-700"}`}>
+                {pol.net_worth_growth_pct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {pol.net_worth_growth_pct >= 0 ? "+" : ""}{pol.net_worth_growth_pct}% growth
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -151,6 +164,7 @@ export default function PoliticianDetail() {
       <Tabs value={tab} onValueChange={setTab} className="mt-8">
         <TabsList>
           <TabsTrigger data-testid="tab-promises" value="promises">Promises ({promises.length})</TabsTrigger>
+          <TabsTrigger data-testid="tab-wealth" value="wealth">Wealth ({wealth.length})</TabsTrigger>
           <TabsTrigger data-testid="tab-works" value="works">Work ({works.length})</TabsTrigger>
           <TabsTrigger data-testid="tab-comments" value="comments">Discussion ({comments.length})</TabsTrigger>
         </TabsList>
@@ -166,6 +180,38 @@ export default function PoliticianDetail() {
               onDelete={(pid) => setPromises(promises.filter(x => x.id !== pid))}
             />
           ))}
+        </TabsContent>
+
+        <TabsContent value="wealth" className="mt-6 space-y-4">
+          {isAuthed && <AddWealth politicianId={id} onAdded={(w) => setWealth([...wealth, w].sort((a,b) => a.as_of_date.localeCompare(b.as_of_date)))} />}
+          {wealth.length === 0 ? <EmptyState text="No wealth records yet." /> : (
+            <div className="border border-zinc-200 rounded-md bg-white overflow-x-auto" data-testid="wealth-table">
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 uppercase text-xs">
+                  <tr><th className="text-left px-4 py-3">As of</th><th className="text-right px-4 py-3">Annual income</th><th className="text-right px-4 py-3">Net worth</th><th className="text-left px-4 py-3">Source</th><th className="text-left px-4 py-3">By</th></tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {wealth.map((w, i) => {
+                    const prev = i > 0 ? wealth[i - 1] : null;
+                    const g = (prev && prev.net_worth && w.net_worth != null && prev.net_worth > 0)
+                      ? Math.round(((w.net_worth - prev.net_worth) / prev.net_worth) * 1000) / 10 : null;
+                    return (
+                      <tr key={w.id} className="hover:bg-zinc-50">
+                        <td className="px-4 py-3 tabular-nums">{w.as_of_date}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{fmtMoney(w.annual_income)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {fmtMoney(w.net_worth)}
+                          {g != null && <span className={`ml-2 text-xs ${g >= 0 ? "text-green-700" : "text-red-700"}`}>{g >= 0 ? "+" : ""}{g}%</span>}
+                        </td>
+                        <td className="px-4 py-3">{w.source_url ? <a className="text-blue-600 hover:underline inline-flex items-center gap-1" href={w.source_url} target="_blank" rel="noreferrer">view <ExternalLink className="h-3 w-3" /></a> : "—"}</td>
+                        <td className="px-4 py-3 text-zinc-600">{w.created_by_name}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="works" className="mt-6 space-y-4">
@@ -260,6 +306,56 @@ function AddPromise({ politicianId, onAdded }) {
         <DialogFooter>
           <Button data-testid="promise-submit-btn" onClick={submit} disabled={saving || !form.title} className="bg-zinc-900 hover:bg-zinc-800">
             {saving ? "Saving..." : "Add promise"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddWealth({ politicianId, onAdded }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ as_of_date: "", annual_income: "", net_worth: "", source_url: "", notes: "" });
+  const [saving, setSaving] = useState(false);
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        as_of_date: form.as_of_date,
+        annual_income: form.annual_income === "" ? null : parseFloat(form.annual_income),
+        net_worth: form.net_worth === "" ? null : parseFloat(form.net_worth),
+        source_url: form.source_url || null,
+        notes: form.notes || "",
+      };
+      const { data } = await api.post(`/politicians/${politicianId}/wealth`, payload);
+      onAdded(data);
+      setForm({ as_of_date: "", annual_income: "", net_worth: "", source_url: "", notes: "" });
+      setOpen(false);
+      toast.success("Wealth entry added");
+    } catch { toast.error("Failed"); }
+    finally { setSaving(false); }
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button data-testid="add-wealth-trigger" variant="outline" className="w-full justify-start text-zinc-500">
+          <Plus className="h-4 w-4 mr-2" /> Log income / net worth...
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Log income / net worth</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>As of date *</Label><Input data-testid="wealth-date-input" type="date" value={form.as_of_date} onChange={(e) => setForm({...form, as_of_date: e.target.value})} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Annual income</Label><Input data-testid="wealth-income-input" type="number" value={form.annual_income} onChange={(e) => setForm({...form, annual_income: e.target.value})} placeholder="$" /></div>
+            <div><Label>Net worth</Label><Input data-testid="wealth-networth-input" type="number" value={form.net_worth} onChange={(e) => setForm({...form, net_worth: e.target.value})} placeholder="$" /></div>
+          </div>
+          <div><Label>Source URL</Label><Input data-testid="wealth-source-input" value={form.source_url} onChange={(e) => setForm({...form, source_url: e.target.value})} placeholder="Asset declaration link" /></div>
+          <div><Label>Notes</Label><Textarea data-testid="wealth-notes-input" rows={2} value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} /></div>
+        </div>
+        <DialogFooter>
+          <Button data-testid="wealth-submit-btn" onClick={submit} disabled={saving || !form.as_of_date} className="bg-zinc-900 hover:bg-zinc-800">
+            {saving ? "Saving..." : "Add entry"}
           </Button>
         </DialogFooter>
       </DialogContent>

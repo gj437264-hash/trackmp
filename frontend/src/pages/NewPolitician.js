@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export default function NewPolitician() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", party: "", constituency: "", state: "", position: "", photo_url: "", bio: "" });
+  const [form, setForm] = useState({ name: "", party: "", country: "", state: "", city: "", constituency: "", position: "", position_since: "", photo_url: "", bio: "" });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -60,10 +60,22 @@ export default function NewPolitician() {
             <Input data-testid="new-pol-position" id="position" required value={form.position} onChange={update("position")} placeholder="MP, MLA, Mayor..." />
           </div>
           <div>
+            <Label htmlFor="position_since">In position since</Label>
+            <Input data-testid="new-pol-since" id="position_since" type="date" value={form.position_since} onChange={update("position_since")} />
+          </div>
+          <div>
+            <Label htmlFor="country">Country *</Label>
+            <Input data-testid="new-pol-country" id="country" required value={form.country} onChange={update("country")} placeholder="e.g. India" />
+          </div>
+          <div>
             <Label htmlFor="state">State / Region *</Label>
             <Input data-testid="new-pol-state" id="state" required value={form.state} onChange={update("state")} placeholder="e.g. California" />
           </div>
-          <div className="sm:col-span-2">
+          <div>
+            <Label htmlFor="city">City</Label>
+            <Input data-testid="new-pol-city" id="city" value={form.city} onChange={update("city")} placeholder="e.g. Los Angeles" />
+          </div>
+          <div>
             <Label htmlFor="constituency">Constituency *</Label>
             <Input data-testid="new-pol-constituency" id="constituency" required value={form.constituency} onChange={update("constituency")} placeholder="e.g. District 12" />
           </div>

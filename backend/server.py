@@ -73,9 +73,12 @@ class LoginIn(BaseModel):
 class PoliticianIn(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     party: str = Field(min_length=1, max_length=80)
-    constituency: str = Field(min_length=1, max_length=120)
+    country: str = Field(min_length=1, max_length=80)
     state: str = Field(min_length=1, max_length=80)
+    city: Optional[str] = ""
+    constituency: str = Field(min_length=1, max_length=120)
     position: str = Field(min_length=1, max_length=120)
+    position_since: Optional[str] = None
     photo_url: Optional[str] = None
     bio: Optional[str] = ""
 
@@ -90,6 +93,16 @@ class PoliticianOut(PoliticianIn):
     broken_count: int = 0
     rating_avg: float = 0.0
     rating_count: int = 0
+    latest_net_worth: Optional[float] = None
+    latest_income: Optional[float] = None
+    net_worth_growth_pct: Optional[float] = None
+
+class WealthIn(BaseModel):
+    as_of_date: str
+    annual_income: Optional[float] = None
+    net_worth: Optional[float] = None
+    source_url: Optional[str] = None
+    notes: Optional[str] = ""
 
 class PromiseIn(BaseModel):
     title: str = Field(min_length=3, max_length=200)
@@ -235,15 +248,37 @@ async def _enrich_politician(pol: dict) -> dict:
     else:
         pol["rating_avg"] = 0.0
         pol["rating_count"] = 0
+    # wealth aggregation
+    wealth = await db.wealth_entries.find({"politician_id": pol["id"]}).sort("as_of_date", 1).to_list(1000)
+    pol["latest_net_worth"] = None
+    pol["latest_income"] = None
+    pol["net_worth_growth_pct"] = None
+    if wealth:
+        last = wealth[-1]
+        first = wealth[0]
+        pol["latest_net_worth"] = last.get("net_worth")
+        pol["latest_income"] = last.get("annual_income")
+        if (first.get("net_worth") and last.get("net_worth") is not None
+                and first.get("net_worth") > 0 and len(wealth) > 1):
+            pol["net_worth_growth_pct"] = round(
+                ((last["net_worth"] - first["net_worth"]) / first["net_worth"]) * 100, 1
+            )
+    # ensure new fields exist on old documents
+    pol.setdefault("country", "")
+    pol.setdefault("city", "")
+    pol.setdefault("position_since", None)
     return pol
 
 @api_router.get("/politicians")
 async def list_politicians(
     q: Optional[str] = None,
     party: Optional[str] = None,
+    country: Optional[str] = None,
     state: Optional[str] = None,
+    city: Optional[str] = None,
     constituency: Optional[str] = None,
-    sort: str = "recent",  # recent | promises | delivered | rating
+    position: Optional[str] = None,
+    sort: str = "recent",
 ):
     query = {}
     if q:
@@ -251,11 +286,11 @@ async def list_politicians(
             {"name": {"$regex": q, "$options": "i"}},
             {"constituency": {"$regex": q, "$options": "i"}},
             {"party": {"$regex": q, "$options": "i"}},
+            {"position": {"$regex": q, "$options": "i"}},
         ]
-    if party:
-        query["party"] = party
-    if state:
-        query["state"] = state
+    for k, v in [("party", party), ("country", country), ("state", state), ("city", city), ("position", position)]:
+        if v:
+            query[k] = v
     if constituency:
         query["constituency"] = {"$regex": constituency, "$options": "i"}
 
@@ -266,10 +301,27 @@ async def list_politicians(
     elif sort == "delivered":
         out.sort(key=lambda x: x["delivered_count"], reverse=True)
     elif sort == "rating":
-        out.sort(key=lambda x: x["rating_avg"], reverse=True)
+        out.sort(key=lambda x: (x["rating_avg"], x["rating_count"]), reverse=True)
+    elif sort == "name":
+        out.sort(key=lambda x: x["name"].lower())
+    elif sort == "tenure_long":
+        out.sort(key=lambda x: x.get("position_since") or "9999")
+    elif sort == "tenure_short":
+        out.sort(key=lambda x: x.get("position_since") or "0000", reverse=True)
+    elif sort == "wealth":
+        out.sort(key=lambda x: x.get("latest_net_worth") or 0, reverse=True)
     else:
         out.sort(key=lambda x: x["created_at"], reverse=True)
     return out
+
+@api_router.get("/filters/distinct")
+async def filters_distinct():
+    fields = ["country", "state", "city", "party", "position"]
+    result = {}
+    for f in fields:
+        vals = await db.politicians.distinct(f)
+        result[f] = sorted([v for v in vals if v])
+    return result
 
 @api_router.post("/politicians")
 async def create_politician(payload: PoliticianIn, user: dict = Depends(get_current_user)):
@@ -456,6 +508,40 @@ async def delete_comment(cid: str, user: dict = Depends(get_current_user)):
     await db.comments.delete_one({"id": cid})
     return {"ok": True}
 
+# ----- Wealth -----
+@api_router.get("/politicians/{pid}/wealth")
+async def list_wealth(pid: str):
+    docs = await db.wealth_entries.find({"politician_id": pid}).sort("as_of_date", 1).to_list(1000)
+    for d in docs:
+        d.pop("_id", None)
+    return docs
+
+@api_router.post("/politicians/{pid}/wealth")
+async def create_wealth(pid: str, payload: WealthIn, user: dict = Depends(get_current_user)):
+    if not await db.politicians.find_one({"id": pid}):
+        raise HTTPException(status_code=404, detail="Politician not found")
+    doc = {
+        "id": new_id(),
+        "politician_id": pid,
+        **payload.model_dump(),
+        "created_by": user["id"],
+        "created_by_name": user["name"],
+        "created_at": now_iso(),
+    }
+    await db.wealth_entries.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.delete("/wealth/{wid}")
+async def delete_wealth(wid: str, user: dict = Depends(get_current_user)):
+    w = await db.wealth_entries.find_one({"id": wid})
+    if not w:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    if w.get("created_by") != user["id"] and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only creator or admin can delete")
+    await db.wealth_entries.delete_one({"id": wid})
+    return {"ok": True}
+
 # ----- Ratings -----
 @api_router.post("/politicians/{pid}/rate")
 async def rate_politician(pid: str, payload: RatingIn, user: dict = Depends(get_current_user)):
@@ -550,6 +636,7 @@ async def on_startup():
     await db.comments.create_index("politician_id")
     await db.ratings.create_index([("politician_id", 1), ("user_id", 1)], unique=True)
     await db.votes.create_index([("promise_id", 1), ("user_id", 1)], unique=True)
+    await db.wealth_entries.create_index([("politician_id", 1), ("as_of_date", 1)])
 
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@trackmp.com").lower()
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
