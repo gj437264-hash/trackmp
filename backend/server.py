@@ -470,6 +470,37 @@ async def rate_politician(pid: str, payload: RatingIn, user: dict = Depends(get_
     return await _enrich_politician(pol)
 
 # ----- Stats -----
+@api_router.patch("/politicians/{pid}/verify")
+async def verify_politician(pid: str, payload: dict, user: dict = Depends(get_current_user)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    pol = await db.politicians.find_one({"id": pid})
+    if not pol:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    await db.politicians.update_one({"id": pid}, {"$set": {"verified": bool(payload.get("verified", True))}})
+    pol = await db.politicians.find_one({"id": pid})
+    return await _enrich_politician(pol)
+
+@api_router.get("/me/contributions")
+async def my_contributions(user: dict = Depends(get_current_user)):
+    politicians = await db.politicians.find({"created_by": user["id"]}).sort("created_at", -1).to_list(500)
+    politicians = [await _enrich_politician(p) for p in politicians]
+    promises_raw = await db.promises.find({"created_by": user["id"]}).sort("created_at", -1).to_list(500)
+    promises = []
+    for p in promises_raw:
+        p.pop("_id", None)
+        pol = await db.politicians.find_one({"id": p["politician_id"]}, {"_id": 0, "name": 1, "constituency": 1})
+        p["politician_name"] = pol["name"] if pol else "Unknown"
+        promises.append(p)
+    works_raw = await db.works.find({"created_by": user["id"]}).sort("created_at", -1).to_list(500)
+    works = []
+    for w in works_raw:
+        w.pop("_id", None)
+        pol = await db.politicians.find_one({"id": w["politician_id"]}, {"_id": 0, "name": 1})
+        w["politician_name"] = pol["name"] if pol else "Unknown"
+        works.append(w)
+    return {"politicians": politicians, "promises": promises, "works": works}
+
 @api_router.get("/stats/overview")
 async def stats_overview():
     politicians = await db.politicians.count_documents({})

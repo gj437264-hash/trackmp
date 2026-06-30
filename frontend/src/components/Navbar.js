@@ -17,6 +17,9 @@ export default function Navbar() {
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <Link data-testid="nav-feed-link" to="/feed" className="text-zinc-700 hover:text-zinc-950">Politicians</Link>
           <Link data-testid="nav-add-link" to="/politicians/new" className="text-zinc-700 hover:text-zinc-950">Add Politician</Link>
+          {user && user !== false && (
+            <Link data-testid="nav-me-link" to="/me" className="text-zinc-700 hover:text-zinc-950">My contributions</Link>
+          )}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           {user && user !== false ? (

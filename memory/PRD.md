@@ -25,13 +25,17 @@
 - Frontend (React + Tailwind + shadcn): Landing, Login, Register, Feed (search/filter/sort), Politician detail (Promises/Work/Discussion tabs, dialogs for adding), Add Politician form, Navbar with auth state, Sonner toasts.
 - Swiss/high-contrast design system per `/app/design_guidelines.json` (Cabinet Grotesk + Inter, tabular-nums, status badges).
 
-## Backlog (P1)
-- "My contributions" page
-- Edit politician (UI exists in API only)
+## Implemented (v1.1 — 2026-02 — backlog clear)
+- Edit politician page (`/politicians/:id/edit`) — reuses form, PUT endpoint.
+- "My contributions" page (`/me`) — politicians, promises, work I authored.
+- Admin verification toggle (`PATCH /api/politicians/:id/verify`) + blue check on profile.
+- Share button (Web Share API with clipboard fallback) on politician detail.
+- DEPLOYMENT.md — full self-host guide for Ubuntu/Debian VPS (Mongo + uvicorn systemd + nginx + Let's Encrypt).
+
+## Backlog (P1) — remaining
 - Photo upload via object storage (currently URL-based)
-- Profile verification flow for admins
 - Politician compare (side-by-side)
-- Public share cards with delivery score
+- Public share cards / OG meta image with delivery score
 
 ## Backlog (P2)
 - Email notifications for status changes

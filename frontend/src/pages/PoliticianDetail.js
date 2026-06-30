@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import PromiseCard from "@/components/PromiseCard";
 import StatusBadge, { STATUS_OPTIONS } from "@/components/StatusBadge";
-import { MapPin, BadgeCheck, Star, Plus, Briefcase, MessageSquare, Trash2, ExternalLink, CheckCircle2, XCircle, Clock, CircleDashed } from "lucide-react";
+import { MapPin, BadgeCheck, Star, Plus, Briefcase, MessageSquare, Trash2, ExternalLink, CheckCircle2, XCircle, Clock, CircleDashed, Pencil, Share2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const DEFAULT_AVATAR = "https://images.pexels.com/photos/11655430/pexels-photo-11655430.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=400&w=400";
@@ -42,6 +42,8 @@ export default function PoliticianDetail() {
   if (!pol) return <div className="max-w-7xl mx-auto px-4 py-20 text-center text-zinc-500">Loading...</div>;
 
   const isAuthed = user && user !== false;
+  const isAdmin = isAuthed && user.role === "admin";
+  const canEdit = isAuthed && (user.id === pol.created_by || isAdmin);
   const total = pol.promises_count || 0;
   const deliveredPct = total ? Math.round((pol.delivered_count / total) * 100) : 0;
 
@@ -52,6 +54,26 @@ export default function PoliticianDetail() {
       setPol(data);
       toast.success("Rating saved");
     } catch { toast.error("Rating failed"); }
+  };
+
+  const toggleVerify = async () => {
+    try {
+      const { data } = await api.patch(`/politicians/${id}/verify`, { verified: !pol.verified });
+      setPol(data);
+      toast.success(data.verified ? "Verified" : "Verification removed");
+    } catch { toast.error("Failed"); }
+  };
+
+  const share = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${pol.name} on TrackMP`, text: `${pol.name} — ${total} promises, ${deliveredPct}% delivered`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied");
+      }
+    } catch { /* user cancelled share */ }
   };
 
   return (
@@ -80,6 +102,22 @@ export default function PoliticianDetail() {
               {pol.constituency}, {pol.state}
             </div>
             {pol.bio && <p className="text-zinc-700 mt-4 leading-relaxed">{pol.bio}</p>}
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button data-testid="pol-share-btn" size="sm" variant="outline" onClick={share}>
+                <Share2 className="h-3.5 w-3.5 mr-1" /> Share
+              </Button>
+              {canEdit && (
+                <Button data-testid="pol-edit-btn" size="sm" variant="outline" onClick={() => navigate(`/politicians/${id}/edit`)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                </Button>
+              )}
+              {isAdmin && (
+                <Button data-testid="pol-verify-btn" size="sm" variant={pol.verified ? "default" : "outline"} onClick={toggleVerify} className={pol.verified ? "bg-blue-600 hover:bg-blue-700" : ""}>
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1" /> {pol.verified ? "Verified (remove)" : "Verify"}
+                </Button>
+              )}
+            </div>
 
             <div className="mt-4 flex items-center gap-1">
               {[1,2,3,4,5].map(n => (
