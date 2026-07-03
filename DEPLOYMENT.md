@@ -93,6 +93,10 @@ JWT_SECRET="REPLACE_WITH_64_CHAR_HEX"
 FRONTEND_URL="https://your-domain.com"
 ADMIN_EMAIL="admin@your-domain.com"
 ADMIN_PASSWORD="REPLACE_WITH_A_STRONG_PASSWORD"
+SUPER_ADMIN_EMAIL="admin@example.com"
+SUPER_ADMIN_PASSWORD="Admin@123"
+UPLOAD_DIR=/opt/trackmp/backend/uploads
+PUBLIC_UPLOAD_BASE=/api/uploads
 ```
 
 Generate a real secret:
