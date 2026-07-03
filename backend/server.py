@@ -1,89 +1,136 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
+"""TrackMP FastAPI application entrypoint."""
+from __future__ import annotations
 
+import logging
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / ".env")
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-# Create the main app without a prefix
-app = FastAPI()
+from countries import COUNTRIES
+from db import close_db, get_db, utcnow_iso
+from routes import router as api_router
+from security import hash_password, verify_password
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+log = logging.getLogger("trackmp")
+
+app = FastAPI(title="TrackMP")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# =========================================================================
+# STARTUP
+# =========================================================================
+async def _seed_countries(db):
+    existing = await db.countries.count_documents({})
+    if existing >= len(COUNTRIES):
+        return
+    now = utcnow_iso()
+    for code, name in COUNTRIES:
+        if await db.countries.find_one({"code": code}):
+            continue
+        await db.countries.insert_one(
+            {"code": code, "name": name, "created_at": now, "updated_at": now, "deleted_at": None}
+        )
+    log.info("Seeded %d countries", len(COUNTRIES))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+async def _seed_super_admin(db):
+    email = os.environ["SUPER_ADMIN_EMAIL"].lower().strip()
+    password = os.environ["SUPER_ADMIN_PASSWORD"]
+    now = utcnow_iso()
+    existing = await db.users.find_one({"email": email})
+    if existing is None:
+        await db.users.insert_one(
+            {
+                "email": email,
+                "name": "Super Admin",
+                "role": "super_admin",
+                "password_hash": hash_password(password),
+                "country_code": None,
+                "created_at": now,
+                "updated_at": now,
+                "deleted_at": None,
+            }
+        )
+        log.info("Super admin seeded: %s", email)
+        return
+    updates: dict = {}
+    if existing.get("role") != "super_admin":
+        updates["role"] = "super_admin"
+    if not verify_password(password, existing.get("password_hash", "")):
+        updates["password_hash"] = hash_password(password)
+    if existing.get("deleted_at") is not None:
+        updates["deleted_at"] = None
+    if updates:
+        updates["updated_at"] = now
+        await db.users.update_one({"_id": existing["_id"]}, {"$set": updates})
+        log.info("Super admin updated: %s (fields=%s)", email, list(updates))
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+async def _create_indexes(db):
+    await db.users.create_index("email", unique=True)
+    await db.signup_requests.create_index("email")
+    await db.signup_requests.create_index("status")
+    await db.invite_tokens.create_index("token", unique=True)
+    await db.password_reset_tokens.create_index("token", unique=True)
+    await db.countries.create_index("code")
+    await db.states.create_index("country_code")
+    await db.cities.create_index("state_id")
+    await db.constituencies.create_index("state_id")
+    await db.politicians.create_index("name")
+    await db.politicians.create_index("country_code")
+    await db.relatives.create_index("politician_id")
+    await db.wealth_entries.create_index("politician_id")
+    await db.wealth_entries.create_index("relative_id")
+    await db.audit_events.create_index("timestamp")
+    await db.audit_events.create_index("entity_type")
 
-# Include the router in the main app
-app.include_router(api_router)
 
+@app.on_event("startup")
+async def on_startup():
+    db = get_db()
+    await _create_indexes(db)
+    await _seed_countries(db)
+    await _seed_super_admin(db)
+    upload_dir = os.environ.get("UPLOAD_DIR", "/app/backend/uploads")
+    Path(upload_dir).mkdir(parents=True, exist_ok=True)
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    close_db()
+
+
+# =========================================================================
+# MIDDLEWARE + ROUTES + STATIC
+# =========================================================================
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+app.include_router(api_router)
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+_upload_dir = os.environ.get("UPLOAD_DIR", "/app/backend/uploads")
+Path(_upload_dir).mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=_upload_dir), name="uploads")
+
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}

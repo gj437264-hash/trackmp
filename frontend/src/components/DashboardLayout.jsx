@@ -1,0 +1,90 @@
+import React from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth, hasRole } from "@/context/AuthContext";
+import {
+  LayoutGrid,
+  UserPlus,
+  Users,
+  Globe2,
+  ScrollText,
+  Trash2,
+  LogOut,
+  UserSquare2,
+} from "lucide-react";
+
+const ITEMS = [
+  { to: "/dashboard", label: "Overview", icon: LayoutGrid, roles: ["super_admin", "admin"], end: true },
+  { to: "/dashboard/politicians", label: "Politicians", icon: UserSquare2, roles: ["super_admin", "admin"] },
+  { to: "/dashboard/reference", label: "Reference Data", icon: Globe2, roles: ["super_admin", "admin"] },
+  { to: "/dashboard/signups", label: "Signup Queue", icon: UserPlus, roles: ["super_admin"] },
+  { to: "/dashboard/admins", label: "Admins", icon: Users, roles: ["super_admin"] },
+  { to: "/dashboard/audit", label: "Audit Log", icon: ScrollText, roles: ["super_admin"] },
+  { to: "/dashboard/trash", label: "Trash", icon: Trash2, roles: ["super_admin"] },
+];
+
+export function DashboardLayout({ children }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const items = ITEMS.filter((i) => hasRole(user, ...i.roles));
+
+  return (
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-[260px_1fr] bg-white">
+      <aside className="border-b-2 md:border-b-0 md:border-r-2 border-black bg-surfaceAlt/60 flex flex-col">
+        <div className="px-6 py-6 border-b-2 border-black">
+          <Link to="/" className="flex items-center gap-2" data-testid="dashboard-brand">
+            <span className="w-8 h-8 bg-klein grid place-items-center text-white font-black">T</span>
+            <span className="font-display font-black text-lg uppercase">TrackMP</span>
+          </Link>
+          <div className="mt-4">
+            <div className="label-eyebrow">Signed in as</div>
+            <div className="font-bold text-sm mt-1 truncate" data-testid="current-user-email">{user?.email}</div>
+            <div className="inline-block mt-2 px-2 py-1 text-[10px] font-bold uppercase tracking-widest bg-black text-white">
+              {user?.role?.replace("_", " ")}
+            </div>
+          </div>
+        </div>
+        <nav className="flex-1 py-2 flex flex-col">
+          {items.map((it) => {
+            const Icon = it.icon;
+            return (
+              <NavLink
+                key={it.to}
+                to={it.to}
+                end={it.end}
+                data-testid={`side-${it.label.toLowerCase().replace(/\s+/g, "-")}`}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-6 py-3 border-l-4 text-sm font-bold uppercase tracking-wider transition-colors ${
+                    isActive
+                      ? "border-klein bg-white text-black"
+                      : "border-transparent text-neutral-700 hover:bg-white"
+                  }`
+                }
+              >
+                <Icon size={16} strokeWidth={2.5} />
+                {it.label}
+              </NavLink>
+            );
+          })}
+        </nav>
+        <div className="p-4 border-t-2 border-black flex flex-col gap-2">
+          <button
+            onClick={() => navigate("/")}
+            className="brutal-btn-secondary text-xs"
+            data-testid="view-public-site"
+          >
+            View Public Site
+          </button>
+          <button
+            onClick={async () => { await logout(); navigate("/"); }}
+            className="brutal-btn-primary text-xs"
+            data-testid="dashboard-logout"
+          >
+            <LogOut size={14} className="mr-2" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+      <main className="min-w-0 animate-fade-slide-up">{children}</main>
+    </div>
+  );
+}
