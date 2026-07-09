@@ -179,6 +179,7 @@ server {
 
     # API → FastAPI
     location ^~ /api/ {
+        client_max_body_size 50M;
         proxy_pass http://127.0.0.1:8001;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
