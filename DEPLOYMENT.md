@@ -172,10 +172,21 @@ Create `/etc/nginx/sites-available/trackmp`:
 ```nginx
 server {
     listen 80;
+    #listen 443 ssl; #If SSL Certificate setup is completed
     server_name your-domain.com;
 
     root /opt/trackmp/frontend/build;
     index index.html;
+
+    # Path to your SSL certificate
+    #ssl_certificate /opt/trackmp/cert/localhost+4.pem;
+
+    # Path to your private key
+    #ssl_certificate_key  /opt/trackmp/cert/localhost+4-key.pem;
+
+    # Recommended settings for better security
+    #ssl_protocols TLSv1.2 TLSv1.3;
+    #ssl_ciphers HIGH:!aNULL:!MD5;
 
     # API → FastAPI
     location ^~ /api/ {
