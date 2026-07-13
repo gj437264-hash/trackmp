@@ -169,45 +169,62 @@ Logs: `sudo journalctl -u trackmp-backend -f`
 ## 8. Nginx (serves frontend + proxies `/api`)
 
 Create `/etc/nginx/sites-available/trackmp`:
-```nginx
+```# Define a connection pool for your FastAPI backend
+upstream fastapi_backend {
+    server 127.0.0.1:8001;
+    keepalive 32; # Keeps 32 connections open to eliminate handshake lag
+}
+
 server {
     listen 80;
-    #listen 443 ssl; #If SSL Certificate setup is completed
+    # listen 443 ssl http2; # Uncomment and add http2 when SSL is ready
     server_name your-domain.com;
 
     root /opt/trackmp/frontend/build;
     index index.html;
 
-    # Path to your SSL certificate
-    #ssl_certificate /opt/trackmp/cert/localhost+4.pem;
+    # Global Gzip Compression (Crucial for JS bundles and JSON data)
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
 
-    # Path to your private key
-    #ssl_certificate_key  /opt/trackmp/cert/localhost+4-key.pem;
+    # SSL Settings (Keep commented until ready, but http2 is added above)
+    # ssl_certificate /opt/trackmp/cert/localhost+4.pem;
+    # ssl_certificate_key /opt/trackmp/cert/localhost+4-key.pem;
+    # ssl_protocols TLSv1.2 TLSv1.3;
+    # ssl_ciphers HIGH:!aNULL:!MD5;
 
-    # Recommended settings for better security
-    #ssl_protocols TLSv1.2 TLSv1.3;
-    #ssl_ciphers HIGH:!aNULL:!MD5;
-
-    # API → FastAPI
+    # 1. API Endpoint Routing
     location ^~ /api/ {
         client_max_body_size 50M;
-        proxy_pass http://127.0.0.1:8001;
+        
+        proxy_pass http://fastapi_backend; # Route via upstream block
         proxy_http_version 1.1;
+        
+        # Performance tuning for proxy connections
+        proxy_set_header Connection ""; # Required for HTTP/1.1 keepalive
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # React SPA fallback
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Static cache
+    # 2. Optimized Static Cache Block (Handles caching and SPA fallback safely)
     location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
         expires 30d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, no-transform, immutable";
+        access_log off; # Turn off logging for static assets to save disk I/O
+        try_files $uri =404; # Avoids falling back to index.html if a static file goes missing
+    }
+
+    # 3. Main React SPA Entry point
+    location / {
+        try_files $uri $uri/ /index.html;
+        
+        # Don't cache index.html so clients instantly get frontend updates
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 }
 ```
