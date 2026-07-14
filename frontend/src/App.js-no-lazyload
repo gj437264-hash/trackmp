@@ -1,0 +1,108 @@
+import React from "react";
+import "@/App.css";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { Toaster } from "sonner";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
+import { PageTransition } from "@/components/PageTransition";
+
+import HomePage from "@/pages/HomePage";
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
+import SubmitUpdatePage from "@/pages/SubmitUpdatePage";
+import ArticlesPage from "@/pages/ArticlesPage";
+import ArticleDetail from "@/pages/ArticleDetail";
+import YourVoicePage from "@/pages/YourVoicePage";
+import BudgetAnalysisPage from "@/pages/BudgetAnalysisPage";
+import PoliticianProfile from "@/pages/PoliticianProfile";
+import SearchPage from "@/pages/SearchPage";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
+import ThankYouPage from "@/pages/ThankYouPage";
+import AcceptInvitePage from "@/pages/AcceptInvitePage";
+import { ForgotPasswordPage, ResetPasswordPage } from "@/pages/PasswordPages";
+
+import DashboardHome from "@/pages/dashboard/DashboardHome";
+import SignupQueue from "@/pages/dashboard/SignupQueue";
+import Admins from "@/pages/dashboard/Admins";
+import ReferenceData from "@/pages/dashboard/ReferenceData";
+import PoliticiansList from "@/pages/dashboard/PoliticiansList";
+import CommunityDesk from "@/pages/dashboard/CommunityDesk";
+import TicketDetail from "@/pages/dashboard/TicketDetail";
+import Visitors from "@/pages/dashboard/Visitors";
+import Articles from "@/pages/dashboard/Articles";
+import ArticleEditor from "@/pages/dashboard/ArticleEditor";
+import VisitorDetail from "@/pages/dashboard/VisitorDetail";
+import PoliticianForm from "@/pages/dashboard/PoliticianForm";
+import AuditLog from "@/pages/dashboard/AuditLog";
+import Trash from "@/pages/dashboard/Trash";
+
+const ADMIN_ROLES = ["super_admin", "admin"];
+const SUPER = ["super_admin"];
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public */}
+        <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+        <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+        <Route path="/submit-update" element={<PageTransition><SubmitUpdatePage /></PageTransition>} />
+        <Route path="/articles" element={<PageTransition><ArticlesPage /></PageTransition>} />
+        <Route path="/articles/:id" element={<PageTransition><ArticleDetail /></PageTransition>} />
+        <Route path="/your-voice" element={<PageTransition><YourVoicePage /></PageTransition>} />
+        <Route path="/budget-analysis" element={<PageTransition><BudgetAnalysisPage /></PageTransition>} />
+        <Route path="/politicians/:id" element={<PageTransition><PoliticianProfile /></PageTransition>} />
+        <Route path="/search" element={<PageTransition><SearchPage /></PageTransition>} />
+
+        {/* Auth */}
+        <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><SignupPage /></PageTransition>} />
+        <Route path="/thank-you" element={<PageTransition><ThankYouPage /></PageTransition>} />
+        <Route path="/accept-invite" element={<PageTransition><AcceptInvitePage /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPasswordPage /></PageTransition>} />
+
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<ProtectedRoute roles={ADMIN_ROLES}><DashboardHome /></ProtectedRoute>} />
+        <Route path="/dashboard/politicians" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticiansList /></ProtectedRoute>} />
+        <Route path="/dashboard/community" element={<ProtectedRoute roles={ADMIN_ROLES}><CommunityDesk /></ProtectedRoute>} />
+        <Route path="/dashboard/community/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><TicketDetail /></ProtectedRoute>} />
+        <Route path="/dashboard/visitors" element={<ProtectedRoute roles={ADMIN_ROLES}><Visitors /></ProtectedRoute>} />
+        <Route path="/dashboard/articles" element={<ProtectedRoute roles={ADMIN_ROLES}><Articles /></ProtectedRoute>} />
+        <Route path="/dashboard/articles/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><ArticleEditor /></ProtectedRoute>} />
+        <Route path="/dashboard/visitors/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><VisitorDetail /></ProtectedRoute>} />
+        <Route path="/dashboard/politicians/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticianForm /></ProtectedRoute>} />
+        <Route path="/dashboard/reference" element={<ProtectedRoute roles={ADMIN_ROLES}><ReferenceData /></ProtectedRoute>} />
+        <Route path="/dashboard/signups" element={<ProtectedRoute roles={SUPER}><SignupQueue /></ProtectedRoute>} />
+        <Route path="/dashboard/admins" element={<ProtectedRoute roles={SUPER}><Admins /></ProtectedRoute>} />
+        <Route path="/dashboard/audit" element={<ProtectedRoute roles={SUPER}><AuditLog /></ProtectedRoute>} />
+        <Route path="/dashboard/trash" element={<ProtectedRoute roles={SUPER}><Trash /></ProtectedRoute>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className:
+              "!rounded-none !border-2 !border-black !shadow-brutal !font-bold !bg-white !text-black",
+          }}
+        />
+        <ScrollToTop />
+        <AnimatedRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}

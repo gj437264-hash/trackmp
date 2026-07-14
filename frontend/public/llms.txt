@@ -1,0 +1,79 @@
+# llms.txt for TrackMP
+# http://your-domain.com//llms.txt
+# Last updated: 2026-07-12
+
+## About TrackMP
+
+TrackMP is a public record of political performance — every campaign promise, every legislative action, every project outcome, logged against evidence and open for anyone to inspect.
+
+**Mission**: Provide transparent, non-partisan tracking of political promises and delivery across all levels of government.
+
+**Core Values**:
+- Transparency First
+- Evidence-Based Tracking
+- Citizen Oversight
+- Data-Driven Accountability
+- Non-Partisan by Design
+
+## Key Statistics
+
+- **12K+** Promises Tracked
+- **847** Representatives Monitored
+- **94%** Verification Rate
+- **36** States Covered
+
+## Core Platform Features
+
+### 1. Promise Ledger
+Every campaign commitment, sourced and time-stamped at the moment it was made, then tracked through defined stages from announcement to verified completion.
+
+### 2. Work Log
+Votes, legislative contributions, and project sign-offs, entered chronologically with source documents or public records.
+
+### 3. Constituency View
+Every record is tied to a place - filter from national trends to a single state, district, or constituency.
+
+### 4. Editorial Control
+Reading data is open to everyone. Adding to it requires peer review before publication.
+
+## How Promises Get Tracked
+
+1. **Ingestion**: Campaign statements and manifestos are extracted, categorized, and linked to representatives
+2. **Evidence**: Votes, legislative work, and project milestones are appended with source links
+3. **Score**: The system aggregates evidence into a transparent Delivery Index
+
+## Content Categories
+
+### Public Records
+- Campaign promises and commitments
+- Legislative voting records
+- Project outcomes and milestones
+- Constituency service records
+- Policy implementation status
+
+### Government Data
+- State-level performance metrics
+- District-level delivery scores
+- Representative accountability indices
+- Regional development tracking
+
+### Search & Discovery
+- Search by representative name
+- Filter by state or district
+- Browse by policy category
+- Timeline-based navigation
+
+## Data Structure
+
+### Representative Records
+```json
+{
+  "name": "string",
+  "position": "string",
+  "state": "string",
+  "district": "string",
+  "party": "string",
+  "promises": ["promise_id"],
+  "delivery_score": "float",
+  "last_updated": "timestamp"
+}

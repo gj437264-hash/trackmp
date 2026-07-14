@@ -1,0 +1,2 @@
+name,party,role,brief_intro,country_code,state,city,constituency,date_of_birth,education,profession,contact_email,contact_phone,official_website,social_twitter,social_facebook,social_instagram,social_youtube,tags
+Test Import Person,Independent,MLA,A test import,IN,TestState,TestCity,TestConstituency,,,,,,,,,,,

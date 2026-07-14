@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800;9..144,900&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2A1F1A;
+  background: #FBF7F0;
+}
+
+code, .font-mono, pre {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  :root {
+    --background: 36 47% 96%;
+    --foreground: 20 20% 13%;
+    --card: 36 47% 98%;
+    --card-foreground: 20 20% 13%;
+    --popover: 36 47% 98%;
+    --popover-foreground: 20 20% 13%;
+    --primary: 11 62% 47%;
+    --primary-foreground: 36 47% 98%;
+    --secondary: 38 42% 89%;
+    --secondary-foreground: 20 20% 13%;
+    --muted: 38 42% 89%;
+    --muted-foreground: 20 12% 38%;
+    --accent: 164 55% 27%;
+    --accent-foreground: 36 47% 98%;
+    --destructive: 8 50% 47%;
+    --destructive-foreground: 36 47% 98%;
+    --border: 20 20% 13%;
+    --input: 20 20% 13%;
+    --ring: 11 62% 47%;
+    --chart-1: 11 62% 47%;
+    --chart-2: 164 55% 27%;
+    --chart-3: 41 62% 56%;
+    --chart-4: 8 50% 47%;
+    --chart-5: 20 20% 13%;
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fraunces', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: #C4432B;
+    color: #fff;
+  }
+}
+
+@layer components {
+  .brutal-card {
+    @apply bg-surface border border-ink/10 rounded-2xl shadow-brutal;
+  }
+  .brutal-btn {
+    @apply inline-flex items-center justify-center px-5 py-3 font-bold uppercase tracking-wider text-sm border-2 border-transparent rounded-xl transition-all;
+  }
+  .brutal-btn-primary {
+    @apply brutal-btn bg-klein text-white hover:bg-kleinDark hover:shadow-brutal-primary;
+  }
+  .brutal-btn-secondary {
+    @apply brutal-btn bg-surface text-ink border-ink/15 hover:bg-surfaceAlt hover:shadow-brutal-sm;
+  }
+  .brutal-btn-danger {
+    @apply brutal-btn bg-danger text-white hover:opacity-90;
+  }
+  .brutal-input {
+    @apply w-full px-4 py-3 bg-surface border-2 border-ink/15 rounded-xl focus:outline-none focus:ring-0 focus:border-klein focus:shadow-brutal-primary transition-all;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .brutal-input:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+  .label-eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-ink/60;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  .data-num {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+}
+
+@layer base {
+  [data-debug-wrapper="true"] {
+    display: contents !important;
+  }
+}

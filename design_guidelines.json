@@ -1,102 +1,127 @@
 {
   "theme": "light",
-  "archetype": "4 (Swiss & High-Contrast)",
+  "archetype": "Archetype 4: Swiss & High-Contrast",
+  "rationale": "For a politician transparency platform, the design must communicate truth, authority, and objectivity. A high-contrast Swiss-inspired brutalist layout with thick borders and sharp typography achieves an 'editorial' or 'audit' feel. The rawness signals unvarnished truth.",
   "typography": {
-    "headings": {
-      "font": "Cabinet Grotesk, sans-serif",
-      "style": "tracking-tight font-bold"
-    },
-    "body": {
-      "font": "Inter, sans-serif",
-      "style": "leading-relaxed"
-    },
-    "data_metrics": {
-      "font": "Inter, sans-serif",
-      "style": "tabular-nums"
-    },
+    "heading_font": "Archivo",
+    "body_font": "IBM Plex Sans",
+    "mono_font": "IBM Plex Mono",
     "hierarchy": {
-      "h1": "text-4xl sm:text-5xl tracking-tight font-bold text-zinc-950",
-      "h2": "text-2xl sm:text-3xl tracking-tight font-semibold text-zinc-900",
-      "h3": "text-xl sm:text-2xl font-medium text-zinc-900",
-      "body": "text-base text-zinc-700",
-      "small": "text-sm text-zinc-500",
-      "label": "text-xs uppercase tracking-wider font-medium text-zinc-500"
+      "h1": "text-5xl lg:text-6xl font-black tracking-tighter uppercase",
+      "h2": "text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3": "text-xl lg:text-2xl font-bold tracking-tight",
+      "body": "text-base leading-relaxed text-neutral-900",
+      "small_labels": "text-xs font-bold uppercase tracking-[0.2em] text-neutral-600",
+      "data_numbers": "font-mono text-sm lg:text-base tracking-tight"
     }
   },
-  "colors": {
-    "background": "bg-white",
-    "surface": "bg-zinc-50",
-    "text": {
-      "primary": "text-zinc-950",
-      "secondary": "text-zinc-600",
-      "muted": "text-zinc-400"
-    },
-    "border": "border-zinc-200",
-    "accent": {
-      "primary": "bg-zinc-900 text-white hover:bg-zinc-800",
-      "link": "text-blue-600 hover:text-blue-800 hover:underline"
-    },
-    "tracker_status": {
-      "delivered": "bg-green-50 text-green-700 border-green-200",
-      "in_progress": "bg-amber-50 text-amber-700 border-amber-200",
-      "pending": "bg-zinc-100 text-zinc-700 border-zinc-200",
-      "broken": "bg-red-50 text-red-700 border-red-200"
-    }
+  "color_palette": {
+    "background": "#FFFFFF",
+    "surface": "#FFFFFF",
+    "surface_alt": "#F3F4F6",
+    "text_primary": "#0A0A0A",
+    "text_secondary": "#525252",
+    "primary": "#002FA7",
+    "primary_hover": "#001B63",
+    "primary_foreground": "#FFFFFF",
+    "border": "#0A0A0A",
+    "success": "#16A34A",
+    "danger": "#DC2626",
+    "warning": "#F59E0B"
   },
-  "layout_and_spacing": {
-    "architecture": "Control Room Grid (Dense, Data Correlation) mixed with Social Feed.",
-    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
-    "padding": "Generous spacing. p-6 or p-8 inside bordered containers.",
-    "alignment": "Left-align text, right-align metrics and numbers. Center-align empty state graphics."
+  "spacing_and_layout": {
+    "philosophy": "Strict grids. Generous internal padding (p-6, p-8) to prevent text collision with the mandatory heavy borders.",
+    "public_directory_grid": "Mode A: Tetris Grid. Asymmetrical grid-cols-1 md:grid-cols-12 gap-8.",
+    "dashboard_grid": "Mode B: Control Room Grid. grid-cols-1 md:grid-cols-4 gap-px bg-black (creates thin borders between items).",
+    "borders": "1px to 2px solid black borders on almost all structural elements.",
+    "radius": "rounded-none (Sharp corners to reinforce the strict, objective theme)"
   },
   "components": {
-    "cards": "Flat design. 1px border-zinc-200. No shadows. Max border-radius: rounded-md.",
-    "buttons": "Clear distinct states. Primary: dark solid. Secondary: transparent with 1px outline.",
-    "navigation": "Sticky top bar, crystal glass effect: bg-white/80 backdrop-blur-md border-b border-zinc-200.",
-    "badges": "Subtle rounded styling. Used extensively for party affiliation, status, and role.",
-    "tables": "Dense. Row hover effect (hover:bg-zinc-50). Used for promises and voting records."
+    "buttons": {
+      "primary": "bg-primary text-white font-bold rounded-none border-2 border-transparent hover:bg-primary_hover transition-colors",
+      "secondary": "bg-white text-black font-bold rounded-none border-2 border-black hover:bg-neutral-100 transition-colors",
+      "disabled": "opacity-50 cursor-not-allowed grayscale"
+    },
+    "cards": "bg-white border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6",
+    "inputs": "rounded-none border-2 border-black focus:ring-0 focus:border-primary focus:shadow-[2px_2px_0px_0px_#002FA7] transition-all bg-white",
+    "tables": "w-full border-collapse. th: bg-surface_alt border-b-2 border-black font-bold text-left uppercase tracking-wider text-xs p-4. td: border-b border-neutral-300 py-4 px-4 font-mono text-sm.",
+    "tabs": "flex border-b-2 border-black. Tab items: uppercase tracking-wider font-bold px-6 py-3 -mb-[2px] border-b-2 transition-colors. Active: border-primary text-primary. Inactive: border-transparent text-neutral-500 hover:text-black.",
+    "charts": "Recharts. Use sharp straight lines (type='linear' or 'step'), not curved ('monotone'). High contrast stroke colors: Black for baseline, Primary Blue for net worth, Red for liabilities."
   },
-  "motion": {
-    "interactions": "Micro-interactions on hover. Cards: -translate-y-0.5, border darkening.",
-    "transitions": "transition-all duration-200 ease-out"
-  },
-  "media": {
-    "image_urls": {
-      "politician_profiles": {
-        "description": "Professional headshots for politician profile photos.",
-        "urls": [
-          "https://images.pexels.com/photos/11655430/pexels-photo-11655430.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-          "https://images.pexels.com/photos/36645466/pexels-photo-36645466.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
-        ]
-      },
-      "government_buildings": {
-        "description": "Hero backgrounds or placeholder headers for constituency pages.",
-        "urls": [
-          "https://images.unsplash.com/photo-1742888827024-6d85caf1d09b",
-          "https://images.unsplash.com/photo-1761792425134-7e09471c5b55"
-        ]
-      },
-      "data_abstract": {
-        "description": "Abstract visual representation for data and network connectivity.",
-        "urls": [
-          "https://images.pexels.com/photos/10325707/pexels-photo-10325707.png",
-          "https://images.pexels.com/photos/17279851/pexels-photo-17279851.jpeg"
-        ]
-      }
+  "pages": {
+    "public_directory": {
+      "layout": "Hero section with large typographic statement and abstract architecture image overlay. Search bar massive, dominating the viewport. Politician cards in a masonry or offset grid.",
+      "politician_cards": "Include headshot, name (H3), state/party, and a 'View Record' brutalist button."
+    },
+    "politician_profile": {
+      "header": "Split layout. Left: Large high-res portrait. Right: Brief intro, key stats in a heavily bordered bento grid.",
+      "tabs_section": "Overview (text-heavy), Wealth History (Line chart + Data Table), Relatives (Nested accordions or sub-tables with their wealth history)."
+    },
+    "auth": {
+      "layout": "Minimalist center-aligned card. White card, thick black border, hard shadow.",
+      "social_buttons": "Disabled state: grayscale, opacity-50. Must include a tooltip on hover explaining 'Currently disabled'."
+    },
+    "super_admin_dashboard": {
+      "layout": "Sidebar navigation (dark or very light gray with black borders). Main content area dense.",
+      "features": "Signup approvals queue in a table with distinct Accept/Reject buttons. Reference Data (Countries/States/Cities) managed via inline-editable tables or compact dialogs. Audit Log with complex filters."
+    },
+    "admin_dashboard": {
+      "layout": "Same shell as Super Admin.",
+      "features": "Politician CRUD with multi-step form or long scrolling form with sticky save bar. Image upload area styled as a dashed-border dropzone. Wealth history entered via dynamic form arrays."
     }
   },
-  "accessibility": {
-    "focus": "focus:ring-2 focus:ring-zinc-900 focus:outline-none",
-    "testing": "MANDATORY: Add data-testid attributes to all interactive elements."
+  "motion": {
+    "hover": "Instant or very fast (100ms) transitions. Avoid bouncy spring animations. Go for snappy, mechanical feel.",
+    "page_load": "Fade-in with a subtle slide-up (duration 300ms, ease-out)."
+  },
+  "media_urls": {
+    "heroes_and_backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1523292562811-8fa7962a78c8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwxfHxnb3Zlcm5tZW50JTIwYnVpbGRpbmclMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzgzMDg0Nzk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "White concrete building under sky",
+        "category": "hero_background"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1616873354936-b9e21b744c54?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwzfHxnb3Zlcm5tZW50JTIwYnVpbGRpbmclMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzgzMDg0Nzk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "White concrete building under blue sky",
+        "category": "hero_background_alt"
+      }
+    ],
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc4MzA4NDgwOXww&ixlib=rb-4.1.0&q=85",
+        "description": "Professional man",
+        "category": "politician_placeholder_1"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc4MzA4NDgwOXww&ixlib=rb-4.1.0&q=85",
+        "description": "Professional woman",
+        "category": "politician_placeholder_2"
+      },
+      {
+        "url": "https://images.pexels.com/photos/26872232/pexels-photo-26872232.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Man in blue suit",
+        "category": "politician_placeholder_3"
+      }
+    ],
+    "abstract_data": [
+      {
+        "url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwyfHxmaW5hbmNpYWwlMjBncmFwaCUyMGNoYXJ0JTIwYWJzdHJhY3R8ZW58MHx8fHwxNzgzMDg0Nzk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Stock market candlestick chart",
+        "category": "wealth_data_placeholder"
+      }
+    ]
+  },
+  "testing": {
+    "attributes": "All interactive and key informational elements MUST include a `data-testid` attribute. Convention: kebab-case, role-based. Examples: `data-testid='search-politician-input'`, `data-testid='view-record-button'`, `data-testid='wealth-history-tab'`."
   },
   "instructions_to_main_agent": [
-    "Design a hybrid platform combining civic tracking dashboard and social network.",
-    "Strictly follow Archetype 4: Swiss & High-Contrast. Prioritize clear data and authority.",
-    "Implement tabular numerals for all metrics, dates, and tracker numbers.",
-    "Use 'lucide-react' for all iconography.",
-    "Add 'data-testid' to ALL actionable items (buttons, inputs, filters).",
-    "Never use generic placeholder images (dummyimage/via.placeholder), use media URLs from this file.",
-    "Maintain high contrast. Rely on 1px borders and structural grayscale to delineate sections.",
-    "Since .js files are used, ensure guidelines and code assume .js, not .tsx extensions."
+    "Use standard Tailwind CSS classes. Apply custom fonts (Archivo, IBM Plex Sans, IBM Plex Mono) in the Tailwind config.",
+    "Do NOT use 'Inter' for headings. Use Archivo.",
+    "Build the dashboard layouts using a grid with gap-px and a dark background to create 1px 'borders' between panes, or use explicit border-r/border-b classes to enforce the brutalist style.",
+    "For the social login buttons on the Auth page, wrap them in a Tooltip from Shadcn, and style them to look disabled (opacity-50, cursor-not-allowed).",
+    "Never use placeholder image services like via.placeholder.com. Use the media URLs provided in this JSON.",
+    "Build robust charts using Recharts for the Wealth History section. Emphasize sharp, straight lines over smooth curves to maintain the Swiss Brutalist aesthetic.",
+    "Add 'data-testid' to all buttons, links, form inputs, and tab triggers."
   ]
 }

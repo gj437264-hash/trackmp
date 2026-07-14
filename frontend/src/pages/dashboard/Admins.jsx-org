@@ -1,0 +1,151 @@
+import React, { useEffect, useState } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { api, formatApiError } from "@/lib/api";
+import { toast } from "sonner";
+import { Trash, Edit, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+export default function Admins() {
+  const [items, setItems] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [form, setForm] = useState({ email: "", name: "", password: "" });
+  const [editForm, setEditForm] = useState({ name: "", password: "", role: "admin" });
+
+  const load = async () => {
+    const { data } = await api.get("/admin/admins");
+    setItems(data.items || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const create = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/admin/admins", form);
+      toast.success("Admin created.");
+      setShowCreate(false);
+      setForm({ email: "", name: "", password: "" });
+      load();
+    } catch (e2) { toast.error(formatApiError(e2)); }
+  };
+  const doDelete = async (u) => {
+    if (!window.confirm(`Delete admin ${u.email}?`)) return;
+    try { await api.delete(`/admin/admins/${u.id}`); toast.success("Deleted."); load(); }
+    catch (e2) { toast.error(formatApiError(e2)); }
+  };
+  const openEdit = (u) => {
+    setEditUser(u);
+    setEditForm({ name: u.name || "", password: "", role: u.role });
+  };
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const body = { name: editForm.name, role: editForm.role };
+      if (editForm.password) body.password = editForm.password;
+      await api.put(`/admin/admins/${editUser.id}`, body);
+      toast.success("Updated.");
+      setEditUser(null);
+      load();
+    } catch (e2) { toast.error(formatApiError(e2)); }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="p-6 md:p-10">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="soft-label mb-0">/// Personnel</div>
+            <h1 className="mt-2 font-display font-black text-4xl text-slate-900">Admins</h1>
+          </div>
+          <button data-testid="create-admin-btn" onClick={() => setShowCreate(true)} className="btn-soft-primary">
+            <Plus size={16} className="mr-2" /> New Admin
+          </button>
+        </div>
+
+        <div className="mt-8 soft-table-wrap overflow-x-auto">
+          <table className="w-full border-collapse soft-table">
+            <thead>
+              <tr>
+                {["Email", "Name", "Role", "Created", "Actions"].map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((u) => (
+                <tr key={u.id} data-testid={`admin-row-${u.id}`}>
+                  <td className="font-mono text-sm">{u.email}</td>
+                  <td className="font-bold">{u.name || "—"}</td>
+                  <td><span className="text-[10px] font-bold uppercase bg-slate-800 text-white px-2 py-1 rounded-full">{u.role.replace("_", " ")}</span></td>
+                  <td className="font-mono text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>
+                    {u.role !== "super_admin" ? (
+                      <div className="flex gap-2">
+                        <button data-testid={`edit-${u.id}`} onClick={() => openEdit(u)} className="btn-soft-secondary text-xs px-3 py-1.5"><Edit size={12} /></button>
+                        <button data-testid={`delete-${u.id}`} onClick={() => doDelete(u)} className="btn-soft-danger px-3 py-1.5"><Trash size={12} /></button>
+                      </div>
+                    ) : <span className="soft-label mb-0">Protected</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="soft-card p-0">
+            <DialogHeader className="p-6 border-b border-slate-200">
+              <DialogTitle className="font-display text-2xl text-slate-900">Create Admin</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={create} className="p-6 space-y-4">
+              <div>
+                <label className="soft-label">Email</label>
+                <input data-testid="new-admin-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="soft-input" />
+              </div>
+              <div>
+                <label className="soft-label">Name</label>
+                <input data-testid="new-admin-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="soft-input" />
+              </div>
+              <div>
+                <label className="soft-label">Password</label>
+                <input data-testid="new-admin-password" type="password" required minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="soft-input" />
+              </div>
+              <DialogFooter>
+                <button data-testid="save-admin" type="submit" className="btn-soft-primary w-full">Create</button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
+          <DialogContent className="soft-card p-0">
+            <DialogHeader className="p-6 border-b border-slate-200">
+              <DialogTitle className="font-display text-2xl text-slate-900">Edit Admin</DialogTitle>
+            </DialogHeader>
+            {editUser && (
+              <form onSubmit={saveEdit} className="p-6 space-y-4">
+                <div className="font-mono text-sm text-slate-600">{editUser.email}</div>
+                <div>
+                  <label className="soft-label">Name</label>
+                  <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="soft-input" />
+                </div>
+                <div>
+                  <label className="soft-label">New Password <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
+                  <input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="soft-input" />
+                </div>
+                <div>
+                  <label className="soft-label">Role</label>
+                  <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="soft-input">
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+                <button type="submit" className="btn-soft-primary w-full">Save</button>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DashboardLayout>
+  );
+}

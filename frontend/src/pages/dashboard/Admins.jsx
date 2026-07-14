@@ -1,0 +1,415 @@
+import React, { useEffect, useState } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { api, formatApiError } from "@/lib/api";
+import { toast } from "sonner";
+import { Trash, Edit, Plus, X, Globe2, ShieldCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+const SECTION_PERMISSIONS = [
+  { key: "admins", label: "Admins" },
+  { key: "articles", label: "Articles" },
+  { key: "audit_log", label: "Audit Log" },
+  { key: "community_desk", label: "Community Desk" },
+  { key: "dashboard_home", label: "Dashboard Home" },
+  { key: "politicians", label: "Politicians" },
+  { key: "reference_data", label: "Reference Data" },
+  { key: "signups", label: "Signup Queue" },
+  { key: "tickets", label: "Tickets" },
+  { key: "trash", label: "Trash" },
+  { key: "visitors", label: "Visitors" }
+];
+
+const EMPTY_PERMISSIONS = SECTION_PERMISSIONS.reduce((acc, s) => ({ ...acc, [s.key]: true }), {});
+const EMPTY_GEO_SCOPE = { unrestricted: true, rules: [] };
+
+const LEVEL_LABELS = { country: "Country", state: "State", city: "City", constituency: "Constituency" };
+
+// Permission + geo-scope panel shared between the Create and Edit dialogs.
+function AccessControlPanel({
+  role, permissions, setPermissions, geoScope, setGeoScope,
+  countries, states, cities, constituencies,
+  draft, setDraft, onCountryChange, onStateChange,
+}) {
+  if (role === "super_admin") {
+    return (
+      <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+        <ShieldCheck size={16} className="text-slate-400" />
+        Super admins always have full access. No restrictions apply.
+      </div>
+    );
+  }
+
+  const addRule = () => {
+    let value, label;
+    if (draft.level === "country") { value = draft.country_code; label = countries.find((c) => c.code === value)?.name; }
+    if (draft.level === "state") { value = draft.state_id; label = states.find((s) => s.id === value)?.name; }
+    if (draft.level === "city") { value = draft.city_id; label = cities.find((c) => c.id === value)?.name; }
+    if (draft.level === "constituency") { value = draft.constituency_id; label = constituencies.find((c) => c.id === value)?.name; }
+    if (!value) { toast.error("Select a location first."); return; }
+    if (geoScope.rules.some((r) => r.level === draft.level && r.value === value)) { toast.error("That location is already added."); return; }
+    setGeoScope({ ...geoScope, rules: [...geoScope.rules, { level: draft.level, value, label: label || value }] });
+  };
+
+  const removeRule = (idx) => setGeoScope({ ...geoScope, rules: geoScope.rules.filter((_, i) => i !== idx) });
+
+  return (
+    <div className="space-y-5">
+      {/* Section permissions */}
+      <div>
+        <label className="soft-label">Dashboard Section Access</label>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {SECTION_PERMISSIONS.map((s) => (
+            <label key={s.key} className="flex items-center gap-2 text-sm bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 cursor-pointer hover:bg-slate-100 transition-colors duration-200">
+              <input
+                type="checkbox"
+                checked={!!permissions[s.key]}
+                onChange={(e) => setPermissions({ ...permissions, [s.key]: e.target.checked })}
+              />
+              {s.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Geo scope */}
+      <div>
+        <label className="soft-label flex items-center gap-1.5"><Globe2 size={12} /> Location Access</label>
+
+        <label className="flex items-center gap-2 text-sm mt-2 mb-3">
+          <input
+            type="checkbox"
+            checked={geoScope.unrestricted}
+            onChange={(e) => setGeoScope({ ...geoScope, unrestricted: e.target.checked })}
+          />
+          Unrestricted — can manage politicians in any location
+        </label>
+
+        {!geoScope.unrestricted && (
+          <div className="space-y-3">
+            {geoScope.rules.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {geoScope.rules.map((r, i) => (
+                  <span key={`${r.level}-${r.value}`} className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold pl-3 pr-2 py-1.5 rounded-full border border-indigo-200/60">
+                    <span className="text-indigo-400 font-normal">{LEVEL_LABELS[r.level]}:</span> {r.label}
+                    <button type="button" onClick={() => removeRule(i)} className="hover:bg-indigo-200/60 rounded-full p-0.5 transition-colors">
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <select className="soft-input" value={draft.level} onChange={(e) => setDraft({ ...draft, level: e.target.value })}>
+                <option value="country">Country</option>
+                <option value="state">State</option>
+                <option value="city">City</option>
+                <option value="constituency">Constituency</option>
+              </select>
+
+              <select
+                className="soft-input"
+                value={draft.country_code}
+                onChange={(e) => onCountryChange(e.target.value)}
+              >
+                <option value="">Select country</option>
+                {countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+              </select>
+
+              <select
+                className="soft-input"
+                value={draft.state_id}
+                onChange={(e) => onStateChange(e.target.value)}
+                disabled={draft.level === "country" || !states.length}
+              >
+                <option value="">{draft.level === "country" ? "—" : "Select state"}</option>
+                {states.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+
+              {draft.level === "city" ? (
+                <select className="soft-input" value={draft.city_id} onChange={(e) => setDraft({ ...draft, city_id: e.target.value })} disabled={!cities.length}>
+                  <option value="">Select city</option>
+                  {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              ) : draft.level === "constituency" ? (
+                <select className="soft-input" value={draft.constituency_id} onChange={(e) => setDraft({ ...draft, constituency_id: e.target.value })} disabled={!constituencies.length}>
+                  <option value="">Select constituency</option>
+                  {constituencies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              ) : (
+                <div />
+              )}
+            </div>
+
+            <button type="button" onClick={addRule} className="btn-soft-secondary text-xs px-4 py-2 inline-flex items-center gap-1.5">
+              <Plus size={12} /> Add Location
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const EMPTY_DRAFT = { level: "country", country_code: "", state_id: "", city_id: "", constituency_id: "" };
+
+export default function Admins() {
+  const [items, setItems] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+
+  const [form, setForm] = useState({ email: "", name: "", password: "" });
+  const [editForm, setEditForm] = useState({ name: "", password: "", role: "admin" });
+
+  const [createPermissions, setCreatePermissions] = useState({ ...EMPTY_PERMISSIONS });
+  const [createGeoScope, setCreateGeoScope] = useState({ ...EMPTY_GEO_SCOPE });
+  const [editPermissions, setEditPermissions] = useState({ ...EMPTY_PERMISSIONS });
+  const [editGeoScope, setEditGeoScope] = useState({ ...EMPTY_GEO_SCOPE });
+
+  const [countries, setCountries] = useState([]);
+  const [createDraft, setCreateDraft] = useState({ ...EMPTY_DRAFT });
+  const [createStates, setCreateStates] = useState([]);
+  const [createCities, setCreateCities] = useState([]);
+  const [createConstituencies, setCreateConstituencies] = useState([]);
+  const [editDraft, setEditDraft] = useState({ ...EMPTY_DRAFT });
+  const [editStates, setEditStates] = useState([]);
+  const [editCities, setEditCities] = useState([]);
+  const [editConstituencies, setEditConstituencies] = useState([]);
+
+  const load = async () => {
+    const { data } = await api.get("/admin/admins");
+    setItems(data.items || []);
+  };
+  useEffect(() => { load(); }, []);
+  useEffect(() => { api.get("/ref/countries").then((r) => setCountries(r.data.items || [])); }, []);
+
+  const loadStatesFor = async (countryCode, setter) => {
+    if (!countryCode) { setter([]); return; }
+    const { data } = await api.get("/ref/states", { params: { country_code: countryCode } });
+    setter(data.items || []);
+  };
+  const loadCitiesConstituenciesFor = async (stateId, setCitiesFn, setConstFn) => {
+    if (!stateId) { setCitiesFn([]); setConstFn([]); return; }
+    const [c, k] = await Promise.all([
+      api.get("/ref/cities", { params: { state_id: stateId } }),
+      api.get("/ref/constituencies", { params: { state_id: stateId } }),
+    ]);
+    setCitiesFn(c.data.items || []);
+    setConstFn(k.data.items || []);
+  };
+
+  const onCreateCountryChange = async (code) => {
+    setCreateDraft({ ...createDraft, country_code: code, state_id: "", city_id: "", constituency_id: "" });
+    await loadStatesFor(code, setCreateStates);
+    setCreateCities([]); setCreateConstituencies([]);
+  };
+  const onCreateStateChange = async (stateId) => {
+    setCreateDraft({ ...createDraft, state_id: stateId, city_id: "", constituency_id: "" });
+    await loadCitiesConstituenciesFor(stateId, setCreateCities, setCreateConstituencies);
+  };
+  const onEditCountryChange = async (code) => {
+    setEditDraft({ ...editDraft, country_code: code, state_id: "", city_id: "", constituency_id: "" });
+    await loadStatesFor(code, setEditStates);
+    setEditCities([]); setEditConstituencies([]);
+  };
+  const onEditStateChange = async (stateId) => {
+    setEditDraft({ ...editDraft, state_id: stateId, city_id: "", constituency_id: "" });
+    await loadCitiesConstituenciesFor(stateId, setEditCities, setEditConstituencies);
+  };
+
+  const create = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/admin/admins", { ...form, permissions: createPermissions, geo_scope: createGeoScope });
+      toast.success("Admin created.");
+      setShowCreate(false);
+      setForm({ email: "", name: "", password: "" });
+      setCreatePermissions({ ...EMPTY_PERMISSIONS });
+      setCreateGeoScope({ ...EMPTY_GEO_SCOPE });
+      setCreateDraft({ ...EMPTY_DRAFT });
+      load();
+    } catch (e2) { toast.error(formatApiError(e2)); }
+  };
+
+  const doDelete = async (u) => {
+    if (!window.confirm(`Delete admin ${u.email}?`)) return;
+    try { await api.delete(`/admin/admins/${u.id}`); toast.success("Deleted."); load(); }
+    catch (e2) { toast.error(formatApiError(e2)); }
+  };
+
+  const openEdit = (u) => {
+    setEditUser(u);
+    setEditForm({ name: u.name || "", password: "", role: u.role });
+    setEditPermissions({ ...EMPTY_PERMISSIONS, ...(u.permissions || {}) });
+    setEditGeoScope(u.geo_scope || { ...EMPTY_GEO_SCOPE });
+    setEditDraft({ ...EMPTY_DRAFT });
+    setEditStates([]); setEditCities([]); setEditConstituencies([]);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const body = { name: editForm.name, role: editForm.role, permissions: editPermissions, geo_scope: editGeoScope };
+      if (editForm.password) body.password = editForm.password;
+      await api.put(`/admin/admins/${editUser.id}`, body);
+      toast.success("Updated.");
+      setEditUser(null);
+      load();
+    } catch (e2) { toast.error(formatApiError(e2)); }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="p-6 md:p-10">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="soft-label mb-0">/// Personnel</div>
+            <h1 className="mt-2 font-display font-black text-4xl text-slate-900">Admins</h1>
+          </div>
+          <button data-testid="create-admin-btn" onClick={() => setShowCreate(true)} className="btn-soft-primary">
+            <Plus size={16} className="mr-2" /> New Admin
+          </button>
+        </div>
+
+        <div className="mt-8 soft-table-wrap overflow-x-auto">
+          <table className="w-full border-collapse soft-table">
+            <thead>
+              <tr>
+                {["Email", "Name", "Role", "Access", "Created", "Actions"].map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((u) => {
+                const grantedSections = SECTION_PERMISSIONS.filter((s) => u.permissions?.[s.key]).length;
+                const scopeLabel = u.role === "super_admin"
+                  ? "All"
+                  : u.geo_scope?.unrestricted
+                    ? "Unrestricted"
+                    : `${u.geo_scope?.rules?.length || 0} location${(u.geo_scope?.rules?.length || 0) === 1 ? "" : "s"}`;
+                return (
+                  <tr key={u.id} data-testid={`admin-row-${u.id}`}>
+                    <td className="font-mono text-sm">{u.email}</td>
+                    <td className="font-bold">{u.name || "—"}</td>
+                    <td><span className="text-[10px] font-bold uppercase bg-slate-800 text-white px-2 py-1 rounded-full">{u.role.replace("_", " ")}</span></td>
+                    <td className="text-xs text-slate-500">
+                      {u.role === "super_admin" ? (
+                        <span className="text-slate-400">Full access</span>
+                      ) : (
+                        <>{grantedSections}/{SECTION_PERMISSIONS.length} sections · {scopeLabel}</>
+                      )}
+                    </td>
+                    <td className="font-mono text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td>
+                      {u.role !== "super_admin" ? (
+                        <div className="flex gap-2">
+                          <button data-testid={`edit-${u.id}`} onClick={() => openEdit(u)} className="btn-soft-secondary text-xs px-3 py-1.5"><Edit size={12} /></button>
+                          <button data-testid={`delete-${u.id}`} onClick={() => doDelete(u)} className="btn-soft-danger px-3 py-1.5"><Trash size={12} /></button>
+                        </div>
+                      ) : <span className="soft-label mb-0">Protected</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Create Admin */}
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="soft-card p-0 max-h-[85vh] overflow-y-auto">
+            <DialogHeader className="p-6 border-b border-slate-200">
+              <DialogTitle className="font-display text-2xl text-slate-900">Create Admin</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={create} className="p-6 space-y-5">
+              <div>
+                <label className="soft-label">Email</label>
+                <input data-testid="new-admin-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="soft-input" />
+              </div>
+              <div>
+                <label className="soft-label">Name</label>
+                <input data-testid="new-admin-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="soft-input" />
+              </div>
+              <div>
+                <label className="soft-label">Password</label>
+                <input data-testid="new-admin-password" type="password" required minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="soft-input" />
+              </div>
+
+              <hr className="border-slate-200" />
+
+              <AccessControlPanel
+                role="admin"
+                permissions={createPermissions}
+                setPermissions={setCreatePermissions}
+                geoScope={createGeoScope}
+                setGeoScope={setCreateGeoScope}
+                countries={countries}
+                states={createStates}
+                cities={createCities}
+                constituencies={createConstituencies}
+                draft={createDraft}
+                setDraft={setCreateDraft}
+                onCountryChange={onCreateCountryChange}
+                onStateChange={onCreateStateChange}
+              />
+
+              <DialogFooter>
+                <button data-testid="save-admin" type="submit" className="btn-soft-primary w-full">Create</button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Admin */}
+        <Dialog open={!!editUser} onOpenChange={(o) => !o && setEditUser(null)}>
+          <DialogContent className="soft-card p-0 max-h-[85vh] overflow-y-auto">
+            <DialogHeader className="p-6 border-b border-slate-200">
+              <DialogTitle className="font-display text-2xl text-slate-900">Edit Admin</DialogTitle>
+            </DialogHeader>
+            {editUser && (
+              <form onSubmit={saveEdit} className="p-6 space-y-5">
+                <div className="font-mono text-sm text-slate-600">{editUser.email}</div>
+                <div>
+                  <label className="soft-label">Name</label>
+                  <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="soft-input" />
+                </div>
+                <div>
+                  <label className="soft-label">New Password <span className="text-slate-400 normal-case font-normal">(optional)</span></label>
+                  <input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="soft-input" />
+                </div>
+                <div>
+                  <label className="soft-label">Role</label>
+                  <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="soft-input">
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+
+                <hr className="border-slate-200" />
+
+                <AccessControlPanel
+                  role={editForm.role}
+                  permissions={editPermissions}
+                  setPermissions={setEditPermissions}
+                  geoScope={editGeoScope}
+                  setGeoScope={setEditGeoScope}
+                  countries={countries}
+                  states={editStates}
+                  cities={editCities}
+                  constituencies={editConstituencies}
+                  draft={editDraft}
+                  setDraft={setEditDraft}
+                  onCountryChange={onEditCountryChange}
+                  onStateChange={onEditStateChange}
+                />
+
+                <button type="submit" className="btn-soft-primary w-full">Save</button>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DashboardLayout>
+  );
+}

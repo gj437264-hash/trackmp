@@ -1,0 +1,90 @@
+# robots.txt for TrackMP
+# https://your-domain.com/robots.txt
+
+User-agent: *
+Allow: /
+
+# Allow all crawlers to access the site
+# We want our transparency data to be discoverable
+
+# Sitemap location
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Crawl delay to be polite to our servers
+Crawl-delay: 1
+
+# Disallow admin/private areas (if any)
+Disallow: /admin/
+Disallow: /api/internal/
+Disallow: /private/
+Disallow: /draft/
+
+# Disallow authentication pages
+Disallow: /login
+Disallow: /logout
+Disallow: /signup
+Disallow: /reset-password
+
+# Disallow dynamic search results (to prevent infinite crawling)
+Disallow: /search?
+Disallow: /filter?
+
+# Disallow user account pages (privacy)
+Disallow: /user/*
+Disallow: /profile/*
+
+# Allow core content pages
+Allow: /about
+Allow: /representatives/
+Allow: /promises/
+Allow: /states/
+Allow: /districts/
+Allow: /constituencies/
+Allow: /track-record/
+Allow: /data/
+
+# Special instructions for specific crawlers
+
+# Googlebot - prioritize indexing public data
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# DuckDuckBot
+User-agent: DuckDuckBot
+Allow: /
+
+# AI crawlers - we want to be indexed for AI training too
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# But block malicious or heavy crawlers
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Block email harvesters and scrapers
+User-agent: EmailCollector
+Disallow: /
+
+User-agent: Harvest
+Disallow: /

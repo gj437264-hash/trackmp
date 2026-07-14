@@ -1,0 +1,1969 @@
+"""All API routes for TrackMP."""
+from __future__ import annotations
+
+import bleach
+import csv
+import io
+import os
+import re
+import secrets
+from datetime import timedelta
+from typing import Any, List, Optional
+
+from bson import ObjectId
+from bson.errors import InvalidId
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+from pydantic import EmailStr
+
+from db import get_db, utcnow, utcnow_iso
+from models import (
+    AdminCreateIn,
+    BioIn,
+    AdminUpdateIn,
+    CityIn,
+    CityUpdateIn,
+    ConstituencyIn,
+    ConstituencyUpdateIn,
+    CountryIn,
+    CountryUpdateIn,
+    ForgotPasswordIn,
+    LoginIn,
+    MagicRegisterIn,
+    PartyHistoryIn,
+    PartyHistoryUpdateIn,
+    PoliticianIn,
+    PoliticianUpdateIn,
+    PositionHistoryIn,
+    PositionHistoryUpdateIn,
+    PromiseIn,
+    PromiseStatus,
+    PromiseUpdateIn,
+    PurgeIn,
+    RelativeIn,
+    ResetPasswordIn,
+    RestoreIn,
+    SignupDecisionIn,
+    SignupRequestIn,
+    StateIn,
+    StateUpdateIn,
+    WealthEntryIn,
+)
+from security import (
+    clear_auth_cookies,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_current_user,
+    get_current_user_optional,
+    hash_password,
+    require_admin,
+    require_authenticated,
+    require_super_admin,
+    set_auth_cookies,
+    verify_password,
+)
+from services import AuthProviderRegistry, EmailService, UploadService, audit_log, diff_dict
+
+router = APIRouter(prefix="/api")
+
+
+# =========================================================================
+# HELPERS
+# =========================================================================
+NOT_DELETED = {"deleted_at": None}
+
+
+def _oid(id_: str) -> ObjectId:
+    try:
+        return ObjectId(id_)
+    except (InvalidId, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid ID")
+
+
+def _serialize(doc: dict | None) -> dict | None:
+    if doc is None:
+        return None
+    d = dict(doc)
+    d["id"] = str(d.pop("_id"))
+    return d
+
+
+def _serialize_list(docs: list[dict]) -> list[dict]:
+    return [_serialize(d) for d in docs]
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+ENTITY_COLLECTIONS = {
+    "politician": "politicians",
+    "user": "users",
+    "country": "countries",
+    "state": "states",
+    "city": "cities",
+    "constituency": "constituencies",
+    "relative": "relatives",
+    "wealth": "wealth_entries",
+}
+
+ENTITY_NAME_FIELDS = {
+    "politician": "name",
+    "user": "email",
+    "country": "name",
+    "state": "name",
+    "city": "name",
+    "constituency": "name",
+    "relative": "name",
+    "wealth": "year",
+}
+
+
+# =========================================================================
+# AUTH ROUTES
+# =========================================================================
+@router.post("/auth/login")
+async def login(payload: LoginIn, response: Response, request: Request):
+    db = get_db()
+    email = payload.email.lower().strip()
+    user = await db.users.find_one({"email": email, "deleted_at": None})
+    if not user or not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    user_id = str(user["_id"])
+    role = user["role"]
+    access = create_access_token(user_id, email, role)
+    refresh = create_refresh_token(user_id)
+    set_auth_cookies(response, access, refresh)
+
+    await audit_log(
+        actor={"_id": user_id, "email": email, "role": role},
+        action="login",
+        entity_type="user",
+        entity_id=user_id,
+        ip=_client_ip(request),
+    )
+
+    return {
+        "id": user_id,
+        "email": email,
+        "name": user.get("name"),
+        "role": role,
+        "access_token": access,
+    }
+
+
+@router.post("/auth/logout")
+async def logout(response: Response, user: dict = Depends(get_current_user)):
+    clear_auth_cookies(response)
+    return {"ok": True}
+
+
+@router.get("/auth/me")
+async def me(user: dict = Depends(get_current_user)):
+    return {
+        "id": user["_id"],
+        "email": user["email"],
+        "name": user.get("name"),
+        "role": user["role"],
+    }
+
+
+@router.post("/auth/refresh")
+async def refresh(request: Request, response: Response):
+    token = request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="No refresh token")
+    try:
+        payload = decode_token(token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    db = get_db()
+    user = await db.users.find_one({"_id": ObjectId(payload["sub"]), "deleted_at": None})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    access = create_access_token(str(user["_id"]), user["email"], user["role"])
+    new_refresh = create_refresh_token(str(user["_id"]))
+    set_auth_cookies(response, access, new_refresh)
+    return {"ok": True}
+
+
+@router.post("/auth/register-magic")
+async def register_magic(payload: MagicRegisterIn, response: Response, request: Request):
+    db = get_db()
+    tok = await db.invite_tokens.find_one({"token": payload.token, "used_at": None})
+    if not tok:
+        raise HTTPException(status_code=400, detail="Invalid or used invitation token")
+    if utcnow_iso() > tok["expires_at"]:
+        raise HTTPException(status_code=400, detail="Invitation token expired")
+
+    signup = await db.signup_requests.find_one({"_id": tok["signup_request_id"]})
+    if not signup:
+        raise HTTPException(status_code=400, detail="Signup request missing")
+
+    email = signup["email"].lower()
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        raise HTTPException(status_code=409, detail="Account already exists")
+
+    new_user = {
+        "email": email,
+        "name": payload.name or signup["full_name"],
+        "role": "user",
+        "country_code": signup["country_code"],
+        "password_hash": hash_password(payload.password),
+        "created_at": utcnow_iso(),
+        "updated_at": utcnow_iso(),
+        "deleted_at": None,
+    }
+    result = await db.users.insert_one(new_user)
+    await db.invite_tokens.update_one({"_id": tok["_id"]}, {"$set": {"used_at": utcnow_iso()}})
+    await db.signup_requests.update_one(
+        {"_id": signup["_id"]},
+        {"$set": {"status": "activated", "activated_at": utcnow_iso(), "updated_at": utcnow_iso()}},
+    )
+
+    user_id = str(result.inserted_id)
+    access = create_access_token(user_id, email, "user")
+    refresh_tok = create_refresh_token(user_id)
+    set_auth_cookies(response, access, refresh_tok)
+
+    await audit_log(
+        actor={"_id": user_id, "email": email, "role": "user"},
+        action="account_activated",
+        entity_type="user",
+        entity_id=user_id,
+        ip=_client_ip(request),
+    )
+    return {"id": user_id, "email": email, "name": new_user["name"], "role": "user"}
+
+
+@router.get("/auth/invitation/{token}")
+async def get_invitation(token: str):
+    db = get_db()
+    tok = await db.invite_tokens.find_one({"token": token, "used_at": None})
+    if not tok:
+        raise HTTPException(status_code=404, detail="Invalid or used invitation")
+    if utcnow_iso() > tok["expires_at"]:
+        raise HTTPException(status_code=400, detail="Invitation expired")
+    signup = await db.signup_requests.find_one({"_id": tok["signup_request_id"]})
+    if not signup:
+        raise HTTPException(status_code=404, detail="Missing signup")
+    return {
+        "email": signup["email"],
+        "full_name": signup["full_name"],
+        "country_code": signup["country_code"],
+    }
+
+
+@router.post("/auth/forgot-password")
+async def forgot_password(payload: ForgotPasswordIn):
+    db = get_db()
+    email = payload.email.lower().strip()
+    user = await db.users.find_one({"email": email, "deleted_at": None})
+    if user:
+        token = secrets.token_urlsafe(32)
+        expires = (utcnow() + timedelta(hours=1)).isoformat()
+        await db.password_reset_tokens.insert_one(
+            {"token": token, "user_id": user["_id"], "expires_at": expires, "used_at": None}
+        )
+        reset_link = f"{os.environ.get('FRONTEND_APP_URL', '')}/reset-password?token={token}"
+        await EmailService.send(
+            to=email,
+            subject="TrackMP: password reset",
+            body=f"Reset your password: {reset_link}",
+            kind="password_reset",
+            meta={"reset_link": reset_link},
+        )
+    return {"ok": True}
+
+
+@router.post("/auth/reset-password")
+async def reset_password(payload: ResetPasswordIn):
+    db = get_db()
+    tok = await db.password_reset_tokens.find_one({"token": payload.token, "used_at": None})
+    if not tok:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    if utcnow_iso() > tok["expires_at"]:
+        raise HTTPException(status_code=400, detail="Reset token expired")
+    hashed = hash_password(payload.password)
+    await db.users.update_one(
+        {"_id": tok["user_id"]}, {"$set": {"password_hash": hashed, "updated_at": utcnow_iso()}}
+    )
+    await db.password_reset_tokens.update_one({"_id": tok["_id"]}, {"$set": {"used_at": utcnow_iso()}})
+    return {"ok": True}
+
+
+@router.get("/auth/providers")
+async def list_auth_providers():
+    return {"providers": AuthProviderRegistry.list()}
+
+
+# =========================================================================
+# SIGNUP REQUESTS (public + super admin)
+# =========================================================================
+@router.post("/signup-requests")
+async def create_signup_request(payload: SignupRequestIn, request: Request):
+    db = get_db()
+    email = payload.email.lower().strip()
+    existing_user = await db.users.find_one({"email": email, "deleted_at": None})
+    if existing_user:
+        raise HTTPException(status_code=409, detail="An account already exists for this email")
+    existing_req = await db.signup_requests.find_one(
+        {"email": email, "status": "pending"}
+    )
+    if existing_req:
+        return {"ok": True, "message": "Request already pending"}
+    country = await db.countries.find_one({"code": payload.country_code, "deleted_at": None})
+    if not country:
+        raise HTTPException(status_code=400, detail="Invalid country code")
+    doc = {
+        "full_name": payload.full_name.strip(),
+        "email": email,
+        "country_code": payload.country_code,
+        "status": "pending",
+        "created_at": utcnow_iso(),
+        "updated_at": utcnow_iso(),
+        "ip": _client_ip(request),
+        "note": None,
+    }
+    result = await db.signup_requests.insert_one(doc)
+    await audit_log(
+        actor=None,
+        action="signup_request_created",
+        entity_type="signup_request",
+        entity_id=str(result.inserted_id),
+        changed_fields={"email": email},
+        ip=_client_ip(request),
+    )
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.get("/admin/signup-requests")
+async def list_signup_requests(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    _user: dict = Depends(require_super_admin),
+):
+    db = get_db()
+    q: dict = {}
+    if status_filter:
+        q["status"] = status_filter
+    docs = await db.signup_requests.find(q).sort("created_at", -1).to_list(500)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/admin/signup-requests/{req_id}/approve")
+async def approve_signup(req_id: str, payload: SignupDecisionIn, request: Request, user: dict = Depends(require_super_admin)):
+    db = get_db()
+    req = await db.signup_requests.find_one({"_id": _oid(req_id)})
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is {req['status']}")
+
+    token = secrets.token_urlsafe(32)
+    expires = (utcnow() + timedelta(hours=24)).isoformat()
+    await db.invite_tokens.insert_one(
+        {
+            "token": token,
+            "signup_request_id": req["_id"],
+            "expires_at": expires,
+            "used_at": None,
+            "created_at": utcnow_iso(),
+        }
+    )
+    await db.signup_requests.update_one(
+        {"_id": req["_id"]},
+        {"$set": {"status": "approved", "updated_at": utcnow_iso(), "note": payload.note, "approved_by": user["_id"]}},
+    )
+    invite_link = f"{os.environ.get('FRONTEND_APP_URL', '')}/accept-invite?token={token}"
+    await EmailService.send(
+        to=req["email"],
+        subject="Welcome to TrackMP — activate your account",
+        body=(
+            f"Hi {req['full_name']},\n\nYour TrackMP signup was approved.\n"
+            f"Click the link below to set your password (valid 24 hours):\n{invite_link}\n\n— TrackMP"
+        ),
+        kind="signup_approval",
+        meta={"invite_link": invite_link, "signup_request_id": str(req["_id"])},
+    )
+    await audit_log(
+        actor=user,
+        action="signup_request_approved",
+        entity_type="signup_request",
+        entity_id=str(req["_id"]),
+        changed_fields={"status": {"from": "pending", "to": "approved"}},
+        ip=_client_ip(request),
+    )
+    return {"ok": True, "invite_link": invite_link}
+
+
+@router.post("/admin/signup-requests/{req_id}/reject")
+async def reject_signup(req_id: str, payload: SignupDecisionIn, request: Request, user: dict = Depends(require_super_admin)):
+    db = get_db()
+    req = await db.signup_requests.find_one({"_id": _oid(req_id)})
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is {req['status']}")
+    await db.signup_requests.update_one(
+        {"_id": req["_id"]},
+        {"$set": {"status": "rejected", "updated_at": utcnow_iso(), "note": payload.note, "rejected_by": user["_id"]}},
+    )
+    await audit_log(
+        actor=user,
+        action="signup_request_rejected",
+        entity_type="signup_request",
+        entity_id=str(req["_id"]),
+        changed_fields={"status": {"from": "pending", "to": "rejected"}, "note": payload.note},
+        ip=_client_ip(request),
+    )
+    return {"ok": True}
+
+
+# =========================================================================
+# ADMIN MANAGEMENT (super_admin only)
+# =========================================================================
+@router.get("/admin/admins")
+async def list_admins(_user: dict = Depends(require_super_admin)):
+    db = get_db()
+    docs = await db.users.find({"role": {"$in": ["admin", "super_admin"]}, "deleted_at": None}).to_list(500)
+    for d in docs:
+        d.pop("password_hash", None)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/admin/admins")
+async def create_admin(payload: AdminCreateIn, request: Request, user: dict = Depends(require_super_admin)):
+    db = get_db()
+    email = payload.email.lower().strip()
+    if await db.users.find_one({"email": email, "deleted_at": None}):
+        raise HTTPException(status_code=409, detail="Email already in use")
+    doc = {
+        "email": email,
+        "name": payload.name,
+        "role": "admin",
+        "password_hash": hash_password(payload.password),
+        "country_code": None,
+        "created_at": utcnow_iso(),
+        "updated_at": utcnow_iso(),
+        "deleted_at": None,
+    }
+    result = await db.users.insert_one(doc)
+    await audit_log(
+        actor=user,
+        action="admin_created",
+        entity_type="user",
+        entity_id=str(result.inserted_id),
+        changed_fields={"email": email, "role": "admin"},
+        ip=_client_ip(request),
+    )
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/admin/admins/{user_id}")
+async def update_admin(user_id: str, payload: AdminUpdateIn, request: Request, user: dict = Depends(require_super_admin)):
+    db = get_db()
+    target = await db.users.find_one({"_id": _oid(user_id), "deleted_at": None})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target["role"] == "super_admin":
+        raise HTTPException(status_code=403, detail="Cannot modify super admin")
+    update: dict[str, Any] = {"updated_at": utcnow_iso()}
+    changes: dict = {}
+    if payload.name is not None and payload.name != target.get("name"):
+        update["name"] = payload.name
+        changes["name"] = {"from": target.get("name"), "to": payload.name}
+    if payload.role is not None and payload.role != target["role"]:
+        update["role"] = payload.role
+        changes["role"] = {"from": target["role"], "to": payload.role}
+    if payload.password:
+        update["password_hash"] = hash_password(payload.password)
+        changes["password"] = {"from": "***", "to": "***"}
+    if len(update) > 1:
+        await db.users.update_one({"_id": target["_id"]}, {"$set": update})
+        await audit_log(
+            actor=user,
+            action="admin_updated",
+            entity_type="user",
+            entity_id=user_id,
+            changed_fields=changes,
+            ip=_client_ip(request),
+        )
+    return {"ok": True}
+
+
+@router.delete("/admin/admins/{user_id}")
+async def delete_admin(user_id: str, request: Request, user: dict = Depends(require_super_admin)):
+    db = get_db()
+    target = await db.users.find_one({"_id": _oid(user_id), "deleted_at": None})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target["role"] == "super_admin":
+        raise HTTPException(status_code=403, detail="Cannot delete super admin")
+    await db.users.update_one({"_id": target["_id"]}, {"$set": {"deleted_at": utcnow_iso(), "updated_at": utcnow_iso()}})
+    await audit_log(
+        actor=user,
+        action="admin_deleted",
+        entity_type="user",
+        entity_id=user_id,
+        changed_fields={"email": target["email"]},
+        ip=_client_ip(request),
+    )
+    return {"ok": True}
+
+
+# =========================================================================
+# REFERENCE DATA — Countries / States / Cities / Constituencies
+# =========================================================================
+@router.get("/ref/countries")
+async def list_countries():
+    db = get_db()
+    docs = await db.countries.find(NOT_DELETED).sort("name", 1).to_list(500)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/ref/countries")
+async def create_country(payload: CountryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    code = payload.code.upper()
+    if await db.countries.find_one({"code": code, "deleted_at": None}):
+        raise HTTPException(status_code=409, detail="Country already exists")
+    doc = {
+        "code": code,
+        "name": payload.name,
+        "created_at": utcnow_iso(),
+        "updated_at": utcnow_iso(),
+        "deleted_at": None,
+    }
+    result = await db.countries.insert_one(doc)
+    await audit_log(
+        actor=user, action="country_created", entity_type="country",
+        entity_id=str(result.inserted_id),
+        changed_fields={"code": code, "name": payload.name}, ip=_client_ip(request),
+    )
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/ref/countries/{country_id}")
+async def update_country(country_id: str, payload: CountryUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.countries.find_one({"_id": _oid(country_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Country not found")
+    update: dict = {"updated_at": utcnow_iso()}
+    if payload.name is not None:
+        update["name"] = payload.name
+    await db.countries.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(
+        actor=user, action="country_updated", entity_type="country",
+        entity_id=country_id, changed_fields=diff_dict(existing, {**existing, **update}, ["name"]),
+        ip=_client_ip(request),
+    )
+    return {"ok": True}
+
+
+@router.delete("/ref/countries/{country_id}")
+async def delete_country(country_id: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.countries.find_one({"_id": _oid(country_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Country not found")
+    await db.countries.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(
+        actor=user, action="country_deleted", entity_type="country",
+        entity_id=country_id, changed_fields={"code": existing["code"]}, ip=_client_ip(request),
+    )
+    return {"ok": True}
+
+
+@router.get("/ref/states")
+async def list_states(country_code: Optional[str] = None):
+    db = get_db()
+    q: dict = dict(NOT_DELETED)
+    if country_code:
+        q["country_code"] = country_code
+    docs = await db.states.find(q).sort("name", 1).to_list(2000)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/ref/states")
+async def create_state(payload: StateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    country = await db.countries.find_one({"code": payload.country_code, "deleted_at": None})
+    if not country:
+        raise HTTPException(status_code=400, detail="Invalid country")
+    doc = {
+        "country_code": payload.country_code,
+        "name": payload.name,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.states.insert_one(doc)
+    await audit_log(actor=user, action="state_created", entity_type="state",
+                    entity_id=str(result.inserted_id), changed_fields=doc, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/ref/states/{state_id}")
+async def update_state(state_id: str, payload: StateUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.states.find_one({"_id": _oid(state_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="State not found")
+    update = {"updated_at": utcnow_iso()}
+    if payload.name is not None:
+        update["name"] = payload.name
+    await db.states.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="state_updated", entity_type="state",
+                    entity_id=state_id, changed_fields=diff_dict(existing, {**existing, **update}, ["name"]),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/ref/states/{state_id}")
+async def delete_state(state_id: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.states.find_one({"_id": _oid(state_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="State not found")
+    await db.states.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="state_deleted", entity_type="state",
+                    entity_id=state_id, changed_fields={"name": existing["name"]}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.get("/ref/cities")
+async def list_cities(state_id: Optional[str] = None):
+    db = get_db()
+    q: dict = dict(NOT_DELETED)
+    if state_id:
+        q["state_id"] = state_id
+    docs = await db.cities.find(q).sort("name", 1).to_list(5000)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/ref/cities")
+async def create_city(payload: CityIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    state = await db.states.find_one({"_id": _oid(payload.state_id), "deleted_at": None})
+    if not state:
+        raise HTTPException(status_code=400, detail="Invalid state")
+    doc = {
+        "state_id": payload.state_id, "name": payload.name,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.cities.insert_one(doc)
+    await audit_log(actor=user, action="city_created", entity_type="city",
+                    entity_id=str(result.inserted_id), changed_fields=doc, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/ref/cities/{city_id}")
+async def update_city(city_id: str, payload: CityUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.cities.find_one({"_id": _oid(city_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="City not found")
+    update = {"updated_at": utcnow_iso()}
+    if payload.name is not None:
+        update["name"] = payload.name
+    await db.cities.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="city_updated", entity_type="city",
+                    entity_id=city_id, changed_fields=diff_dict(existing, {**existing, **update}, ["name"]),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/ref/cities/{city_id}")
+async def delete_city(city_id: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.cities.find_one({"_id": _oid(city_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="City not found")
+    await db.cities.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="city_deleted", entity_type="city",
+                    entity_id=city_id, changed_fields={"name": existing["name"]}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.get("/ref/constituencies")
+async def list_constituencies(state_id: Optional[str] = None, city_id: Optional[str] = None):
+    db = get_db()
+    q: dict = dict(NOT_DELETED)
+    if state_id:
+        q["state_id"] = state_id
+    if city_id:
+        q["city_id"] = city_id
+    docs = await db.constituencies.find(q).sort("name", 1).to_list(5000)
+    return {"items": _serialize_list(docs)}
+
+
+@router.post("/ref/constituencies")
+async def create_constituency(payload: ConstituencyIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    state = await db.states.find_one({"_id": _oid(payload.state_id), "deleted_at": None})
+    if not state:
+        raise HTTPException(status_code=400, detail="Invalid state")
+    doc = {
+        "state_id": payload.state_id, "city_id": payload.city_id,
+        "name": payload.name,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.constituencies.insert_one(doc)
+    await audit_log(actor=user, action="constituency_created", entity_type="constituency",
+                    entity_id=str(result.inserted_id), changed_fields=doc, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/ref/constituencies/{cst_id}")
+async def update_constituency(cst_id: str, payload: ConstituencyUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.constituencies.find_one({"_id": _oid(cst_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Constituency not found")
+    update = {"updated_at": utcnow_iso()}
+    if payload.name is not None:
+        update["name"] = payload.name
+    if payload.city_id is not None:
+        update["city_id"] = payload.city_id
+    await db.constituencies.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="constituency_updated", entity_type="constituency",
+                    entity_id=cst_id, changed_fields=diff_dict(existing, {**existing, **update}, ["name", "city_id"]),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/ref/constituencies/{cst_id}")
+async def delete_constituency(cst_id: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.constituencies.find_one({"_id": _oid(cst_id), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Constituency not found")
+    await db.constituencies.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="constituency_deleted", entity_type="constituency",
+                    entity_id=cst_id, changed_fields={"name": existing["name"]}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+# =========================================================================
+# POLITICIANS + Relatives + Wealth
+# =========================================================================
+async def _hydrate_politician(doc: dict) -> dict:
+    """Attach relatives + wealth (non-deleted) to a politician."""
+    db = get_db()
+    d = _serialize(doc)
+    d["wealth"] = _serialize_list(
+        await db.wealth_entries.find(
+            {"politician_id": d["id"], "relative_id": None, "deleted_at": None}
+        ).sort("year", 1).to_list(500)
+    )
+    relatives = await db.relatives.find(
+        {"politician_id": d["id"], "deleted_at": None}
+    ).to_list(200)
+    hydrated_relatives = []
+    for r in relatives:
+        rs = _serialize(r)
+        linked_wealth_source = None
+        if rs.get("linked_politician_id"):
+            try:
+                linked = await db.politicians.find_one(
+                    {"_id": _oid(rs["linked_politician_id"]), "deleted_at": None}
+                )
+            except Exception:
+                linked = None
+            rs["linked_politician_name"] = linked.get("name") if linked else None
+            if linked:
+                linked_wealth_source = rs["linked_politician_id"]
+        else:
+            rs["linked_politician_name"] = None
+        if linked_wealth_source:
+            rs["wealth"] = _serialize_list(
+                await db.wealth_entries.find(
+                    {"politician_id": linked_wealth_source, "relative_id": None, "deleted_at": None}
+                ).sort("year", 1).to_list(500)
+            )
+        else:
+            rs["wealth"] = _serialize_list(
+                await db.wealth_entries.find(
+                    {"relative_id": rs["id"], "deleted_at": None}
+                ).sort("year", 1).to_list(500)
+            )
+        hydrated_relatives.append(rs)
+    d["relatives"] = hydrated_relatives
+    d["promises"] = _serialize_list(
+        await db.promises.find(
+            {"politician_id": d["id"], "deleted_at": None}
+        ).sort("created_at", -1).to_list(500)
+    )	
+    d["party_history"] = _serialize_list(
+        await db.party_history.find(
+            {"politician_id": d["id"], "deleted_at": None}
+        ).sort("start_date", -1).to_list(200)
+    )
+    position_docs = await db.position_history.find(
+        {"politician_id": d["id"], "deleted_at": None}
+    ).sort([("is_current", -1), ("end_date", -1), ("start_date", -1)]).to_list(200)
+    hydrated_positions = []
+    for pos in position_docs:
+        ps = _serialize(pos)
+        try:
+            ps["country_name"] = None
+            if ps.get("country_code"):
+                country = await db.countries.find_one({"code": ps["country_code"]})
+                ps["country_name"] = country.get("name") if country else None
+            ps["state_name"] = None
+            if ps.get("state_id"):
+                state = await db.states.find_one({"_id": _oid(ps["state_id"])})
+                ps["state_name"] = state.get("name") if state else None
+            ps["city_name"] = None
+            if ps.get("city_id"):
+                city = await db.cities.find_one({"_id": _oid(ps["city_id"])})
+                ps["city_name"] = city.get("name") if city else None
+            ps["constituency_name"] = None
+            if ps.get("constituency_id"):
+                const = await db.constituencies.find_one({"_id": _oid(ps["constituency_id"])})
+                ps["constituency_name"] = const.get("name") if const else None
+        except Exception:
+            ps.setdefault("country_name", None)
+            ps.setdefault("state_name", None)
+            ps.setdefault("city_name", None)
+            ps.setdefault("constituency_name", None)
+        hydrated_positions.append(ps)
+    d["position_history"] = hydrated_positions
+    d["bio_html"] = doc.get("bio_html") or ""
+    d["media"] = _serialize_list(
+        await db.politician_media.find(
+            {"politician_id": d["id"], "deleted_at": None}
+        ).sort("created_at", -1).to_list(200)
+    )
+    return d
+
+
+def _strip_private_fields(doc: dict, viewer: Optional[dict]) -> dict:
+    """Remove admin-only fields (e.g. gender) unless viewer is admin/super_admin."""
+    is_admin = bool(viewer) and viewer.get("role") in ("admin", "super_admin")
+    if not is_admin:
+        doc.pop("gender", None)
+    return doc
+
+
+_INVERSE_CHILD = {"son": "child", "daughter": "child"}
+_INVERSE_PARENT = {"father": "parent", "mother": "parent"}
+_INVERSE_SPOUSE = {"husband": "spouse", "wife": "spouse"}
+_INVERSE_SIBLING = {"brother": "sibling", "sister": "sibling"}
+_INVERSE_GRANDCHILD = {"grandson": "grandchild", "granddaughter": "grandchild"}
+_INVERSE_GRANDPARENT = {"grandfather": "grandparent", "grandmother": "grandparent"}
+
+
+def _gendered(term_male: str, term_female: str, generic: str, gender: Optional[str]) -> str:
+    if gender == "male":
+        return term_male
+    if gender == "female":
+        return term_female
+    return generic
+
+
+def _infer_inverse_relationship(relationship: str, original_gender: Optional[str], linked_gender: Optional[str]) -> str:
+    """Best-effort inverse of a relationship term. Falls back to a generic term if unknown."""
+    rel = (relationship or "").strip().lower()
+    if rel in _INVERSE_CHILD:
+        return _gendered("father", "mother", "parent", original_gender)
+    if rel in _INVERSE_PARENT:
+        return _gendered("son", "daughter", "child", linked_gender)
+    if rel in _INVERSE_SPOUSE:
+        return _gendered("husband", "wife", "spouse", linked_gender)
+    if rel in _INVERSE_SIBLING:
+        return _gendered("brother", "sister", "sibling", linked_gender)
+    if rel in _INVERSE_GRANDCHILD:
+        return _gendered("grandfather", "grandmother", "grandparent", original_gender)
+    if rel in _INVERSE_GRANDPARENT:
+        return _gendered("grandson", "granddaughter", "grandchild", linked_gender)
+    if rel == "spouse":
+        return "spouse"
+    if rel == "sibling":
+        return "sibling"
+    if rel == "parent":
+        return "child"
+    if rel == "child":
+        return "parent"
+    return "relative"
+
+
+async def _sync_reciprocal_relative(original: dict, pid: str):
+    """
+    Create, update, or remove the auto-generated reciprocal relative record
+    on the linked politician's profile, based on the current state of `original`.
+    `original` must be the relative document (with real _id) after the write.
+    """
+    db = get_db()
+    should_have_reciprocal = bool(original.get("is_political")) and bool(original.get("linked_politician_id"))
+    reciprocal_id = original.get("reciprocal_relative_id")
+
+    if not should_have_reciprocal:
+        if reciprocal_id:
+            await db.relatives.update_one({"_id": _oid(reciprocal_id)}, {"$set": {"deleted_at": utcnow_iso()}})
+            await db.relatives.update_one({"_id": original["_id"]}, {"$set": {"reciprocal_relative_id": None}})
+        return
+
+    linked_pol = await db.politicians.find_one({"_id": _oid(original["linked_politician_id"]), "deleted_at": None})
+    if not linked_pol:
+        return
+
+    original_pol = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    original_gender = original_pol.get("gender") if original_pol else None
+    linked_gender = linked_pol.get("gender")
+    inverse_relationship = _infer_inverse_relationship(original.get("relationship"), original_gender, linked_gender)
+
+    reciprocal_fields = {
+        "politician_id": str(original["linked_politician_id"]),
+        "name": original_pol.get("name") if original_pol else "",
+        "relationship": inverse_relationship,
+        "description": None,
+        "is_political": True,
+        "political_role": (original_pol.get("role") if original_pol else None),
+        "linked_politician_id": pid,
+        "is_reciprocal": True,
+        "reciprocal_of": str(original["_id"]),
+        "updated_at": utcnow_iso(),
+    }
+
+    existing_reciprocal = await db.relatives.find_one({"_id": _oid(reciprocal_id), "deleted_at": None}) if reciprocal_id else None
+
+    if existing_reciprocal:
+        await db.relatives.update_one({"_id": existing_reciprocal["_id"]}, {"$set": reciprocal_fields})
+    else:
+        reciprocal_fields["created_at"] = utcnow_iso()
+        reciprocal_fields["deleted_at"] = None
+        result = await db.relatives.insert_one(reciprocal_fields)
+        await db.relatives.update_one({"_id": original["_id"]}, {"$set": {"reciprocal_relative_id": str(result.inserted_id)}})
+
+
+@router.get("/politicians")
+async def list_politicians(
+    q: Optional[str] = None,
+    country_code: Optional[str] = None,
+    state_id: Optional[str] = None,
+    constituency_id: Optional[str] = None,
+    limit: int = 10000000,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
+    db = get_db()
+    query: dict = dict(NOT_DELETED)
+    if q:
+        query["name"] = {"$regex": re.escape(q), "$options": "i"}
+    if country_code:
+        query["country_code"] = country_code
+    if state_id:
+        query["state_id"] = state_id
+    if constituency_id:
+        query["constituency_id"] = constituency_id
+    docs = await db.politicians.find(query).sort("name", 1).limit(limit).to_list(limit)
+    items = [_strip_private_fields(d, user) for d in _serialize_list(docs)]
+    return {"items": items}
+
+
+# ---------- Site Stats ----------
+@router.get("/stats")
+async def site_stats():
+    db = get_db()
+    total_politicians = await db.politicians.count_documents({"deleted_at": None})
+    total_promises = await db.promises.count_documents({"deleted_at": None})
+    total_delivered = await db.promises.count_documents({"status": "delivered", "deleted_at": None})
+    total_broken = await db.promises.count_documents({"status": "broken", "deleted_at": None})
+    delivered_pct = round((total_delivered / total_promises) * 100, 1) if total_promises else 0
+    broken_pct = round((total_broken / total_promises) * 100, 1) if total_promises else 0
+    return {
+        "total_politicians": total_politicians,
+        "total_promises": total_promises,
+        "total_delivered": total_delivered,
+        "total_broken": total_broken,
+        "delivered_pct": delivered_pct,
+        "broken_pct": broken_pct,
+    }
+
+
+# ---------- Bulk Import / Export ----------
+_CSV_COLUMNS = [
+    "name", "party", "role", "brief_intro", "country_code", "state", "city", "constituency",
+    "date_of_birth", "education", "profession", "contact_email", "contact_phone",
+    "official_website", "social_twitter", "social_facebook", "social_instagram", "social_youtube", "tags",
+]
+
+
+@router.get("/politicians/import-template")
+async def download_import_template(user: dict = Depends(require_admin)):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(_CSV_COLUMNS)
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=politician_import_template.csv"},
+    )
+
+
+@router.get("/politicians/export")
+async def export_politicians(user: dict = Depends(require_admin)):
+    db = get_db()
+    docs = await db.politicians.find(NOT_DELETED).sort("name", 1).to_list(100000)
+    state_cache, city_cache, const_cache = {}, {}, {}
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(_CSV_COLUMNS)
+
+    for doc in docs:
+        state_name = ""
+        if doc.get("state_id"):
+            if doc["state_id"] not in state_cache:
+                s = await db.states.find_one({"_id": _oid(doc["state_id"])})
+                state_cache[doc["state_id"]] = s.get("name") if s else ""
+            state_name = state_cache[doc["state_id"]]
+        city_name = ""
+        if doc.get("city_id"):
+            if doc["city_id"] not in city_cache:
+                c = await db.cities.find_one({"_id": _oid(doc["city_id"])})
+                city_cache[doc["city_id"]] = c.get("name") if c else ""
+            city_name = city_cache[doc["city_id"]]
+        const_name = ""
+        if doc.get("constituency_id"):
+            if doc["constituency_id"] not in const_cache:
+                k = await db.constituencies.find_one({"_id": _oid(doc["constituency_id"])})
+                const_cache[doc["constituency_id"]] = k.get("name") if k else ""
+            const_name = const_cache[doc["constituency_id"]]
+
+        social = doc.get("social_links") or {}
+        writer.writerow([
+            doc.get("name", ""), doc.get("party", ""), doc.get("role", ""), doc.get("brief_intro", ""),
+            doc.get("country_code", ""), state_name, city_name, const_name,
+            doc.get("date_of_birth", ""), doc.get("education", ""), doc.get("profession", ""),
+            doc.get("contact_email", ""), doc.get("contact_phone", ""), doc.get("official_website", ""),
+            social.get("twitter", ""), social.get("facebook", ""), social.get("instagram", ""), social.get("youtube", ""),
+            ";".join(doc.get("tags", [])),
+        ])
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=politicians_export.csv"},
+    )
+
+
+@router.post("/politicians/import")
+async def import_politicians(request: Request, file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    db = get_db()
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded CSV")
+
+    reader = csv.DictReader(io.StringIO(text))
+    missing_cols = [c for c in ["name", "country_code"] if c not in (reader.fieldnames or [])]
+    if missing_cols:
+        raise HTTPException(status_code=400, detail=f"Missing required column(s): {', '.join(missing_cols)}")
+
+    created = 0
+    errors = []
+    skipped = []
+    state_lookup, city_lookup, const_lookup = {}, {}, {}
+
+    for i, row in enumerate(reader, start=2):
+        name = (row.get("name") or "").strip()
+        country_code = (row.get("country_code") or "").strip().upper()
+        if not name:
+            errors.append({"row": i, "error": "Missing name"})
+            continue
+        if not country_code:
+            errors.append({"row": i, "error": "Missing country_code"})
+            continue
+
+        country = await db.countries.find_one({"code": country_code})
+        if not country:
+            errors.append({"row": i, "error": f"Unknown country_code '{country_code}'"})
+            continue
+
+        state_id = None
+        state_name = (row.get("state") or "").strip()
+        if state_name:
+            cache_key = (country_code, state_name.lower())
+            if cache_key not in state_lookup:
+                existing_state = await db.states.find_one(
+                    {"country_code": country_code, "name": {"$regex": f"^{re.escape(state_name)}$", "$options": "i"}}
+                )
+                if existing_state:
+                    state_lookup[cache_key] = str(existing_state["_id"])
+                else:
+                    result = await db.states.insert_one({
+                        "name": state_name, "country_code": country_code,
+                        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+                    })
+                    state_lookup[cache_key] = str(result.inserted_id)
+            state_id = state_lookup[cache_key]
+
+        city_id = None
+        city_name = (row.get("city") or "").strip()
+        if city_name and state_id:
+            cache_key = (state_id, city_name.lower())
+            if cache_key not in city_lookup:
+                existing_city = await db.cities.find_one(
+                    {"state_id": state_id, "name": {"$regex": f"^{re.escape(city_name)}$", "$options": "i"}}
+                )
+                if existing_city:
+                    city_lookup[cache_key] = str(existing_city["_id"])
+                else:
+                    result = await db.cities.insert_one({
+                        "name": city_name, "state_id": state_id,
+                        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+                    })
+                    city_lookup[cache_key] = str(result.inserted_id)
+            city_id = city_lookup[cache_key]
+
+        constituency_id = None
+        const_name = (row.get("constituency") or "").strip()
+        if const_name and state_id:
+            cache_key = (state_id, const_name.lower())
+            if cache_key not in const_lookup:
+                existing_const = await db.constituencies.find_one(
+                    {"state_id": state_id, "name": {"$regex": f"^{re.escape(const_name)}$", "$options": "i"}}
+                )
+                if existing_const:
+                    const_lookup[cache_key] = str(existing_const["_id"])
+                else:
+                    result = await db.constituencies.insert_one({
+                        "name": const_name, "state_id": state_id,
+                        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+                    })
+                    const_lookup[cache_key] = str(result.inserted_id)
+            constituency_id = const_lookup[cache_key]
+
+        tags_raw = (row.get("tags") or "").strip()
+        tags = [t.strip() for t in tags_raw.split(";") if t.strip()] if tags_raw else []
+
+        social_links = {
+            "twitter": (row.get("social_twitter") or "").strip() or None,
+            "facebook": (row.get("social_facebook") or "").strip() or None,
+            "instagram": (row.get("social_instagram") or "").strip() or None,
+            "youtube": (row.get("social_youtube") or "").strip() or None,
+        }
+        if not any(social_links.values()):
+            social_links = None
+
+        doc = {
+            "name": name,
+            "party": (row.get("party") or "").strip() or None,
+            "role": (row.get("role") or "").strip() or None,
+            "brief_intro": (row.get("brief_intro") or "").strip() or None,
+            "image_url": None,
+            "country_code": country_code,
+            "state_id": state_id,
+            "city_id": city_id,
+            "constituency_id": constituency_id,
+            "date_of_birth": (row.get("date_of_birth") or "").strip() or None,
+            "education": (row.get("education") or "").strip() or None,
+            "profession": (row.get("profession") or "").strip() or None,
+            "contact_email": (row.get("contact_email") or "").strip() or None,
+            "contact_phone": (row.get("contact_phone") or "").strip() or None,
+            "official_website": (row.get("official_website") or "").strip() or None,
+            "social_links": social_links,
+            "tags": tags,
+            "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+        }
+
+        existing_politician = await db.politicians.find_one({
+            "name": {"$regex": f"^{re.escape(name)}$", "$options": "i"},
+            "country_code": country_code,
+            "deleted_at": None,
+        })
+        if existing_politician:
+            skipped.append({"row": i, "name": name, "reason": "Politician with this name and country already exists"})
+            continue
+
+        try:
+            result = await db.politicians.insert_one(doc)
+            created += 1
+            await audit_log(actor=user, action="politician_imported", entity_type="politician",
+                            entity_id=str(result.inserted_id), changed_fields={"name": name, "source": "csv_import"},
+                            ip=_client_ip(request))
+        except Exception as e:
+            errors.append({"row": i, "error": f"Database error: {str(e)}"})
+
+    return {"created": created, "skipped": skipped, "errors": errors}
+
+
+# ---------- Wealth entries (politician-level or relative-level) ----------
+
+
+@router.get("/politicians/{pid}")
+async def get_politician(pid: str, user: Optional[dict] = Depends(get_current_user_optional)):
+    db = get_db()
+    doc = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    hydrated = await _hydrate_politician(doc)
+    return _strip_private_fields(hydrated, user)
+
+
+@router.post("/politicians")
+async def create_politician(payload: PoliticianIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    doc = payload.model_dump()
+    doc.update({"created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None})
+    result = await db.politicians.insert_one(doc)
+    await audit_log(actor=user, action="politician_created", entity_type="politician",
+                    entity_id=str(result.inserted_id), changed_fields={"name": payload.name},
+                    ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/politicians/{pid}")
+async def update_politician(pid: str, payload: PoliticianUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    update_data = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    update_data["updated_at"] = utcnow_iso()
+
+    new_party = update_data.get("party")
+    if new_party and new_party != existing.get("party"):
+        today = utcnow_iso()[:10]
+        await db.party_history.update_many(
+            {"politician_id": pid, "end_date": None, "deleted_at": None},
+            {"$set": {"end_date": today, "updated_at": utcnow_iso()}}
+        )
+        await db.party_history.insert_one({
+            "politician_id": pid,
+            "party": new_party,
+            "start_date": today,
+            "end_date": None,
+            "note": "Party change (auto-logged)",
+            "source_url": None,
+            "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+        })
+
+    await db.politicians.update_one({"_id": existing["_id"]}, {"$set": update_data})
+    changed = diff_dict(existing, {**existing, **update_data}, list(update_data.keys()))
+    await audit_log(actor=user, action="politician_updated", entity_type="politician",
+                    entity_id=pid, changed_fields=changed, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/politicians/{pid}")
+async def delete_politician(pid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    now = utcnow_iso()
+    await db.politicians.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": now}})
+    await audit_log(actor=user, action="politician_deleted", entity_type="politician",
+                    entity_id=pid, changed_fields={"name": existing["name"]}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.post("/politicians/{pid}/wealth")
+async def add_politician_wealth(pid: str, payload: WealthEntryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    net_worth = payload.net_worth if payload.net_worth is not None else payload.assets - payload.liabilities
+    doc = {
+        "politician_id": pid, "relative_id": None,
+        "year": payload.year, "assets": payload.assets, "liabilities": payload.liabilities,
+        "net_worth": net_worth, "notes": payload.notes,
+        "source_urls": payload.source_urls,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.wealth_entries.insert_one(doc)
+    await audit_log(actor=user, action="wealth_created", entity_type="wealth",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"politician_id": pid, "year": payload.year, "net_worth": net_worth},
+                    ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/wealth/{wid}")
+async def update_wealth(wid: str, payload: WealthEntryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.wealth_entries.find_one({"_id": _oid(wid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Wealth entry not found")
+    net_worth = payload.net_worth if payload.net_worth is not None else payload.assets - payload.liabilities
+    update = {
+        "year": payload.year, "assets": payload.assets, "liabilities": payload.liabilities,
+        "net_worth": net_worth, "notes": payload.notes, "source_urls": payload.source_urls,
+        "updated_at": utcnow_iso(),
+    }
+    await db.wealth_entries.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="wealth_updated", entity_type="wealth",
+                    entity_id=wid, changed_fields=diff_dict(existing, {**existing, **update},
+                    ["year", "assets", "liabilities", "net_worth", "notes"]),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/wealth/{wid}")
+async def delete_wealth(wid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.wealth_entries.find_one({"_id": _oid(wid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    await db.wealth_entries.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="wealth_deleted", entity_type="wealth",
+                    entity_id=wid, changed_fields={"year": existing.get("year")}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+# ---------- Relatives ----------
+@router.post("/politicians/{pid}/relatives")
+async def add_relative(pid: str, payload: RelativeIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    doc = {
+        "politician_id": pid, "name": payload.name,
+        "relationship": payload.relationship, "description": payload.description,
+        "is_political": payload.is_political, "political_role": payload.political_role,
+        "linked_politician_id": payload.linked_politician_id,
+        "is_reciprocal": False, "reciprocal_of": None, "reciprocal_relative_id": None,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.relatives.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    await _sync_reciprocal_relative(doc, pid)
+    await audit_log(actor=user, action="relative_created", entity_type="relative",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"politician_id": pid, "name": payload.name}, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/relatives/{rid}")
+async def update_relative(rid: str, payload: RelativeIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.relatives.find_one({"_id": _oid(rid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Relative not found")
+    if existing.get("is_reciprocal"):
+        raise HTTPException(status_code=400, detail="This entry is auto-linked. Edit it from the original politician's profile instead.")
+    update = payload.model_dump()
+    update["updated_at"] = utcnow_iso()
+    await db.relatives.update_one({"_id": existing["_id"]}, {"$set": update})
+    merged = {**existing, **update}
+    await _sync_reciprocal_relative(merged, existing["politician_id"])
+    await audit_log(actor=user, action="relative_updated", entity_type="relative",
+                    entity_id=rid, changed_fields=diff_dict(existing, merged,
+                    ["name", "relationship", "description", "is_political", "political_role", "linked_politician_id"]), ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/relatives/{rid}")
+async def delete_relative(rid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.relatives.find_one({"_id": _oid(rid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    if existing.get("is_reciprocal"):
+        raise HTTPException(status_code=400, detail="This entry is auto-linked. Delete it from the original politician's profile instead.")
+    await db.relatives.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    reciprocal_id = existing.get("reciprocal_relative_id")
+    if reciprocal_id:
+        await db.relatives.update_one({"_id": _oid(reciprocal_id)}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="relative_deleted", entity_type="relative",
+                    entity_id=rid, changed_fields={"name": existing["name"]}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.post("/relatives/{rid}/wealth")
+async def add_relative_wealth(rid: str, payload: WealthEntryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    rel = await db.relatives.find_one({"_id": _oid(rid), "deleted_at": None})
+    if not rel:
+        raise HTTPException(status_code=404, detail="Relative not found")
+    net_worth = payload.net_worth if payload.net_worth is not None else payload.assets - payload.liabilities
+    doc = {
+        "politician_id": rel["politician_id"], "relative_id": rid,
+        "year": payload.year, "assets": payload.assets, "liabilities": payload.liabilities,
+        "net_worth": net_worth, "notes": payload.notes, "source_urls": payload.source_urls,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.wealth_entries.insert_one(doc)
+    await audit_log(actor=user, action="relative_wealth_created", entity_type="wealth",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"relative_id": rid, "year": payload.year}, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+    d["relatives"] = hydrated_relatives
+    d["promises"] = _serialize_list(
+        await db.promises.find(
+            {"politician_id": d["id"], "deleted_at": None}
+        ).sort("created_at", -1).to_list(500)
+    )
+    return d
+
+# ---------- Promises ----------
+@router.get("/politicians/{pid}/promises")
+async def list_promises(pid: str):
+    db = get_db()
+    docs = await db.promises.find(
+        {"politician_id": pid, "deleted_at": None}
+    ).sort("created_at", -1).to_list(500)
+    return _serialize_list(docs)
+
+
+@router.post("/politicians/{pid}/promises")
+async def add_promise(pid: str, payload: PromiseIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    doc = {
+        "politician_id": pid,
+        "title": payload.title,
+        "description": payload.description,
+        "status": payload.status,
+        "date_made": payload.date_made,
+        "source_url": payload.source_url,
+        "created_by": user["_id"],
+        "created_by_name": user.get("name") or user.get("email", "Unknown"),
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.promises.insert_one(doc)
+    await audit_log(actor=user, action="promise_created", entity_type="promise",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"politician_id": pid, "title": payload.title},
+                    ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/promises/{prid}")
+async def update_promise(prid: str, payload: PromiseUpdateIn, request: Request, user: dict = Depends(require_authenticated)):
+    db = get_db()
+    existing = await db.promises.find_one({"_id": _oid(prid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Promise not found")
+    is_owner = existing.get("created_by") == user["_id"]
+    is_admin = user.get("role") in ("admin", "super_admin")
+    if not (is_owner or is_admin):
+        raise HTTPException(status_code=403, detail="Not authorized to edit this promise")
+    update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    update["updated_at"] = utcnow_iso()
+    await db.promises.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="promise_updated", entity_type="promise",
+                    entity_id=prid,
+                    changed_fields=diff_dict(existing, {**existing, **update}, list(update.keys())),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/promises/{prid}")
+async def delete_promise(prid: str, request: Request, user: dict = Depends(require_authenticated)):
+    db = get_db()
+    existing = await db.promises.find_one({"_id": _oid(prid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    is_owner = existing.get("created_by") == user["_id"]
+    is_admin = user.get("role") in ("admin", "super_admin")
+    if not (is_owner or is_admin):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this promise")
+    await db.promises.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="promise_deleted", entity_type="promise",
+                    entity_id=prid, changed_fields={"title": existing.get("title")},
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+# ---------- Party History ----------
+@router.get("/politicians/{pid}/party-history")
+async def list_party_history(pid: str):
+    db = get_db()
+    docs = await db.party_history.find(
+        {"politician_id": pid, "deleted_at": None}
+    ).sort("start_date", -1).to_list(200)
+    return _serialize_list(docs)
+
+
+@router.post("/politicians/{pid}/party-history")
+async def add_party_history(pid: str, payload: PartyHistoryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    doc = {
+        "politician_id": pid,
+        "party": payload.party,
+        "start_date": payload.start_date,
+        "end_date": payload.end_date,
+        "note": payload.note,
+        "source_url": payload.source_url,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.party_history.insert_one(doc)
+    await audit_log(actor=user, action="party_history_created", entity_type="party_history",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"politician_id": pid, "party": payload.party}, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/party-history/{phid}")
+async def update_party_history(phid: str, payload: PartyHistoryUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.party_history.find_one({"_id": _oid(phid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Party history entry not found")
+    update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    update["updated_at"] = utcnow_iso()
+    await db.party_history.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="party_history_updated", entity_type="party_history",
+                    entity_id=phid, changed_fields=diff_dict(existing, {**existing, **update}, list(update.keys())),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/party-history/{phid}")
+async def delete_party_history(phid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.party_history.find_one({"_id": _oid(phid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    await db.party_history.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="party_history_deleted", entity_type="party_history",
+                    entity_id=phid, changed_fields={"party": existing.get("party")}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+# ---------- Position History ----------
+@router.get("/politicians/{pid}/position-history")
+async def list_position_history(pid: str):
+    db = get_db()
+    docs = await db.position_history.find(
+        {"politician_id": pid, "deleted_at": None}
+    ).sort([("is_current", -1), ("end_date", -1), ("start_date", -1)]).to_list(200)
+    return _serialize_list(docs)
+
+
+@router.post("/politicians/{pid}/position-history")
+async def add_position_history(pid: str, payload: PositionHistoryIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    doc = {
+        "politician_id": pid,
+        "position": payload.position,
+        "country_code": payload.country_code,
+        "state_id": payload.state_id,
+        "city_id": payload.city_id,
+        "constituency_id": payload.constituency_id,
+        "party": payload.party,
+        "start_date": payload.start_date,
+        "end_date": payload.end_date,
+        "is_current": payload.is_current,
+        "election_year": payload.election_year,
+        "note": payload.note,
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.position_history.insert_one(doc)
+    await audit_log(actor=user, action="position_history_created", entity_type="position_history",
+                    entity_id=str(result.inserted_id),
+                    changed_fields={"politician_id": pid, "position": payload.position}, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id)}
+
+
+@router.put("/position-history/{phid}")
+async def update_position_history(phid: str, payload: PositionHistoryUpdateIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.position_history.find_one({"_id": _oid(phid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Position history entry not found")
+    update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    update["updated_at"] = utcnow_iso()
+    await db.position_history.update_one({"_id": existing["_id"]}, {"$set": update})
+    await audit_log(actor=user, action="position_history_updated", entity_type="position_history",
+                    entity_id=phid, changed_fields=diff_dict(existing, {**existing, **update}, list(update.keys())),
+                    ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.delete("/position-history/{phid}")
+async def delete_position_history(phid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.position_history.find_one({"_id": _oid(phid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    await db.position_history.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="position_history_deleted", entity_type="position_history",
+                    entity_id=phid, changed_fields={"position": existing.get("position")}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+# ---------- Bio / Media ----------
+_ALLOWED_TAGS = [
+    "p", "br", "strong", "b", "em", "i", "u", "h1", "h2", "h3", "h4", "h5", "h6",
+    "ul", "ol", "li", "a", "img", "blockquote", "hr", "table", "thead", "tbody",
+    "tr", "th", "td", "span", "div", "figure", "figcaption", "video", "source",
+]
+_ALLOWED_ATTRS = {
+    "a": ["href", "title", "target", "rel"],
+    "img": ["src", "alt", "title", "width", "height"],
+    "video": ["src", "controls", "width", "height"],
+    "source": ["src", "type"],
+    "*": ["class"],
+}
+
+
+def _sanitize_html(raw: str) -> str:
+    return bleach.clean(
+        raw or "",
+        tags=_ALLOWED_TAGS,
+        attributes=_ALLOWED_ATTRS,
+        protocols=["http", "https", "mailto"],
+        strip=True,
+    )
+
+
+@router.put("/politicians/{pid}/bio")
+async def update_bio(pid: str, payload: BioIn, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    clean_html = _sanitize_html(payload.html)
+    await db.politicians.update_one({"_id": politician["_id"]}, {"$set": {"bio_html": clean_html, "updated_at": utcnow_iso()}})
+    await audit_log(actor=user, action="bio_updated", entity_type="politician",
+                    entity_id=pid, changed_fields={"bio_length": len(clean_html)}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.post("/politicians/{pid}/bio-file")
+async def upload_bio_file(pid: str, request: Request, file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    if not file.filename.lower().endswith((".html", ".htm")):
+        raise HTTPException(status_code=400, detail="Only .html files are accepted here")
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded HTML")
+    clean_html = _sanitize_html(text)
+    await db.politicians.update_one({"_id": politician["_id"]}, {"$set": {"bio_html": clean_html, "updated_at": utcnow_iso()}})
+    await audit_log(actor=user, action="bio_file_uploaded", entity_type="politician",
+                    entity_id=pid, changed_fields={"filename": file.filename}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+def _media_type_for(content_type: str) -> str:
+    if not content_type:
+        return "other"
+    if content_type.startswith("image/"):
+        return "image"
+    if content_type == "application/pdf":
+        return "pdf"
+    if content_type.startswith("video/"):
+        return "video"
+    return "other"
+
+
+@router.get("/politicians/{pid}/media")
+async def list_media(pid: str):
+    db = get_db()
+    docs = await db.politician_media.find(
+        {"politician_id": pid, "deleted_at": None}
+    ).sort("created_at", -1).to_list(200)
+    return _serialize_list(docs)
+
+
+@router.post("/politicians/{pid}/media")
+async def upload_media(pid: str, request: Request, file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    db = get_db()
+    politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    if not politician:
+        raise HTTPException(status_code=404, detail="Politician not found")
+    url = await UploadService.save(file, subdir="politician_media")
+    doc = {
+        "politician_id": pid,
+        "url": url,
+        "filename": file.filename,
+        "file_type": _media_type_for(file.content_type),
+        "uploaded_by": user.get("email") or user.get("_id"),
+        "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
+    }
+    result = await db.politician_media.insert_one(doc)
+    await audit_log(actor=user, action="media_uploaded", entity_type="politician_media",
+                    entity_id=str(result.inserted_id), changed_fields={"filename": file.filename}, ip=_client_ip(request))
+    return {"ok": True, "id": str(result.inserted_id), "url": url}
+
+
+@router.delete("/media/{mid}")
+async def delete_media(mid: str, request: Request, user: dict = Depends(require_admin)):
+    db = get_db()
+    existing = await db.politician_media.find_one({"_id": _oid(mid), "deleted_at": None})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Not found")
+    await db.politician_media.update_one({"_id": existing["_id"]}, {"$set": {"deleted_at": utcnow_iso()}})
+    await audit_log(actor=user, action="media_deleted", entity_type="politician_media",
+                    entity_id=mid, changed_fields={"filename": existing.get("filename")}, ip=_client_ip(request))
+    return {"ok": True}
+
+
+# ---------- Regional Search ----------
+@router.get("/search/positions")
+async def search_positions(
+    country_code: Optional[str] = None,
+    state_id: Optional[str] = None,
+    city_id: Optional[str] = None,
+    constituency_id: Optional[str] = None,
+    position: Optional[str] = None,
+    party: Optional[str] = None,
+    election_year: Optional[int] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+):
+    db = get_db()
+    query: dict = {"deleted_at": None}
+    if country_code:
+        query["country_code"] = country_code
+    if state_id:
+        query["state_id"] = state_id
+    if city_id:
+        query["city_id"] = city_id
+    if constituency_id:
+        query["constituency_id"] = constituency_id
+    if position:
+        query["position"] = {"$regex": re.escape(position), "$options": "i"}
+    if party:
+        query["party"] = {"$regex": re.escape(party), "$options": "i"}
+    if election_year:
+        query["election_year"] = election_year
+    if status == "current":
+        query["is_current"] = True
+    elif status == "former":
+        query["is_current"] = False
+
+    docs = await db.position_history.find(query).to_list(limit * 3)
+
+    pol_cache: dict = {}
+    geo_cache = {"country": {}, "state": {}, "city": {}, "constituency": {}}
+
+    async def get_politician(pid):
+        if pid not in pol_cache:
+            try:
+                doc = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+            except Exception:
+                doc = None
+            pol_cache[pid] = doc
+        return pol_cache[pid]
+
+    async def get_geo_name(kind, key):
+        if not key:
+            return None
+        cache = geo_cache[kind]
+        if key not in cache:
+            try:
+                if kind == "country":
+                    doc = await db.countries.find_one({"code": key})
+                elif kind == "state":
+                    doc = await db.states.find_one({"_id": _oid(key)})
+                elif kind == "city":
+                    doc = await db.cities.find_one({"_id": _oid(key)})
+                else:
+                    doc = await db.constituencies.find_one({"_id": _oid(key)})
+                cache[key] = doc.get("name") if doc else None
+            except Exception:
+                cache[key] = None
+        return cache[key]
+
+    results = []
+    for doc in docs:
+        pol = await get_politician(doc.get("politician_id"))
+        if not pol:
+            continue
+        results.append({
+            "politician_id": str(pol["_id"]),
+            "name": pol.get("name"),
+            "photo_url": pol.get("image_url"),
+            "verified": pol.get("verified", False),
+            "position": doc.get("position"),
+            "party": doc.get("party") or pol.get("party"),
+            "is_current": bool(doc.get("is_current")),
+            "start_date": doc.get("start_date"),
+            "end_date": doc.get("end_date"),
+            "election_year": doc.get("election_year"),
+            "country_name": await get_geo_name("country", doc.get("country_code")),
+            "state_name": await get_geo_name("state", doc.get("state_id")),
+            "city_name": await get_geo_name("city", doc.get("city_id")),
+            "constituency_name": await get_geo_name("constituency", doc.get("constituency_id")),
+        })
+
+    current = sorted([r for r in results if r["is_current"]], key=lambda r: (r["position"] or "", r["name"] or ""))
+    former = sorted([r for r in results if not r["is_current"]], key=lambda r: (r["name"] or ""))
+
+    grouped_current: dict = {}
+    for r in current:
+        grouped_current.setdefault(r["position"] or "Other", []).append(r)
+
+    return {
+        "current": [{"position": k, "politicians": v} for k, v in grouped_current.items()],
+        "former": former[:limit],
+    }
+
+
+# ---------- Promise Leaderboards ----------
+@router.get("/leaderboards/promises")
+async def promise_leaderboard(kind: str = "keepers", limit: int = 100, min_promises: int = 5):
+    db = get_db()
+    pipeline = [
+        {"$match": {"deleted_at": None}},
+        {"$group": {
+            "_id": "$politician_id",
+            "total": {"$sum": 1},
+            "delivered": {"$sum": {"$cond": [{"$eq": ["$status", "delivered"]}, 1, 0]}},
+            "broken": {"$sum": {"$cond": [{"$eq": ["$status", "broken"]}, 1, 0]}},
+        }},
+        {"$match": {"total": {"$gte": min_promises}}},
+        {"$addFields": {
+            "delivered_pct": {"$multiply": [{"$divide": ["$delivered", "$total"]}, 100]},
+            "broken_pct": {"$multiply": [{"$divide": ["$broken", "$total"]}, 100]},
+        }},
+    ]
+    if kind == "breakers":
+        pipeline.append({"$sort": {"broken_pct": -1, "broken": -1}})
+    else:
+        pipeline.append({"$sort": {"delivered_pct": -1, "delivered": -1}})
+    pipeline.append({"$limit": limit})
+
+    rows = await db.promises.aggregate(pipeline).to_list(limit)
+
+    results = []
+    for row in rows:
+        pid = row["_id"]
+        try:
+            pol = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+        except Exception:
+            pol = None
+        if not pol:
+            continue
+        results.append({
+            "politician_id": str(pol["_id"]),
+            "name": pol.get("name"),
+            "photo_url": pol.get("image_url"),
+            "party": pol.get("party"),
+            "role": pol.get("role"),
+            "country_code": pol.get("country_code"),
+            "total_promises": row["total"],
+            "delivered_count": row["delivered"],
+            "broken_count": row["broken"],
+            "delivered_pct": round(row["delivered_pct"], 1),
+            "broken_pct": round(row["broken_pct"], 1),
+        })
+    return {"items": results}
+
+
+# =========================================================================
+# UPLOAD
+# =========================================================================
+@router.post("/upload/image")
+async def upload_image(file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image uploads are allowed")
+    url = await UploadService.save(file, subdir="politicians")
+    return {"url": url}
+
+
+# =========================================================================
+# AUDIT LOG
+# =========================================================================
+@router.get("/admin/audit")
+async def get_audit(
+    actor: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    action: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    limit: int = 200,
+    _user: dict = Depends(require_super_admin),
+):
+    db = get_db()
+    q: dict = {}
+    if actor:
+        q["actor_email"] = {"$regex": re.escape(actor), "$options": "i"}
+    if entity_type:
+        q["entity_type"] = entity_type
+    if action:
+        q["action"] = action
+    if from_date or to_date:
+        ts: dict = {}
+        if from_date:
+            ts["$gte"] = from_date
+        if to_date:
+            ts["$lte"] = to_date
+        q["timestamp"] = ts
+    docs = await db.audit_events.find(q).sort("timestamp", -1).limit(limit).to_list(limit)
+    return {"items": _serialize_list(docs)}
+
+
+# =========================================================================
+# TRASH — soft delete restore + purge (super_admin)
+# =========================================================================
+@router.get("/admin/trash")
+async def list_trash(entity_type: Optional[str] = None, _user: dict = Depends(require_super_admin)):
+    db = get_db()
+    if entity_type and entity_type in ENTITY_COLLECTIONS:
+        collections = {entity_type: ENTITY_COLLECTIONS[entity_type]}
+    else:
+        collections = ENTITY_COLLECTIONS
+    items: list[dict] = []
+    for etype, coll in collections.items():
+        docs = await db[coll].find({"deleted_at": {"$ne": None}}).sort("deleted_at", -1).limit(200).to_list(200)
+        for d in docs:
+            d_ser = _serialize(d)
+            items.append({"entity_type": etype, "entity_id": d_ser["id"], "record": d_ser})
+    return {"items": items}
+
+
+@router.post("/admin/trash/restore")
+async def restore_entity(payload: RestoreIn, request: Request, user: dict = Depends(require_super_admin)):
+    coll = ENTITY_COLLECTIONS.get(payload.entity_type)
+    if not coll:
+        raise HTTPException(status_code=400, detail="Unknown entity type")
+    db = get_db()
+    result = await db[coll].update_one(
+        {"_id": _oid(payload.entity_id), "deleted_at": {"$ne": None}},
+        {"$set": {"deleted_at": None, "updated_at": utcnow_iso()}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Entity not found in trash")
+    await audit_log(actor=user, action=f"{payload.entity_type}_restored", entity_type=payload.entity_type,
+                    entity_id=payload.entity_id, ip=_client_ip(request))
+    return {"ok": True}
+
+
+@router.post("/admin/trash/purge")
+async def purge_entity(payload: PurgeIn, request: Request, user: dict = Depends(require_super_admin)):
+    coll = ENTITY_COLLECTIONS.get(payload.entity_type)
+    name_field = ENTITY_NAME_FIELDS.get(payload.entity_type)
+    if not coll or not name_field:
+        raise HTTPException(status_code=400, detail="Unknown entity type")
+    db = get_db()
+    existing = await db[coll].find_one({"_id": _oid(payload.entity_id), "deleted_at": {"$ne": None}})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Entity not found in trash")
+    actual_name = str(existing.get(name_field, ""))
+    if actual_name.strip() != payload.confirm_name.strip():
+        raise HTTPException(status_code=400, detail=f"Confirmation must exactly match: {actual_name}")
+    await db[coll].delete_one({"_id": existing["_id"]})
+    await audit_log(actor=user, action=f"{payload.entity_type}_purged", entity_type=payload.entity_type,
+                    entity_id=payload.entity_id,
+                    changed_fields={name_field: actual_name}, ip=_client_ip(request))
+    return {"ok": True}
