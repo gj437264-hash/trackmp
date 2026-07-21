@@ -17,7 +17,7 @@ export default function PoliticiansList() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get("/politicians", { params: q ? { q } : {} });
+      const { data } = await api.get("/admin/politicians", { params: q ? { q } : {} });
       setItems(data.items || []);
     } finally { setLoading(false); }
   };

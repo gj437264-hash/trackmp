@@ -167,6 +167,8 @@ async def login(payload: LoginIn, response: Response, request: Request):
         "email": email,
         "name": user.get("name"),
         "role": role,
+        "permissions": user.get("permissions", {}),
+        "geo_scope": user.get("geo_scope", {"unrestricted": True, "rules": []}),
         "access_token": access,
     }
 
@@ -184,6 +186,8 @@ async def me(user: dict = Depends(get_current_user)):
         "email": user["email"],
         "name": user.get("name"),
         "role": user["role"],
+        "permissions": user.get("permissions", {}),
+        "geo_scope": user.get("geo_scope", {"unrestricted": True, "rules": []}),
     }
 
 
@@ -553,7 +557,7 @@ async def list_countries():
 
 
 @router.post("/ref/countries")
-async def create_country(payload: CountryIn, request: Request, user: dict = Depends(require_admin)):
+async def create_country(payload: CountryIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     code = payload.code.upper()
     if await db.countries.find_one({"code": code, "deleted_at": None}):
@@ -575,7 +579,7 @@ async def create_country(payload: CountryIn, request: Request, user: dict = Depe
 
 
 @router.put("/ref/countries/{country_id}")
-async def update_country(country_id: str, payload: CountryUpdateIn, request: Request, user: dict = Depends(require_admin)):
+async def update_country(country_id: str, payload: CountryUpdateIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.countries.find_one({"_id": _oid(country_id), "deleted_at": None})
     if not existing:
@@ -593,7 +597,7 @@ async def update_country(country_id: str, payload: CountryUpdateIn, request: Req
 
 
 @router.delete("/ref/countries/{country_id}")
-async def delete_country(country_id: str, request: Request, user: dict = Depends(require_admin)):
+async def delete_country(country_id: str, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.countries.find_one({"_id": _oid(country_id), "deleted_at": None})
     if not existing:
@@ -617,7 +621,7 @@ async def list_states(country_code: Optional[str] = None):
 
 
 @router.post("/ref/states")
-async def create_state(payload: StateIn, request: Request, user: dict = Depends(require_admin)):
+async def create_state(payload: StateIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     country = await db.countries.find_one({"code": payload.country_code, "deleted_at": None})
     if not country:
@@ -634,7 +638,7 @@ async def create_state(payload: StateIn, request: Request, user: dict = Depends(
 
 
 @router.put("/ref/states/{state_id}")
-async def update_state(state_id: str, payload: StateUpdateIn, request: Request, user: dict = Depends(require_admin)):
+async def update_state(state_id: str, payload: StateUpdateIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.states.find_one({"_id": _oid(state_id), "deleted_at": None})
     if not existing:
@@ -650,7 +654,7 @@ async def update_state(state_id: str, payload: StateUpdateIn, request: Request, 
 
 
 @router.delete("/ref/states/{state_id}")
-async def delete_state(state_id: str, request: Request, user: dict = Depends(require_admin)):
+async def delete_state(state_id: str, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.states.find_one({"_id": _oid(state_id), "deleted_at": None})
     if not existing:
@@ -672,7 +676,7 @@ async def list_cities(state_id: Optional[str] = None):
 
 
 @router.post("/ref/cities")
-async def create_city(payload: CityIn, request: Request, user: dict = Depends(require_admin)):
+async def create_city(payload: CityIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     state = await db.states.find_one({"_id": _oid(payload.state_id), "deleted_at": None})
     if not state:
@@ -688,7 +692,7 @@ async def create_city(payload: CityIn, request: Request, user: dict = Depends(re
 
 
 @router.put("/ref/cities/{city_id}")
-async def update_city(city_id: str, payload: CityUpdateIn, request: Request, user: dict = Depends(require_admin)):
+async def update_city(city_id: str, payload: CityUpdateIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.cities.find_one({"_id": _oid(city_id), "deleted_at": None})
     if not existing:
@@ -704,7 +708,7 @@ async def update_city(city_id: str, payload: CityUpdateIn, request: Request, use
 
 
 @router.delete("/ref/cities/{city_id}")
-async def delete_city(city_id: str, request: Request, user: dict = Depends(require_admin)):
+async def delete_city(city_id: str, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.cities.find_one({"_id": _oid(city_id), "deleted_at": None})
     if not existing:
@@ -728,7 +732,7 @@ async def list_constituencies(state_id: Optional[str] = None, city_id: Optional[
 
 
 @router.post("/ref/constituencies")
-async def create_constituency(payload: ConstituencyIn, request: Request, user: dict = Depends(require_admin)):
+async def create_constituency(payload: ConstituencyIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     state = await db.states.find_one({"_id": _oid(payload.state_id), "deleted_at": None})
     if not state:
@@ -745,7 +749,7 @@ async def create_constituency(payload: ConstituencyIn, request: Request, user: d
 
 
 @router.put("/ref/constituencies/{cst_id}")
-async def update_constituency(cst_id: str, payload: ConstituencyUpdateIn, request: Request, user: dict = Depends(require_admin)):
+async def update_constituency(cst_id: str, payload: ConstituencyUpdateIn, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.constituencies.find_one({"_id": _oid(cst_id), "deleted_at": None})
     if not existing:
@@ -763,7 +767,7 @@ async def update_constituency(cst_id: str, payload: ConstituencyUpdateIn, reques
 
 
 @router.delete("/ref/constituencies/{cst_id}")
-async def delete_constituency(cst_id: str, request: Request, user: dict = Depends(require_admin)):
+async def delete_constituency(cst_id: str, request: Request, user: dict = Depends(require_section("reference_data"))):
     db = get_db()
     existing = await db.constituencies.find_one({"_id": _oid(cst_id), "deleted_at": None})
     if not existing:
@@ -2170,7 +2174,6 @@ async def upload_ticket_attachment(ticket_id: str, file: UploadFile = File(...))
 
 
 # ---------- Admin: Community Desk list/detail (basic, Phase 1) ----------
-@router.get("/admin/tickets")
 async def _ticket_visible_to(user: dict, ticket: dict) -> bool:
     """Contact tickets and politician-less update requests are always visible
     to any admin with community_desk access. Update requests tied to a
@@ -2193,6 +2196,8 @@ async def _ticket_visible_to(user: dict, ticket: dict) -> bool:
     return can_access_politician(user, politician)
 
 
+
+@router.get("/admin/tickets")
 async def list_tickets(
     status: Optional[str] = None,
     ticket_type: Optional[str] = None,
@@ -2260,7 +2265,7 @@ async def list_visitors(
     q: Optional[str] = None,
     sort: str = "recent",
     limit: int = 100,
-    user: dict = Depends(require_admin),
+    user: dict = Depends(require_section("visitors")),
 ):
     db = get_db()
     query: dict = {}
@@ -2276,7 +2281,7 @@ async def list_visitors(
 
 
 @router.get("/admin/visitors/{visitor_id}")
-async def get_visitor(visitor_id: str, user: dict = Depends(require_admin)):
+async def get_visitor(visitor_id: str, user: dict = Depends(require_section("visitors"))):
     db = get_db()
     visitor = await db.visitors.find_one({"_id": _oid(visitor_id)})
     if not visitor:

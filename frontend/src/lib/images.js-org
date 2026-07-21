@@ -1,0 +1,48 @@
+// Uses the same origin/API base your app already talks to.
+// If you already have an API_BASE_URL constant elsewhere, use that instead.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+/**
+ * @param {File} file
+ * @param {string} context - one of IMAGE_UPLOAD_CONTEXTS in the backend .env
+ *   (profile_photo, product_image, blog_cover, listing_photo, generic)
+ */
+export async function uploadImage(file, context, { quality } = {}) {
+  const form = new FormData();
+  form.append("file", file);
+
+  const params = new URLSearchParams({ context });
+  if (quality) params.set("quality", quality);
+
+  const res = await fetch(`${API_BASE}/api/images/upload?${params}`, {
+    method: "POST",
+    credentials: "include",   // REQUIRED — sends your existing auth cookie
+    body: form,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Upload failed (${res.status})`);
+  }
+  return res.json(); // { file_id, url, status, ... }
+}
+
+export function imageUrl(fileId) {
+  return `${API_BASE}/api/images/${fileId}`;
+}
+
+export async function deleteImage(fileId) {
+  const res = await fetch(`${API_BASE}/api/images/${fileId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+  return res.json();
+}
+
+export async function listMyImages(context) {
+  const qs = context ? `?context=${encodeURIComponent(context)}` : "";
+  const res = await fetch(`${API_BASE}/api/images${qs}`, { credentials: "include" });
+  if (!res.ok) throw new Error(`List failed (${res.status})`);
+  return res.json();
+}

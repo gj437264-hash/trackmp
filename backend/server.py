@@ -18,6 +18,7 @@ from countries import COUNTRIES
 from db import close_db, get_db, utcnow_iso
 from routes import router as api_router
 from security import hash_password, verify_password
+from image_router import router as image_router, init_image_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -128,6 +129,7 @@ async def on_startup():
     await _seed_super_admin(db)
     upload_dir = os.environ.get("UPLOAD_DIR", "/app/backend/uploads")
     Path(upload_dir).mkdir(parents=True, exist_ok=True)
+    init_image_router(db)
 
 
 @app.on_event("shutdown")
@@ -148,6 +150,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(image_router, prefix="/api/images", tags=["images"])   # NEW
 
 _upload_dir = os.environ.get("UPLOAD_DIR", "/app/backend/uploads")
 Path(_upload_dir).mkdir(parents=True, exist_ok=True)

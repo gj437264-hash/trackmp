@@ -28,3 +28,10 @@ typer>=0.9.0
 #emergentintegrations==0.2.0
 bleach>=6.1.0
 beautifulsoup4==4.12.3
+
+# --- added for image upload/optimization router ---
+Pillow>=10.3.0
+python-magic>=0.4.27
+cachetools>=5.3.3
+aiofiles>=23.2.1
+# redis>=5.0.4          # uncomment only if you set REDIS_URL in .env

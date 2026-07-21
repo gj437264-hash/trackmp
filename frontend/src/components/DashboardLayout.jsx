@@ -17,21 +17,27 @@ import {
 
 const ITEMS = [
   { to: "/dashboard", label: "Overview", icon: LayoutGrid, roles: ["super_admin", "admin"], end: true },
-  { to: "/dashboard/politicians", label: "Politicians", icon: UserSquare2, roles: ["super_admin", "admin"] },
-  { to: "/dashboard/articles", label: "Articles", icon: Newspaper, roles: ["super_admin", "admin"] },
-  { to: "/dashboard/community", label: "Community Desk", icon: Inbox, roles: ["super_admin", "admin"] },
-  { to: "/dashboard/visitors", label: "Contributors", icon: Contact2, roles: ["super_admin", "admin"] },
-  { to: "/dashboard/reference", label: "Reference Data", icon: Globe2, roles: ["super_admin", "admin"] },
+  { to: "/dashboard/politicians", label: "Politicians", icon: UserSquare2, roles: ["super_admin", "admin"], section: "politicians" },
+  { to: "/dashboard/articles", label: "Articles", icon: Newspaper, roles: ["super_admin", "admin"], section: "articles" },
+  { to: "/dashboard/community", label: "Community Desk", icon: Inbox, roles: ["super_admin", "admin"], section: "community_desk" },
+  { to: "/dashboard/visitors", label: "Contributors", icon: Contact2, roles: ["super_admin", "admin"], section: "visitors" },
+  { to: "/dashboard/reference", label: "Reference Data", icon: Globe2, roles: ["super_admin", "admin"], section: "reference_data" },
   { to: "/dashboard/signups", label: "Signup Queue", icon: UserPlus, roles: ["super_admin"] },
   { to: "/dashboard/admins", label: "Admins", icon: Users, roles: ["super_admin"] },
   { to: "/dashboard/audit", label: "Audit Log", icon: ScrollText, roles: ["super_admin"] },
   { to: "/dashboard/trash", label: "Trash", icon: Trash2, roles: ["super_admin"] },
 ];
 
+function canSeeSection(user, section) {
+  if (!section) return true;
+  if (user?.role === "super_admin") return true;
+  return !!user?.permissions?.[section];
+}
+
 export function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const items = ITEMS.filter((i) => hasRole(user, ...i.roles));
+  const items = ITEMS.filter((i) => hasRole(user, ...i.roles) && canSeeSection(user, i.section));
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-[260px_1fr] bg-white">

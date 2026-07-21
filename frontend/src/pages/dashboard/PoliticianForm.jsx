@@ -89,7 +89,7 @@ export default function PoliticianForm() {
 
   useEffect(() => {
     if (isNew) return;
-    api.get(`/politicians/${id}`).then((r) => {
+    api.get(`/admin/politicians/${id}`).then((r) => {
       const d = r.data;
       setP({
         name: d.name || "", party: d.party || "", role: d.role || "",
@@ -117,11 +117,22 @@ export default function PoliticianForm() {
     }).catch((e) => toast.error(formatApiError(e)));
   }, [id, isNew]);
 
+//  const upload = async (file) => {
+//    const fd = new FormData(); fd.append("file", file);
+//    try {
+//      const { data } = await api.post("/upload/image", fd, { headers: { "Content-Type": "multipart/form-data" } });
+//      const url = data.url.startsWith("http") ? data.url : `${process.env.REACT_APP_BACKEND_URL}${data.url}`;
+//      setP((s) => ({ ...s, image_url: url }));
+//      toast.success("Uploaded.");
+//    } catch (e) { toast.error(formatApiError(e)); }
+//  };
   const upload = async (file) => {
     const fd = new FormData(); fd.append("file", file);
     try {
-      const { data } = await api.post("/upload/image", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      const url = data.url.startsWith("http") ? data.url : `${process.env.REACT_APP_BACKEND_URL}${data.url}`;
+      const { data } = await api.post("/images/upload?context=politician_photo", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      // Built from file_id rather than trusting a "url" field in the
+      // response, since the router doesn't know its own mount prefix.
+      const url = `${process.env.REACT_APP_BACKEND_URL}/api/images/${data.file_id}`;
       setP((s) => ({ ...s, image_url: url }));
       toast.success("Uploaded.");
     } catch (e) { toast.error(formatApiError(e)); }
