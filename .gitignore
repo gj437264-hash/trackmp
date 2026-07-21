@@ -87,3 +87,5 @@ credentials.json
 *.key
 .credentials
 backend/uploads/
+backend/optimized/
+backend/originals/
