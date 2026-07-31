@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SEO Task Automation — Setup & Troubleshooting Guide</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-border: #2a2f3a;
+    --text: #e6e8eb;
+    --muted: #9aa3b2;
+    --accent: #4fb3ff;
+    --ok: #4caf82;
+    --warn: #e0a13c;
+    --err: #e0605a;
+    --code-bg: #11141a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--panel-border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 20px 0 8px; }
+  nav h2:first-child { margin-top: 0; }
+  nav a {
+    display: block;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 2px;
+  }
+  nav a:hover { background: #1f2430; color: var(--accent); }
+  main { flex: 1; padding: 40px 56px; max-width: 920px; }
+  h1 { font-size: 30px; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); margin-bottom: 32px; }
+  h2 { font-size: 22px; margin-top: 48px; padding-top: 8px; border-top: 1px solid var(--panel-border); }
+  h3 { font-size: 17px; margin-top: 28px; color: var(--accent); }
+  p { color: var(--text); }
+  .lead { color: var(--muted); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #ffd479; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13.5px;
+  }
+  pre code { background: none; padding: 0; color: #d9dce3; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 18px 0;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-right: 8px;
+  }
+  .badge.ok { background: rgba(76,175,130,0.15); color: var(--ok); }
+  .badge.warn { background: rgba(224,161,60,0.15); color: var(--warn); }
+  .badge.err { background: rgba(224,96,90,0.15); color: var(--err); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--panel-border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tree { font-family: "SFMono-Regular", Consolas, monospace; font-size: 13.5px; background: var(--code-bg); border: 1px solid var(--panel-border); border-radius: 8px; padding: 16px 20px; white-space: pre; overflow-x: auto; color: #d9dce3; }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(79,179,255,0.06);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+    font-size: 14.5px;
+  }
+  .callout.warn { border-left-color: var(--warn); background: rgba(224,161,60,0.06); }
+  .callout.err { border-left-color: var(--err); background: rgba(224,96,90,0.06); }
+  .ts-item {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+  .ts-item h4 { margin: 0 0 8px; font-size: 15.5px; }
+  .ts-item .symptom { color: var(--err); font-family: monospace; font-size: 13px; background: var(--code-bg); padding: 8px 10px; border-radius: 6px; margin: 8px 0; white-space: pre-wrap; }
+  .ts-item .cause { color: var(--muted); margin: 8px 0; }
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 6px 0 6px 28px; position: relative; }
+  .checklist li::before { content: "☐"; position: absolute; left: 0; color: var(--accent); }
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--panel-border); color: var(--muted); font-size: 13px; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    nav { width: 100%; height: auto; position: static; }
+    main { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <h2>Overview</h2>
+  <a href="#intro">Introduction</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#dirstructure">Directory Structure</a>
+
+  <h2>Setup</h2>
+  <a href="#step1">1. Create user & directories</a>
+  <a href="#step2">2. Virtual environment</a>
+  <a href="#step3">3. Shared modules</a>
+  <a href="#step4">4. Task modules</a>
+  <a href="#step5">5. CLI entrypoint</a>
+  <a href="#step6">6. .env configuration</a>
+  <a href="#step7">7. systemd units</a>
+  <a href="#step8">8. Enable & verify</a>
+
+  <h2>Operations</h2>
+  <a href="#testing">Manual testing</a>
+  <a href="#monitoring">Monitoring & logs</a>
+  <a href="#exitcodes">Exit code reference</a>
+
+  <h2>Troubleshooting</h2>
+  <a href="#ts-brace">Brace expansion (mkdir)</a>
+  <a href="#ts-path">Path name mismatch</a>
+  <a href="#ts-modulenotfound">ModuleNotFoundError</a>
+  <a href="#ts-envfile">EnvironmentFile not found</a>
+  <a href="#ts-missingenv">Missing required env vars</a>
+  <a href="#ts-onfailure">OnFailure= ignored</a>
+  <a href="#ts-dupfunc">Duplicate function definitions</a>
+  <a href="#ts-deadcode">Leftover/dead code after merge</a>
+  <a href="#ts-lock">Lock file / concurrency</a>
+  <a href="#ts-perms">Permission errors</a>
+  <a href="#ts-checklist">Pre-flight checklist</a>
+</nav>
+
+<main>
+
+<h1 id="intro">SEO Task Automation Setup Guide</h1>
+<p class="subtitle">From standalone scripts to a scheduled, monitored, fault-tolerant service — full build steps and troubleshooting reference.</p>
+
+<div class="panel">
+  <p><strong>What this covers:</strong> consolidating several standalone Python maintenance scripts (slug backfill, static page generation, sitemap generation) into a single installable package with shared configuration, logging, retries, locking, and a systemd timer — plus every real error encountered while deploying this pattern and how it was diagnosed.</p>
+</div>
+
+<h2 id="architecture">Architecture</h2>
+<p>One Python package with subcommands, run via <code>python -m &lt;package&gt;.cli run-all</code>, scheduled with a <strong>systemd timer</strong> (preferred over cron on any systemd-managed Linux host — it gives locking semantics, structured logs via <code>journalctl</code>, and failure hooks for free).</p>
+
+<table>
+<tr><th>Option</th><th>Verdict</th></tr>
+<tr><td>Separate standalone scripts</td><td><span class="badge err">Rejected</span>Each script re-implements DB connection, config loading, and logging — the exact drift that causes crashes when one script uses a different env var name than another.</td></tr>
+<tr><td>Bash wrapper around Python scripts</td><td><span class="badge err">Rejected</span>Locking, retries, and structured error handling are all easier and safer in Python; Bash should glue processes, not own logic.</td></tr>
+<tr><td>Pure Bash implementation</td><td><span class="badge err">Rejected</span>No safe way to do DB queries or templated file generation without shelling out to Python anyway.</td></tr>
+<tr><td>Single Python package, subcommands, systemd timer</td><td><span class="badge ok">Recommended</span>Shared config/logging/db modules eliminate drift; systemd timer provides locking, logs, and failure hooks natively.</td></tr>
+</table>
+
+<h2 id="dirstructure">Directory Structure</h2>
+<p>Replace <code>/app/seo-tasks</code> below with your actual install path.</p>
+<div class="tree">/app/seo-tasks/
+├── seo_tasks/                  &lt;- the importable package (underscore required)
+│   ├── __init__.py
+│   ├── cli.py                  &lt;- entrypoint: run-all | backfill-slugs | static-pages | sitemap
+│   ├── config.py                &lt;- loads & validates ALL env vars in one place
+│   ├── db.py                    &lt;- single get_db() with connection handling
+│   ├── logging_setup.py         &lt;- rotating file + console logging
+│   ├── notify.py                &lt;- Slack webhook notifications
+│   ├── lockfile.py              &lt;- flock-based single-instance guard
+│   ├── retry.py                 &lt;- @retry decorator for transient failures
+│   ├── atomic_write.py          &lt;- tmp-file + os.replace() safe writer
+│   ├── state.py                 &lt;- tracks last-run timestamps in MongoDB
+│   └── tasks/
+│       ├── __init__.py
+│       ├── backfill_slugs.py
+│       ├── static_pages.py
+│       └── sitemap.py
+├── venv/                        &lt;- Python virtual environment
+├── logs/                        &lt;- rotated log files (must exist before first run)
+├── run/                         &lt;- lock file directory (must exist before first run)
+├── .env                          &lt;- chmod 600, one canonical var per setting
+└── systemd/
+    ├── app-seo.service
+    └── app-seo.timer
+</div>
+
+<div class="callout warn">
+<strong>The single most common failure in this setup traces back to two things:</strong> (1) the package folder must be named with an <em>underscore</em> (<code>seo_tasks</code>), never a hyphen — Python module names cannot contain hyphens — and (2) whatever path you choose for the parent folder, it must be used <em>consistently</em> across the systemd unit's <code>WorkingDirectory</code>, <code>EnvironmentFile</code>, and <code>ExecStart</code> lines. A hyphen/underscore mismatch between the parent folder and the package folder, or between what the unit file expects and what actually exists on disk, causes almost every early error in this guide.
+</div>
+
+<h2 id="step1">Step 1 — Create the user and directories</h2>
+<pre><code># Dedicated low-privilege service account (least-privilege, not root)
+useradd --system --home /app/seo-tasks --shell /usr/sbin/nologin svcuser
+
+mkdir -p /app/seo-tasks/logs /app/seo-tasks/run
+mkdir -p /app/seo-tasks/seo_tasks/tasks
+
+chown -R svcuser:svcuser /app/seo-tasks</code></pre>
+<div class="callout warn">
+Use <code>mkdir -p dir1 dir2</code> as two separate arguments, not brace syntax like <code>mkdir -p {logs,run}</code>, if there is any chance this will be run with <code>sh</code> instead of <code>bash</code>. Brace expansion is a bash-only feature — under <code>dash</code>/<code>sh</code> it is treated as a literal string and creates a single directory literally named <code>{logs,run}</code> instead of two real directories. See <a href="#ts-brace">Troubleshooting: brace expansion</a>.
+</div>
+
+<h2 id="step2">Step 2 — Virtual environment</h2>
+<pre><code>cd /app/seo-tasks
+python3 -m venv venv
+./venv/bin/pip install pymongo</code></pre>
+<p class="lead">No other third-party dependencies are required — logging, retries, locking, and notifications can all be built on the Python standard library (<code>logging</code>, <code>fcntl</code>, <code>tempfile</code>, <code>urllib</code>).</p>
+
+<h2 id="step3">Step 3 — Shared modules</h2>
+<p>These live in <code>seo_tasks/</code> directly (not in <code>tasks/</code>) and are imported by every task module. Writing config/DB/logging once here — instead of duplicating it in each task — is what prevents the env-var drift that causes most production incidents in this kind of setup.</p>
+
+<h3>config.py — single source of truth for all settings</h3>
+<pre><code>import os
+import sys
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Settings:
+    mongodb_uri: str
+    mongodb_db: str
+    base_url: str
+    sitemap_output_dir: str
+    static_output_dir: str
+    slack_webhook_url: str | None
+
+def load_settings() -> Settings:
+    required = ["MONGODB_URI", "MONGODB_DB", "BASE_URL"]
+    missing = [k for k in required if not os.environ.get(k)]
+    if missing:
+        sys.stderr.write(f"FATAL: missing required env vars: {', '.join(missing)}\n")
+        sys.exit(1)
+
+    return Settings(
+        mongodb_uri=os.environ["MONGODB_URI"],
+        mongodb_db=os.environ["MONGODB_DB"],
+        base_url=os.environ["BASE_URL"],
+        sitemap_output_dir=os.environ.get("SITEMAP_OUTPUT_DIR", "/app/public"),
+        static_output_dir=os.environ.get("STATIC_OUTPUT_DIR", "/app/public/politicians"),
+        slack_webhook_url=os.environ.get("SLACK_WEBHOOK_URL"),
+    )</code></pre>
+
+<h3>db.py — one connection helper</h3>
+<pre><code>from functools import lru_cache
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+from .config import load_settings
+from .retry import retry
+
+@lru_cache
+def get_client() -> MongoClient:
+    settings = load_settings()
+    return MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=5000)
+
+def get_db():
+    settings = load_settings()
+    return get_client()[settings.mongodb_db]
+
+@retry(exceptions=(PyMongoError,), attempts=3, base_delay=2)
+def ping():
+    get_client().admin.command("ping")</code></pre>
+
+<h3>retry.py</h3>
+<pre><code>import time
+import logging
+import functools
+
+def retry(exceptions, attempts=3, base_delay=2):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            log = logging.getLogger(fn.__module__)
+            for attempt in range(1, attempts + 1):
+                try:
+                    return fn(*args, **kwargs)
+                except exceptions as e:
+                    if attempt == attempts:
+                        log.error(f"{fn.__name__} failed after {attempts} attempts: {e}")
+                        raise
+                    delay = base_delay * (2 ** (attempt - 1))
+                    log.warning(f"{fn.__name__} failed (attempt {attempt}/{attempts}): {e} — retrying in {delay}s")
+                    time.sleep(delay)
+        return wrapper
+    return decorator</code></pre>
+
+<h3>atomic_write.py — never publish a truncated file</h3>
+<pre><code>import os
+import tempfile
+
+def atomic_write(path: str, content: str, encoding="utf-8"):
+    directory = os.path.dirname(path)
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".tmp-")
+    try:
+        with os.fdopen(fd, "w", encoding=encoding) as f:
+            f.write(content)
+        os.replace(tmp_path, path)  # atomic on the same filesystem
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise</code></pre>
+
+<h3>lockfile.py — prevent overlapping runs</h3>
+<pre><code>import fcntl
+import os
+import sys
+
+class SingleInstance:
+    def __init__(self, path="run/seo-tasks.lock"):
+        self.path = path
+        self.fh = None
+
+    def __enter__(self):
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        self.fh = open(self.path, "w")
+        try:
+            fcntl.flock(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            sys.stderr.write("Another run is already in progress — exiting.\n")
+            sys.exit(3)  # distinct code: "skipped", not "failed"
+        self.fh.write(str(os.getpid()))
+        self.fh.flush()
+        return self
+
+    def __exit__(self, *a):
+        fcntl.flock(self.fh, fcntl.LOCK_UN)
+        self.fh.close()</code></pre>
+<p class="lead">Uses <code>flock</code>, which releases automatically if the holding process dies — a stale PID left in the lock file after a crash is harmless and self-heals on the next run.</p>
+
+<h3>state.py — enables change detection instead of full reprocessing every run</h3>
+<pre><code>from datetime import datetime, timezone
+from .db import get_db
+
+def get_last_run(task_name: str):
+    doc = get_db()["seo_state"].find_one({"_id": task_name})
+    return doc["last_run"] if doc else None
+
+def set_last_run(task_name: str, when: datetime = None):
+    when = when or datetime.now(timezone.utc)
+    get_db()["seo_state"].update_one(
+        {"_id": task_name}, {"$set": {"last_run": when}}, upsert=True
+    )</code></pre>
+
+<h3>logging_setup.py — path-independent, self-healing</h3>
+<pre><code>import logging
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
+
+def setup_logging():
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+    # Resolved relative to this file's location, NOT the process's working
+    # directory — avoids failures if the process is ever launched from
+    # somewhere unexpected.
+    log_dir = Path(__file__).resolve().parent.parent / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    file_handler = RotatingFileHandler(
+        log_dir / "seo-tasks.log", maxBytes=10 * 1024 * 1024, backupCount=5
+    )
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
+
+    console = logging.StreamHandler()  # captured by journald under systemd
+    console.setFormatter(fmt)
+    root.addHandler(console)</code></pre>
+
+<h3>notify.py — Slack alerts, stdlib only</h3>
+<pre><code>import json
+import logging
+import urllib.request
+from .config import load_settings
+
+def slack_notify(message: str):
+    settings = load_settings()
+    if not settings.slack_webhook_url:
+        return
+    try:
+        req = urllib.request.Request(
+            settings.slack_webhook_url,
+            data=json.dumps({"text": message}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Slack notify failed: {e}")</code></pre>
+
+<h2 id="step4">Step 4 — Task modules</h2>
+<p>Each file in <code>seo_tasks/tasks/</code> exposes a single <code>run() -&gt; bool</code> function and imports shared modules with relative imports (<code>from ..db import get_db</code>). No task module should ever read <code>os.environ</code> directly — always go through <code>config.load_settings()</code>.</p>
+
+<div class="callout">
+When merging old standalone scripts into this structure, delete the original script's body entirely rather than appending the new function above it. See <a href="#ts-deadcode">Troubleshooting: leftover dead code after merge</a> — this was the single most disruptive class of bug encountered during migration.
+</div>
+
+<pre><code># seo_tasks/tasks/backfill_slugs.py — example shape
+import logging
+from ..db import get_db
+from ..retry import retry
+from pymongo.errors import PyMongoError
+
+log = logging.getLogger(__name__)
+
+@retry(exceptions=(PyMongoError,), attempts=3, base_delay=2)
+def run() -> bool:
+    db = get_db()
+    # ... task logic here, using db directly ...
+    log.info("Task complete")
+    return True</code></pre>
+
+<h2 id="step5">Step 5 — CLI entrypoint</h2>
+<pre><code># seo_tasks/cli.py
+import argparse
+import sys
+import logging
+from .logging_setup import setup_logging
+from .lockfile import SingleInstance
+from .notify import slack_notify
+from .tasks import backfill_slugs, static_pages, sitemap
+
+TASKS = {
+    "backfill-slugs": backfill_slugs.run,
+    "static-pages": static_pages.run,
+    "sitemap": sitemap.run,
+}
+
+def run_all():
+    results = {}
+    for name, fn in TASKS.items():
+        try:
+            results[name] = fn()
+        except Exception as e:
+            logging.getLogger(name).exception(f"{name} failed")
+            slack_notify(f":x: SEO task `{name}` failed: {e}")
+            results[name] = False
+    if all(results.values()):
+        return 0
+    if any(results.values()):
+        return 2   # partial failure
+    return 1        # total failure
+
+def main():
+    parser = argparse.ArgumentParser(prog="seo-tasks")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("run-all")
+    for name in TASKS:
+        sub.add_parser(name)
+    args = parser.parse_args()
+
+    setup_logging()
+    with SingleInstance(path="run/seo-tasks.lock"):
+        if args.command == "run-all":
+            sys.exit(run_all())
+        else:
+            sys.exit(0 if TASKS[args.command]() else 1)
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+<h2 id="step6">Step 6 — .env configuration</h2>
+<pre><code>cat > /app/seo-tasks/.env &lt;&lt;'EOF'
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=appdb
+BASE_URL=https://your-real-domain.com
+SITEMAP_OUTPUT_DIR=/app/public
+STATIC_OUTPUT_DIR=/app/public/politicians
+SLACK_WEBHOOK_URL=
+EOF
+chmod 600 /app/seo-tasks/.env
+chown svcuser:svcuser /app/seo-tasks/.env</code></pre>
+<div class="callout err">
+<strong>Use exactly one variable name per setting, everywhere.</strong> If one script reads <code>MONGODB_DB</code> and another reads <code>MONGODB_DATABASE</code>, you will get intermittent <code>KeyError</code> crashes that look unrelated to each other. Grep the whole codebase for every place an env var is read and standardize on a single name before deploying: <code>grep -rn 'os.environ\[' seo_tasks/</code>
+</div>
+
+<h2 id="step7">Step 7 — systemd units</h2>
+
+<h3>app-seo.service</h3>
+<pre><code>[Unit]
+Description=App SEO maintenance (slugs, static pages, sitemap)
+After=network-online.target mongod.service
+Wants=network-online.target
+OnFailure=app-seo-alert.service
+
+[Service]
+Type=oneshot
+User=svcuser
+Group=svcuser
+WorkingDirectory=/app/seo-tasks
+EnvironmentFile=/app/seo-tasks/.env
+ExecStart=/app/seo-tasks/venv/bin/python -m seo_tasks.cli run-all
+TimeoutStartSec=30min</code></pre>
+<div class="callout warn">
+<code>OnFailure=</code> is a <strong>[Unit]</strong> directive, not a <strong>[Service]</strong> directive. Putting it under <code>[Service]</code> does not cause a hard failure — systemd silently ignores the unknown key and logs a warning — so this mistake is easy to miss. See <a href="#ts-onfailure">Troubleshooting: OnFailure= ignored</a>.
+</div>
+
+<h3>app-seo.timer</h3>
+<pre><code>[Unit]
+Description=Run App SEO maintenance daily
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target</code></pre>
+<p class="lead"><code>Persistent=true</code> means a run missed due to the host being down at the scheduled time fires automatically at next boot, instead of silently skipping that day.</p>
+
+<h3>app-seo-alert.service (optional but referenced above)</h3>
+<pre><code>[Unit]
+Description=Alert on app-seo failure
+
+[Service]
+Type=oneshot
+EnvironmentFile=/app/seo-tasks/.env
+ExecStart=/app/seo-tasks/venv/bin/python -m seo_tasks.notify_failure</code></pre>
+<div class="callout">
+If <code>OnFailure=</code> references a unit that references a Python entrypoint that doesn't exist yet, the failure path is a silent no-op rather than a hard error. Either implement <code>notify_failure</code> as a small CLI subcommand, or remove the <code>OnFailure=</code> line until you do — don't leave it half-wired.
+</div>
+
+<h2 id="step8">Step 8 — Enable and do a first verification</h2>
+<pre><code>cp systemd/app-seo.service systemd/app-seo.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now app-seo.timer
+
+systemctl list-timers app-seo.timer
+systemctl start app-seo.service     # manual first run
+journalctl -u app-seo.service -f</code></pre>
+
+<h2 id="testing">Manual testing (before trusting systemd)</h2>
+<p>Running the CLI directly with <code>sudo -u svcuser</code> does <strong>not</strong> load <code>.env</code> — <code>EnvironmentFile=</code> is a systemd-only mechanism. To get a fair manual test that mirrors what systemd will actually do:</p>
+<pre><code>cd /app/seo-tasks
+sudo -u svcuser env $(grep -v '^#' .env | xargs) ./venv/bin/python -m seo_tasks.cli run-all</code></pre>
+<div class="callout warn">
+This simple form breaks if any value in <code>.env</code> contains spaces or quotes. If that becomes a problem, switch to:
+<pre style="margin-top:8px"><code>sudo -u svcuser bash -c 'set -a; source .env; set +a; ./venv/bin/python -m seo_tasks.cli run-all'</code></pre>
+</div>
+
+<h2 id="monitoring">Monitoring & logs</h2>
+<table>
+<tr><th>Need</th><th>Command</th></tr>
+<tr><td>Live log tail</td><td><code>journalctl -u app-seo.service -f</code></td></tr>
+<tr><td>Today's runs only</td><td><code>journalctl -u app-seo.service --since today</code></td></tr>
+<tr><td>Last service result</td><td><code>systemctl status app-seo.service</code></td></tr>
+<tr><td>Next scheduled run</td><td><code>systemctl list-timers app-seo.timer</code></td></tr>
+<tr><td>Durable log file (independent of journald retention)</td><td><code>tail -f /app/seo-tasks/logs/seo-tasks.log</code></td></tr>
+</table>
+
+<h2 id="exitcodes">Exit code reference</h2>
+<table>
+<tr><th>Code</th><th>Meaning</th></tr>
+<tr><td><code>0</code></td><td>All tasks succeeded</td></tr>
+<tr><td><code>1</code></td><td>All tasks failed</td></tr>
+<tr><td><code>2</code></td><td>Partial failure — at least one task succeeded, at least one failed</td></tr>
+<tr><td><code>3</code></td><td>Skipped — another instance already holds the lock (not a failure)</td></tr>
+</table>
+
+<h2 id="ts-checklist" style="display:none"></h2>
+
+<h1 style="margin-top:64px; border-top: 1px solid var(--panel-border); padding-top: 40px;">Troubleshooting Reference</h1>
+<p class="lead">Each entry below is a real failure mode encountered while building and deploying this exact pattern, in the order they tend to surface.</p>
+
+<div class="ts-item" id="ts-brace">
+<h4><span class="badge err">Setup</span>mkdir created a directory literally named <code>{logs,run}</code></h4>
+<div class="symptom">ls
+__init__.py  atomic_write.py  cli.py  config.py  ...  {logs,run}</div>
+<p class="cause"><strong>Cause:</strong> a deployment script used <code>mkdir -p /app/seo-tasks/{logs,run}</code> but was executed with <code>sh script.sh</code>. Brace expansion is a <code>bash</code> feature; <code>dash</code> (what <code>sh</code> usually points to on Debian/Ubuntu) treats <code>{logs,run}</code> as a literal string. Only one directory gets created, with that exact literal name — <code>logs/</code> and <code>run/</code> never exist, which later causes logging and lock-file errors.</p>
+<p><strong>Fix:</strong></p>
+<pre><code>mkdir -p /app/seo-tasks/logs /app/seo-tasks/run
+rm -rf "/app/seo-tasks/{logs,run}"   # remove the bogus literal directory</code></pre>
+<p class="lead">Prevention: always run deployment scripts with <code>bash script.sh</code>, or avoid brace expansion in any script that might be run with plain <code>sh</code>.</p>
+</div>
+
+<div class="ts-item" id="ts-path">
+<h4><span class="badge err">Setup</span>Path name inconsistency (hyphen vs underscore, or different parent dirs)</h4>
+<div class="symptom">Failed to load environment files: No such file or directory
+Failed to spawn 'start' task: No such file or directory
+status=203/EXEC</div>
+<p class="cause"><strong>Cause:</strong> the actual directory on disk (e.g. <code>/app/seo-tasks</code>) doesn't match what the systemd unit file's <code>WorkingDirectory=</code>, <code>EnvironmentFile=</code>, or <code>ExecStart=</code> expect (e.g. <code>/app/seo_tasks</code>). This is extremely easy to introduce because the *parent* folder name is arbitrary (hyphen or underscore, either is fine) but the *package* folder underneath it (imported via <code>-m seo_tasks.cli</code>) must always be underscored — mixing these two naming decisions up is the most common source of this bug.</p>
+<p><strong>Fix:</strong> pick one parent path and use it verbatim in every reference:</p>
+<pre><code>grep -rn "/app/seo" /etc/systemd/system/app-seo.service
+ls /app/seo-tasks/seo_tasks/cli.py   # must exist exactly at this path
+ls /app/seo-tasks/.env
+ls /app/seo-tasks/venv/bin/python</code></pre>
+<p>All three <code>ls</code> checks above must succeed before starting the service. If any fail, either move the files or edit the unit file — don't guess.</p>
+</div>
+
+<div class="ts-item" id="ts-modulenotfound">
+<h4><span class="badge err">Import</span><code>ModuleNotFoundError: No module named 'seo_tasks'</code></h4>
+<div class="symptom">python: Error while finding module specification for 'seo_tasks.cli'
+(ModuleNotFoundError: No module named 'seo_tasks')</div>
+<p class="cause"><strong>Cause:</strong> either (a) the command was run from a directory that doesn't contain a folder literally named <code>seo_tasks</code> — e.g. running from <code>/tmp</code> instead of the app root — or (b) the package files are sitting flat in the app root instead of nested inside a <code>seo_tasks/</code> subfolder. <code>python -m pkg.module</code> requires <code>pkg/</code> to be importable from the current working directory (or on <code>PYTHONPATH</code>).</p>
+<p><strong>Fix:</strong></p>
+<pre><code>cd /app/seo-tasks   # must be the parent of seo_tasks/, not seo_tasks/ itself
+mkdir -p seo_tasks
+mv __init__.py cli.py config.py db.py atomic_write.py lockfile.py \
+   logging_setup.py notify.py retry.py state.py tasks seo_tasks/
+ls seo_tasks/         # confirm cli.py etc. are now nested one level down</code></pre>
+</div>
+
+<div class="ts-item" id="ts-envfile">
+<h4><span class="badge err">systemd</span><code>Failed to load environment files: No such file or directory</code></h4>
+<p class="cause"><strong>Cause:</strong> <code>EnvironmentFile=</code> in the unit points at a path that doesn't exist — usually the same root cause as <a href="#ts-path">the path mismatch above</a>, specific to the <code>.env</code> file.</p>
+<p><strong>Fix:</strong> confirm the exact path, then reload:</p>
+<pre><code>ls -l /app/seo-tasks/.env
+# edit EnvironmentFile= in the unit to match exactly
+systemctl daemon-reload
+systemctl restart app-seo.service</code></pre>
+</div>
+
+<div class="ts-item" id="ts-missingenv">
+<h4><span class="badge warn">Config</span><code>FATAL: missing required env vars</code> when running manually</h4>
+<div class="symptom">FATAL: missing required env vars: MONGODB_URI, MONGODB_DB, BASE_URL</div>
+<p class="cause"><strong>Cause:</strong> this is <em>expected</em>, not a bug, when running the CLI directly (e.g. <code>sudo -u svcuser ./venv/bin/python -m seo_tasks.cli run-all</code>) without loading <code>.env</code> first. <code>EnvironmentFile=</code> is systemd-only — nothing automatically sources <code>.env</code> for a manually-invoked process.</p>
+<p><strong>Fix:</strong> inject the same variables manually for a fair test:</p>
+<pre><code>sudo -u svcuser env $(grep -v '^#' .env | xargs) ./venv/bin/python -m seo_tasks.cli run-all</code></pre>
+<p class="lead">If this succeeds but the systemd-triggered run still fails, the problem is specific to the unit file (see <a href="#ts-envfile">EnvironmentFile not found</a>), not the application code.</p>
+</div>
+
+<div class="ts-item" id="ts-onfailure">
+<h4><span class="badge warn">systemd</span><code>Unknown key name 'OnFailure' in section 'Service', ignoring</code></h4>
+<p class="cause"><strong>Cause:</strong> <code>OnFailure=</code> belongs in <code>[Unit]</code>, not <code>[Service]</code>. systemd doesn't hard-fail on an unrecognized key in the wrong section — it logs a warning and silently ignores the directive, so failure alerting quietly does nothing until someone notices it in the logs.</p>
+<p><strong>Fix:</strong> move it to the <code>[Unit]</code> block:</p>
+<pre><code>[Unit]
+Description=...
+OnFailure=app-seo-alert.service
+
+[Service]
+...</code></pre>
+</div>
+
+<div class="ts-item" id="ts-dupfunc">
+<h4><span class="badge err">Code</span><code>TypeError: function() takes N positional arguments but M were given</code></h4>
+<div class="symptom">TypeError: unique_slug_for() takes 3 positional arguments but 4 were given</div>
+<p class="cause"><strong>Cause:</strong> two definitions of the same function name exist in one module (usually from pasting a new implementation above an old one without deleting the old one). Python does not error on redefinition — the <em>second</em> definition silently overwrites the first in the module namespace, so a call written against the new signature can end up executing the old function body.</p>
+<p><strong>Fix:</strong> search for duplicate definitions and delete the stale one entirely:</p>
+<pre><code>grep -n "^def " seo_tasks/tasks/*.py</code></pre>
+<p>If a function name appears twice in the same file's output, the file needs to be rewritten to keep only the current version.</p>
+</div>
+
+<div class="ts-item" id="ts-deadcode">
+<h4><span class="badge err">Code</span>Task silently doing the wrong thing (or nothing) after a merge</h4>
+<div class="symptom">INFO sitemap: Documents missing a slug: 0
+INFO sitemap: Nothing to do.</div>
+<p class="cause"><strong>Cause:</strong> when merging an old standalone script into the new task-module structure, only the top of the file was replaced — the rest of the original script's body (a second <code>main()</code>, unused imports, references to variables like <code>BASE_URL</code>/<code>OUTPUT_DIR</code> that were commented out) was left in place below it. Because the new <code>run()</code> function returns before ever reaching that code, it never executes — but because it was copy-pasted from a <em>different</em> task file, the logging messages are misleading (a sitemap task logging about "missing a slug" is the tell).</p>
+<p><strong>Fix:</strong> for any task file that shows log output referencing the wrong task's concern, open the file and check for leftover code after the real <code>run()</code> function:</p>
+<pre><code>grep -n "def run\|def main\|MongoClient" seo_tasks/tasks/*.py</code></pre>
+<p>Any file showing more than one <code>def run</code>/<code>def main</code>, or a <code>MongoClient(...)</code> call outside <code>db.py</code>, needs to be rewritten from scratch rather than patched — partial merges are hard to trust once found once.</p>
+</div>
+
+<div class="ts-item" id="ts-lock">
+<h4><span class="badge warn">Runtime</span>Verifying the lock file actually prevents concurrent runs</h4>
+<p class="cause">Not a bug report — a test worth running deliberately, since it's easy to configure a lock file that's never actually exercised until two runs genuinely overlap in production.</p>
+<p><strong>Test:</strong></p>
+<pre><code># Terminal 1 — start a run and let it hold the lock
+sudo -u svcuser env $(grep -v '^#' .env | xargs) ./venv/bin/python -m seo_tasks.cli run-all &
+
+# Terminal 2 — immediately try a second run
+sudo -u svcuser env $(grep -v '^#' .env | xargs) ./venv/bin/python -m seo_tasks.cli run-all
+echo $?   # should print 3 (skipped, lock held) — not hang, not error</code></pre>
+</div>
+
+<div class="ts-item" id="ts-perms">
+<h4><span class="badge warn">Runtime</span>Permission errors writing to public output directories</h4>
+<p class="cause"><strong>Cause:</strong> the service account (e.g. <code>svcuser</code>) lacks write access to <code>SITEMAP_OUTPUT_DIR</code> / <code>STATIC_OUTPUT_DIR</code>, commonly because those directories were created earlier while logged in as root.</p>
+<p><strong>Test before a full run:</strong></p>
+<pre><code>sudo -u svcuser touch /app/public/permtest && rm /app/public/permtest
+echo $?   # 0 means write access is fine</code></pre>
+<p class="lead">Note: <code>os.replace()</code> (used by <code>atomic_write.py</code>) only needs write permission on the containing <em>directory</em>, not ownership of the specific file being replaced — so this test is usually sufficient even if existing files in that directory are still root-owned.</p>
+</div>
+
+<h2 id="ts-checklist">Pre-flight checklist before enabling the timer</h2>
+<div class="panel">
+<ul class="checklist">
+  <li>Package folder is named with an underscore and sits one level under the working directory (<code>/app/seo-tasks/seo_tasks/cli.py</code> exists)</li>
+  <li><code>logs/</code> and <code>run/</code> exist as real directories, not a literal <code>{logs,run}</code> folder</li>
+  <li>Every env var is read through <code>config.py</code> — no task module calls <code>os.environ[...]</code> directly (<code>grep -rn "os.environ\[" seo_tasks/</code> returns nothing outside <code>config.py</code>)</li>
+  <li>Manual run with injected <code>.env</code> succeeds and produces real, non-placeholder output</li>
+  <li><code>BASE_URL</code> in <code>.env</code> is the real domain, not a placeholder</li>
+  <li>Every task file has exactly one <code>def run()</code> and no leftover <code>def main()</code> from the original script</li>
+  <li><code>OnFailure=</code> is under <code>[Unit]</code>, and the unit it references actually exists</li>
+  <li>Manual <code>systemctl start</code> shows <code>status=0/SUCCESS</code> and matches the manual test's behavior</li>
+  <li>Lock file correctly rejects a second concurrent run with exit code <code>3</code></li>
+  <li>Service account has confirmed write access to every output directory</li>
+</ul>
+</div>
+
+<footer>
+Internal reference document — update paths, service account name, and unit filenames to match your actual deployment before distributing further.
+</footer>
+
+</main>
+</div>
+</body>
+</html>
