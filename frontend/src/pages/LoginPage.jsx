@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { loadRecaptcha, getRecaptchaToken } from "@/lib/recaptcha";
 
 const SOCIALS = [
   { id: "google", label: "Google", svg: <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> },
@@ -23,6 +24,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Sanitize input to prevent XSS
+  const sanitizeInput = useCallback((input) => {
+    return input.replace(/[<>]/g, '');
+  }, []);
+
   useEffect(() => {
     if (user) {
       const target = from || (["super_admin", "admin"].includes(user.role) ? "/dashboard" : "/");
@@ -30,19 +36,88 @@ export default function LoginPage() {
     }
   }, [user, from, nav]);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const res = await login(email.trim(), password);
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
-      toast.error(res.error);
+  const handleEmailChange = useCallback((e) => {
+    const value = e.target.value.trim();
+    // Validate email format client-side
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (value && !emailRegex.test(value)) {
+      setError("Please enter a valid email address");
     } else {
-      toast.success("Welcome back.");
+      setError("");
     }
-  };
+    setEmail(sanitizeInput(value));
+  }, [sanitizeInput]);
+
+  const handlePasswordChange = useCallback((e) => {
+    const value = e.target.value;
+    // Basic password strength validation
+    if (value && value.length < 8) {
+      setError("Password must be at least 8 characters");
+    } else {
+      setError("");
+    }
+    setPassword(value);
+  }, []);
+
+  const submit = useCallback(async (e) => {
+    e.preventDefault();
+
+    // Reset error state
+    setError("");
+
+    // Validate inputs
+    if (!email || !password) {
+      setError("Email and password are required");
+      toast.error("Email and password are required");
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const captchaToken = await getRecaptchaToken("login");
+
+      const res = await login(email, password, captchaToken);
+
+      if (!res.ok) {
+        setError(res.error);
+        toast.error(res.error);
+      } else {
+        toast.success("Welcome back.");
+        // Clear sensitive data from memory
+        setPassword("");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }, [email, password, login]);
+
+  // Clear sensitive data on unmount
+  useEffect(() => {
+    loadRecaptcha().catch(() => {});
+    return () => {
+      setEmail("");
+      setPassword("");
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-10 animate-fade-slide-up relative overflow-hidden">
@@ -59,6 +134,7 @@ export default function LoginPage() {
           <h1 className="mt-2 font-display font-black text-3xl md:text-4xl text-slate-900">
             Sign In
           </h1>
+
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div>
               <label className="soft-label">Email</label>
@@ -67,9 +143,13 @@ export default function LoginPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 className="soft-input"
                 autoComplete="email"
+                maxLength={254}
+                pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                title="Please enter a valid email address"
+                aria-describedby="email-error"
               />
             </div>
             <div>
@@ -79,24 +159,47 @@ export default function LoginPage() {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 className="soft-input"
                 autoComplete="current-password"
+                minLength={8}
+                maxLength={128}
+                aria-describedby="password-error"
               />
             </div>
+
             {error && (
-              <div data-testid="login-error" className="border border-red-200 bg-red-50 rounded-2xl p-3 text-sm font-bold text-red-600">
+              <div
+                data-testid="login-error"
+                className="border border-red-200 bg-red-50 rounded-2xl p-3 text-sm font-bold text-red-600"
+                role="alert"
+                aria-live="polite"
+              >
                 {error}
               </div>
             )}
+
             <button
               data-testid="login-submit"
               type="submit"
-              disabled={busy}
-              className="btn-soft-primary w-full disabled:opacity-50"
+              disabled={busy || !email || !password}
+              className="btn-soft-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-busy={busy}
             >
               {busy ? "Signing in…" : "Sign In"}
             </button>
+
+            <p className="text-xs text-slate-400 text-center">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+                Terms of Service
+              </a>{" "}
+              apply.
+            </p>
           </form>
 
           <div className="mt-6 flex items-center gap-3">

@@ -10,9 +10,11 @@ export function AuthProvider({ children }) {
   const refreshMe = useCallback(async () => {
     try {
       const { data } = await api.get("/auth/me");
-      setUser(data);
-      return data;
+      const nextUser = data.authenticated ? data.user : null;
+      setUser(nextUser);
+      return nextUser;
     } catch {
+      // genuine network/server error, not just "not logged in"
       setUser(null);
       return null;
     }
@@ -22,9 +24,9 @@ export function AuthProvider({ children }) {
     refreshMe();
   }, [refreshMe]);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email, password, captchaToken) => {
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", { email, password, captcha_token: captchaToken });
       if (data?.access_token) {
         localStorage.setItem("trackmp_token", data.access_token);
       }

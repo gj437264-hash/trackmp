@@ -1,0 +1,18 @@
+import logging
+from logging.handlers import RotatingFileHandler
+
+def setup_logging():
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+    file_handler = RotatingFileHandler(
+        "logs/seo-tasks.log", maxBytes=10 * 1024 * 1024, backupCount=5
+    )
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
+
+    console = logging.StreamHandler()  # captured by journald under systemd
+    console.setFormatter(fmt)
+    root.addHandler(console)

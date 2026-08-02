@@ -1,0 +1,122 @@
+"""
+Generates static HTML profile pages for each politician, for crawler visibility.
+Only regenerates pages for politicians updated since the last run.
+"""
+
+import os
+import logging
+from xml.sax.saxutils import escape as xml_escape
+from ..db import get_db
+from ..config import load_settings
+from ..atomic_write import atomic_write
+from ..state import get_last_run, set_last_run
+from ..retry import retry
+from pymongo.errors import PyMongoError
+
+log = logging.getLogger(__name__)
+TASK_NAME = "static_pages"
+BATCH_SIZE = 2000
+
+TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{name} - {title}, {region} | YourSite</title>
+  <meta name="description" content="{description}">
+  <link rel="canonical" href="{canonical_url}">
+
+  <meta property="og:title" content="{name} - {title}, {region}">
+  <meta property="og:description" content="{description}">
+  <meta property="og:type" content="profile">
+  <meta property="og:url" content="{canonical_url}">
+  <meta property="og:image" content="{photo_url}">
+
+  <script type="application/ld+json">
+  {{
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "{name_json}",
+    "jobTitle": "{title_json}",
+    "affiliation": "{region_json}",
+    "url": "{canonical_url}",
+    "image": "{photo_url}"
+  }}
+  </script>
+
+  <script>window.__PRELOADED_POLITICIAN__ = {preloaded_json};</script>
+  <script defer src="/static/js/main.bundle.js"></script>
+</head>
+<body>
+  <div id="root">
+    <h1>{name}</h1>
+    <p>{title}, {region}</p>
+    <p>{description}</p>
+  </div>
+</body>
+</html>
+"""
+
+
+def _safe_slug(slug: str) -> bool:
+    """Guards against path traversal if a slug was ever hand-edited in Mongo."""
+    import re
+    return bool(re.fullmatch(r"[a-z0-9-]+", slug or ""))
+
+
+def build_page(doc, base_url: str, output_dir: str):
+    slug = doc.get("slug") or str(doc["_id"])
+    if not _safe_slug(slug):
+        log.warning(f"Skipping doc {doc['_id']}: unsafe slug {slug!r}")
+        return False
+
+    name = doc.get("name", "")
+    title = doc.get("title", "")
+    region = doc.get("region", "")
+    description = doc.get("bio_short", f"{name} - {title}, {region}")
+    photo_url = doc.get("photo_url", f"{base_url}/default-avatar.png")
+    canonical_url = f"{base_url}/politicians/{slug}"
+
+    html = TEMPLATE.format(
+        name=xml_escape(name),
+        title=xml_escape(title),
+        region=xml_escape(region),
+        description=xml_escape(description),
+        canonical_url=canonical_url,
+        photo_url=photo_url,
+        name_json=name.replace('"', '\\"'),
+        title_json=title.replace('"', '\\"'),
+        region_json=region.replace('"', '\\"'),
+        preloaded_json="{}",
+    )
+
+    page_dir = os.path.join(output_dir, slug)
+    os.makedirs(page_dir, exist_ok=True)
+    atomic_write(os.path.join(page_dir, "index.html"), html)
+    return True
+
+
+@retry(exceptions=(PyMongoError,), attempts=3, base_delay=2)
+def run() -> bool:
+    settings = load_settings()
+    db = get_db()
+    politicians = db["politicians"]
+
+    last_run = get_last_run(TASK_NAME)
+    query = {"updatedAt": {"$gt": last_run}} if last_run else {}
+    projection = {"_id": 1, "slug": 1, "name": 1, "title": 1,
+                  "region": 1, "bio_short": 1, "photo_url": 1}
+
+    total = politicians.count_documents(query)
+    log.info(f"Politicians to (re)generate: {total}")
+    if total == 0:
+        log.info("Nothing changed since last run.")
+        return True
+
+    count = 0
+    for doc in politicians.find(query, projection).batch_size(BATCH_SIZE):
+        if build_page(doc, settings.base_url, settings.static_output_dir):
+            count += 1
+
+    set_last_run(TASK_NAME)
+    log.info(f"Generated {count} static politician pages")
+    return True

@@ -4,6 +4,7 @@ import { api, formatApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck, UserCog, ClipboardCheck, ArrowRight, ScanSearch } from "lucide-react";
+import { loadRecaptcha, getRecaptchaToken } from "@/lib/recaptcha";
 
 export default function SignupPage() {
   const [countries, setCountries] = useState([]);
@@ -15,6 +16,7 @@ export default function SignupPage() {
   const nav = useNavigate();
 
   useEffect(() => {
+    loadRecaptcha().catch(() => {});
     api.get("/ref/countries").then((r) => setCountries(r.data.items || []));
   }, []);
 
@@ -23,15 +25,20 @@ export default function SignupPage() {
     setBusy(true);
     setErr("");
     try {
+      const captchaToken = await getRecaptchaToken("signup");
+
       await api.post("/signup-requests", {
         full_name: fullName.trim(),
         email: email.trim(),
         country_code: country,
+        captcha_token: captchaToken,
       });
       toast.success("Request submitted.");
       nav("/thank-you", { replace: true });
     } catch (e2) {
-      const msg = formatApiError(e2);
+      const msg = e2?.message === "reCAPTCHA not loaded. Please refresh the page and try again."
+        ? e2.message
+        : formatApiError(e2);
       setErr(msg);
       toast.error(msg);
     } finally {
@@ -168,6 +175,18 @@ export default function SignupPage() {
                 >
                   {busy ? "Submitting…" : "Request Moderator Access"}
                 </button>
+
+                <p className="text-[11px] text-slate-400 text-center">
+                  This site is protected by reCAPTCHA and the Google{" "}
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+                    Terms of Service
+                  </a>{" "}
+                  apply.
+                </p>
               </form>
 
               {/* Lower-commitment alternative — mobile only, since desktop shows it on the left panel */}

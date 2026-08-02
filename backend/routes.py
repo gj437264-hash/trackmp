@@ -1,13 +1,15 @@
 """All API routes for TrackMP."""
 from __future__ import annotations
+import uuid
 
+import httpx
 import bleach
 import csv
 import io
 import os
 import re
 import secrets
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Any, List, Optional
 
 from bson import ObjectId
@@ -15,6 +17,7 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from pydantic import EmailStr
 from bs4 import BeautifulSoup
+from rate_limit import limiter
 
 from db import get_db, utcnow, utcnow_iso
 from models import (
@@ -94,14 +97,23 @@ def _oid(id_: str) -> ObjectId:
     except (InvalidId, TypeError):
         raise HTTPException(status_code=400, detail="Invalid ID")
 
+def _clean(value):
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {k: _clean(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_clean(v) for v in value]
+    return value
 
 def _serialize(doc: dict | None) -> dict | None:
     if doc is None:
         return None
     d = dict(doc)
     d["id"] = str(d.pop("_id"))
-    return d
-
+    return _clean(d)
 
 def _serialize_list(docs: list[dict]) -> list[dict]:
     return [_serialize(d) for d in docs]
@@ -140,8 +152,34 @@ ENTITY_NAME_FIELDS = {
 # =========================================================================
 # AUTH ROUTES
 # =========================================================================
+
+RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY")
+RECAPTCHA_MIN_SCORE = 0.5  # adjust later if too strict/loose
+
+async def _verify_recaptcha(token: str, expected_action: str) -> bool:
+    if not token:
+        return False
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data={"secret": RECAPTCHA_SECRET_KEY, "response": token},
+            timeout=10.0,
+        )
+    data = resp.json()
+    if not data.get("success"):
+        return False
+    if data.get("action") != expected_action:
+        return False
+    if data.get("score", 0) < RECAPTCHA_MIN_SCORE:
+        return False
+    return True
+
+
 @router.post("/auth/login")
-async def login(payload: LoginIn, response: Response, request: Request):
+#@limiter.limit("5/minute")
+async def login(request: Request, payload: LoginIn, response: Response):
+    if not await _verify_recaptcha(payload.captcha_token, "login"):
+        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
     db = get_db()
     email = payload.email.lower().strip()
     user = await db.users.find_one({"email": email, "deleted_at": None})
@@ -174,24 +212,31 @@ async def login(payload: LoginIn, response: Response, request: Request):
 
 
 @router.post("/auth/logout")
-async def logout(response: Response, user: dict = Depends(get_current_user)):
+#@limiter.limit("20/minute")
+async def logout(request: Request, response: Response, user: dict = Depends(get_current_user)):
     clear_auth_cookies(response)
     return {"ok": True}
 
 
 @router.get("/auth/me")
-async def me(user: dict = Depends(get_current_user)):
+async def me(user: Optional[dict] = Depends(get_current_user_optional)):
+    if not user:
+        return {"authenticated": False, "user": None}
     return {
-        "id": user["_id"],
-        "email": user["email"],
-        "name": user.get("name"),
-        "role": user["role"],
-        "permissions": user.get("permissions", {}),
-        "geo_scope": user.get("geo_scope", {"unrestricted": True, "rules": []}),
+        "authenticated": True,
+        "user": {
+            "id": user["_id"],
+            "email": user["email"],
+            "name": user.get("name"),
+            "role": user["role"],
+            "permissions": user.get("permissions", {}),
+            "geo_scope": user.get("geo_scope", {"unrestricted": True, "rules": []}),
+        },
     }
 
 
 @router.post("/auth/refresh")
+#@limiter.limit("40/minute")
 async def refresh(request: Request, response: Response):
     token = request.cookies.get("refresh_token")
     if not token:
@@ -213,7 +258,8 @@ async def refresh(request: Request, response: Response):
 
 
 @router.post("/auth/register-magic")
-async def register_magic(payload: MagicRegisterIn, response: Response, request: Request):
+#@limiter.limit("5/minute")
+async def register_magic(request: Request, payload: MagicRegisterIn, response: Response):
     db = get_db()
     tok = await db.invite_tokens.find_one({"token": payload.token, "used_at": None})
     if not tok:
@@ -281,7 +327,8 @@ async def get_invitation(token: str):
 
 
 @router.post("/auth/forgot-password")
-async def forgot_password(payload: ForgotPasswordIn):
+#@limiter.limit("5/minute")
+async def forgot_password(request: Request, payload: ForgotPasswordIn):
     db = get_db()
     email = payload.email.lower().strip()
     user = await db.users.find_one({"email": email, "deleted_at": None})
@@ -303,7 +350,8 @@ async def forgot_password(payload: ForgotPasswordIn):
 
 
 @router.post("/auth/reset-password")
-async def reset_password(payload: ResetPasswordIn):
+#@limiter.limit("5/minute")
+async def reset_password(request: Request, payload: ResetPasswordIn):
     db = get_db()
     tok = await db.password_reset_tokens.find_one({"token": payload.token, "used_at": None})
     if not tok:
@@ -327,7 +375,10 @@ async def list_auth_providers():
 # SIGNUP REQUESTS (public + super admin)
 # =========================================================================
 @router.post("/signup-requests")
-async def create_signup_request(payload: SignupRequestIn, request: Request):
+#@limiter.limit("5/minute")
+async def create_signup_request(request: Request, payload: SignupRequestIn):
+    if not await _verify_recaptcha(payload.captcha_token, "signup"):
+        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
     db = get_db()
     email = payload.email.lower().strip()
     existing_user = await db.users.find_one({"email": email, "deleted_at": None})
@@ -449,13 +500,33 @@ async def reject_signup(req_id: str, payload: SignupDecisionIn, request: Request
 # ADMIN MANAGEMENT (super_admin only)
 # =========================================================================
 @router.get("/admin/admins")
-async def list_admins(_user: dict = Depends(require_super_admin)):
+async def list_admins(
+    role: str | None = None,
+    q: str | None = None,
+    skip: int = 0,
+    limit: int = 50,
+    _user: dict = Depends(require_super_admin),
+):
     db = get_db()
-    docs = await db.users.find({"role": {"$in": ["admin", "super_admin"]}, "deleted_at": None}).to_list(500)
+    limit = max(1, min(limit, 200))  # hard ceiling to prevent abuse
+    filt: dict[str, Any] = {"deleted_at": None}
+    if role:
+        if role not in ("super_admin", "admin", "user"):
+            raise HTTPException(status_code=400, detail="Invalid role filter")
+        filt["role"] = role
+    else:
+        filt["role"] = {"$in": ["super_admin", "admin", "user"]}
+    if q:
+        safe_q = re.escape(q.strip())
+        filt["$or"] = [
+            {"email": {"$regex": safe_q, "$options": "i"}},
+            {"name": {"$regex": safe_q, "$options": "i"}},
+        ]
+    total = await db.users.count_documents(filt)
+    docs = await db.users.find(filt).skip(skip).limit(limit).to_list(limit)
     for d in docs:
         d.pop("password_hash", None)
-    return {"items": _serialize_list(docs)}
-
+    return {"items": _serialize_list(docs), "total": total}
 
 @router.post("/admin/admins")
 async def create_admin(payload: AdminCreateIn, request: Request, user: dict = Depends(require_super_admin)):
@@ -501,6 +572,8 @@ async def update_admin(user_id: str, payload: AdminUpdateIn, request: Request, u
         update["name"] = payload.name
         changes["name"] = {"from": target.get("name"), "to": payload.name}
     if payload.role is not None and payload.role != target["role"]:
+        if payload.role not in ("admin", "user"):
+            raise HTTPException(status_code=403, detail="Cannot set role to this value")
         update["role"] = payload.role
         changes["role"] = {"from": target["role"], "to": payload.role}
     if payload.password:
@@ -1231,23 +1304,46 @@ async def import_politicians(request: Request, file: UploadFile = File(...), use
 # ---------- Wealth entries (politician-level or relative-level) ----------
 
 
+#@router.get("/politicians/{pid}")
+#async def get_politician(pid: str, user: Optional[dict] = Depends(get_current_user_optional)):
+#    db = get_db()
+#    doc = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+#    if not doc:
+#        raise HTTPException(status_code=404, detail="Politician not found")
+#    hydrated = await _hydrate_politician(doc)
+#    return _strip_private_fields(hydrated, user)
+
 @router.get("/politicians/{pid}")
 async def get_politician(pid: str, user: Optional[dict] = Depends(get_current_user_optional)):
     db = get_db()
-    doc = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
+    doc = None
+
+    if ObjectId.is_valid(pid):
+        doc = await db.politicians.find_one({"_id": ObjectId(pid), "deleted_at": None})
+
+    if not doc:
+        doc = await db.politicians.find_one({"slug": pid, "deleted_at": None})
+
     if not doc:
         raise HTTPException(status_code=404, detail="Politician not found")
+
     hydrated = await _hydrate_politician(doc)
     return _strip_private_fields(hydrated, user)
 
-
+ADMIN_POLITICIAN_SORT_FIELDS = {"name", "party", "country_code", "role", "verified"}
 @router.get("/admin/politicians")
 async def list_politicians_admin(
     q: Optional[str] = None,
     country_code: Optional[str] = None,
     state_id: Optional[str] = None,
     constituency_id: Optional[str] = None,
-    limit: int = 10000000,
+    party: Optional[str] = None,
+    role: Optional[str] = None,
+    verified: Optional[bool] = None,
+    page: int = 1,
+    limit: int = 50,
+    sort_by: str = "name",
+    sort_dir: str = "asc",
     user: dict = Depends(require_section("politicians")),
 ):
     db = get_db()
@@ -1260,11 +1356,27 @@ async def list_politicians_admin(
         query["state_id"] = state_id
     if constituency_id:
         query["constituency_id"] = constituency_id
+    if party:
+        query["party"] = party
+    if role:
+        query["role"] = role
+    if verified is True:
+        query["verified"] = True
+    elif verified is False:
+        query["verified"] = {"$ne": True}
     scope_filter = geo_scope_mongo_filter(user)
     if scope_filter:
         query = {"$and": [query, scope_filter]}
-    docs = await db.politicians.find(query).sort("name", 1).limit(limit).to_list(limit)
-    return {"items": _serialize_list(docs)}
+
+    sort_field = sort_by if sort_by in ADMIN_POLITICIAN_SORT_FIELDS else "name"
+    direction = -1 if sort_dir == "desc" else 1
+    page = max(1, page)
+    limit = max(1, min(limit, 500))
+    skip = (page - 1) * limit
+
+    total = await db.politicians.count_documents(query)
+    docs = await db.politicians.find(query).sort(sort_field, direction).skip(skip).limit(limit).to_list(limit)
+    return {"items": _serialize_list(docs), "total": total}
 
 
 @router.get("/admin/politicians/{pid}")
@@ -1501,6 +1613,15 @@ async def add_promise(pid: str, payload: PromiseIn, request: Request, user: dict
     politician = await db.politicians.find_one({"_id": _oid(pid), "deleted_at": None})
     if not politician:
         raise HTTPException(status_code=404, detail="Politician not found")
+    source_links = []
+    for link in (payload.source_links or []):
+        source_links.append({
+            "id": uuid.uuid4().hex,
+            "name": (link.name or "").strip() or None,
+            "url": link.url,
+            "added_by": user.get("name") or user.get("email", "Unknown"),
+            "created_at": utcnow_iso(),
+        })
     doc = {
         "politician_id": pid,
         "title": payload.title,
@@ -1508,6 +1629,8 @@ async def add_promise(pid: str, payload: PromiseIn, request: Request, user: dict
         "status": payload.status,
         "date_made": payload.date_made,
         "source_url": payload.source_url,
+        "source_links": source_links,
+        "files": [],
         "created_by": user["_id"],
         "created_by_name": user.get("name") or user.get("email", "Unknown"),
         "created_at": utcnow_iso(), "updated_at": utcnow_iso(), "deleted_at": None,
@@ -1693,7 +1816,7 @@ _ALLOWED_ATTRS = {
     "img": ["src", "alt", "title", "width", "height"],
     "video": ["src", "controls", "width", "height"],
     "source": ["src", "type"],
-    "*": ["class"],
+    "*": ["class", "style"],
 }
 
 _DANGEROUS_ATTR_PREFIX = "on"
@@ -1711,6 +1834,19 @@ def _sanitize_full_document_html(raw: str) -> str:
             val = tag.attrs.get(url_attr)
             if val and re.match(r"^\s*javascript:", val, re.IGNORECASE):
                 del tag.attrs[url_attr]
+    #Responsive styling injection ---
+    style_tag = soup.new_tag("style")
+    style_tag.string = """
+        html, body { width: 100% !important; margin: 0 auto !important; padding: 0 !important; }
+        body { font-size: 18px; line-height: 1.6; }
+        img, video, iframe, table { max-width: 100% !important; height: auto !important; }
+        div, container, section { max-width: 100% !important; }
+    """
+    if soup.head:
+        soup.head.append(style_tag)
+    else:
+        soup.insert(0, style_tag)
+    
     return str(soup)
 
 def _sanitize_html(raw: str) -> str:
@@ -2013,7 +2149,8 @@ async def upload_article_media(aid: str, request: Request, file: UploadFile = Fi
             text = raw.decode("utf-8")
         except UnicodeDecodeError:
             raise HTTPException(status_code=400, detail="HTML file must be UTF-8 encoded")
-        clean_html = _sanitize_html(text)
+        #clean_html = _sanitize_html(text)
+        clean_html = _sanitize_full_document_html(text)
         await db.articles.update_one({"_id": article["_id"]}, {"$set": {"body_html": clean_html, "updated_at": utcnow_iso()}})
         await audit_log(actor=user, action="article_body_uploaded", entity_type="article",
                         entity_id=aid, changed_fields={"filename": file.filename}, ip=_client_ip(request))
@@ -2072,6 +2209,8 @@ async def get_public_article(aid: str):
 
 @router.post("/contact")
 async def submit_contact(payload: ContactIn, request: Request):
+    if not await _verify_recaptcha(payload.captcha_token, "contact"):
+        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
     db = get_db()
     visitor_id = await _upsert_visitor(
         db, first_name=payload.first_name, last_name=payload.last_name,
@@ -2109,6 +2248,8 @@ async def submit_contact(payload: ContactIn, request: Request):
 
 @router.post("/update-requests")
 async def submit_update_request(payload: UpdateRequestIn, request: Request):
+    if not await _verify_recaptcha(payload.captcha_token, "submit_update"):
+        raise HTTPException(status_code=400, detail="reCAPTCHA verification failed")
     db = get_db()
     if payload.request_type not in ("update_existing", "add_new"):
         raise HTTPException(status_code=400, detail="Invalid request_type")

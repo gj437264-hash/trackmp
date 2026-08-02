@@ -30,7 +30,6 @@ export default function AboutPage() {
                 transformOrigin: '200px 40px'
               }}
             >
-              {/* Dynamic Keyframe Injection directly in SVG node context to guard safety configurations */}
               <style>{`
                 @keyframes swing {
                   0%, 100% { transform: rotate(-5deg); }
@@ -38,23 +37,14 @@ export default function AboutPage() {
                 }
               `}</style>
 
-              {/* Base / Central Stand Structure - Matching Search Page emerald colors */}
               <line x1="200" y1="40" x2="200" y2="330" stroke="currentColor" strokeWidth="4" />
               <circle cx="200" cy="40" r="10" fill="currentColor" className="text-emerald-500/30" />
               <path d="M 130 330 L 270 330 L 245 360 L 155 360 Z" fill="none" stroke="currentColor" strokeWidth="4" />
-
-              {/* Pivot Fulcrum Dot - Matching Search Page emerald */}
               <circle cx="200" cy="90" r="8" fill="currentColor" className="text-emerald-600 animate-pulse" />
-
-              {/* Main crossbar arm */}
               <line x1="80" y1="90" x2="320" y2="90" stroke="currentColor" strokeWidth="5" />
-
-              {/* Left Plate Suspension */}
               <line x1="80" y1="90" x2="50" y2="180" stroke="currentColor" strokeWidth="2" />
               <line x1="80" y1="90" x2="110" y2="180" stroke="currentColor" strokeWidth="2" />
               <path d="M 40 180 A 40 30 0 0 0 120 180 Z" fill="none" stroke="currentColor" strokeWidth="3" />
-
-              {/* Right Plate Suspension */}
               <line x1="320" y1="90" x2="290" y2="180" stroke="currentColor" strokeWidth="2" />
               <line x1="320" y1="90" x2="350" y2="180" stroke="currentColor" strokeWidth="2" />
               <path d="M 280 180 A 40 30 0 0 0 360 180 Z" fill="none" stroke="currentColor" strokeWidth="3" />
@@ -78,7 +68,6 @@ export default function AboutPage() {
               spin, no ranking by opinion. Just a timeline of what was said and what happened next.
             </p>
 
-            {/* Keywords/phrases - Matching Search Page style */}
             <div className="mt-6 flex flex-wrap gap-2">
               <span className="text-xs px-3 py-1.5 bg-slate-100/80 text-slate-600 rounded-full border border-slate-200/50 backdrop-blur-sm font-medium">
                 #Accountability
@@ -101,6 +90,69 @@ export default function AboutPage() {
               <span className="text-xs px-3 py-1.5 bg-teal-50 text-teal-700 rounded-full border border-teal-200/50 font-medium">
                 #LegislativeAudit
               </span>
+            </div>
+          </div>
+        </section>
+
+        {/* NEW SECTION: CORE MISSION STATEMENT - The text you requested */}
+        <section aria-label="Core Mission" className="mb-24 relative">
+          <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-slate-50 to-white border border-slate-200/60 shadow-lg hover:shadow-xl transition-shadow duration-500">
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 rounded-t-3xl" />
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-400/5 rounded-full blur-2xl" />
+            <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-blue-400/5 rounded-full blur-2xl" />
+            
+            <div className="relative">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                    ⚖️
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-3">
+                    <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                      Our Mission
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full font-mono border border-slate-200">
+                      non-partisan
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full font-mono border border-slate-200">
+                      neutral
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full font-mono border border-slate-200">
+                      fact-based
+                    </span>
+                  </div>
+                  
+                  <h2 className="font-display font-black text-2xl md:text-3xl text-slate-900 tracking-tight mb-4">
+                    Objective. Neutral. Fact-Based.
+                  </h2>
+                  
+                  <div className="space-y-4 text-slate-600 leading-relaxed">
+                    <p className="text-base">
+                      TrackMP is non-partisan by construction. We don't take positions, judge motives, or push narratives—we only report what is publicly documented.
+                    </p>
+                    <p className="text-base">
+                      Democracy thrives on transparency. We invite researchers, data analysts, journalists, and active citizens to join our mission in keeping public officials accountable to the people they serve.
+                    </p>
+                  </div>
+                  
+                  <div className="mt-6 flex flex-wrap gap-3 pt-4 border-t border-slate-200/60">
+                    <a href="/submit-update" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors group">
+                      <span>Join our mission</span>
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </a>
+                    <span className="text-slate-300">|</span>
+                    <a href="/search" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors group">
+                      <span>Explore the data</span>
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </a>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400 font-mono">#TransparencyMatters</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -145,7 +197,6 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card 01 - Learn More removed */}
             <article className="group relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-200/80 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
@@ -159,7 +210,6 @@ export default function AboutPage() {
               </div>
             </article>
 
-            {/* Card 02 - Learn More removed */}
             <article className="group relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm hover:shadow-xl hover:border-amber-200/80 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
@@ -173,7 +223,6 @@ export default function AboutPage() {
               </div>
             </article>
 
-            {/* Card 03 - Learn More removed */}
             <article className="group relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-200/80 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
@@ -187,7 +236,6 @@ export default function AboutPage() {
               </div>
             </article>
 
-            {/* Card 04 - Learn More removed */}
             <article className="group relative p-8 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm hover:shadow-xl hover:border-slate-300/80 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-slate-800 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-slate-800/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
@@ -243,32 +291,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* SECTION 5: PLATFORM GUARANTEE - Matching Search Page */}
-        <section aria-label="System Guarantee" className="mb-20 p-6 rounded-2xl bg-slate-50/80 backdrop-blur-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-300 hover:border-slate-200 hover:bg-slate-50/90 group">
-          <div className="flex items-start gap-4">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 shrink-0 font-bold text-sm group-hover:scale-110 transition-transform" aria-hidden="true">✓</div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">/// Core Mandate</span>
-              <p className="mt-0.5 text-sm text-slate-600 font-medium">
-                Non-partisan by construction. TrackMP takes no position — it only reports what is documented.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 font-medium">unbiased</span>
-                <span className="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 font-medium">neutral</span>
-                <span className="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 font-medium">data-driven</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-            <span className="font-mono text-[11px] text-slate-500 bg-white px-3 py-1 border border-slate-200 rounded-full font-semibold shadow-sm group-hover:shadow-md transition-shadow">v1.0.0-PROD</span>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" aria-label="System status operational"></span>
-            </span>
-          </div>
-        </section>
-
+	
         {/* SECTION 6: SUPPORT / FUNDING - Matching Search Page card design */}
         <section aria-labelledby="support-title" className="p-8 md:p-10 rounded-3xl bg-white/80 backdrop-blur-sm border border-slate-100 shadow-sm hover:shadow-xl transition-shadow duration-500">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">

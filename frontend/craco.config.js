@@ -98,10 +98,86 @@ let webpackConfig = {
         ],
       };
 
-      // Add health check plugin to webpack if enabled
+      /* Add health check plugin to webpack if enabled */
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
+      /* --------------------------------------------------------------- 
+      // Bundle-splitting: only applies to production builds. CRA's dev
+      // server already serves modules unbundled, so gating on NODE_ENV
+      // avoids slowing down `craco start` for no benefit.
+      //
+      // Why each group exists (from source-map-explorer analysis):
+      // - reactVendor: react/react-dom/scheduler change almost never —
+      //   isolate so browsers cache it across deploys that don't touch React.
+      // - motion: framer-motion + motion-dom were ~144KB stuck in main.js
+      //   via AnimatePresence in App.js. Once that import is removed from
+      //   the App shell, this chunk becomes lazy-loaded only on pages that
+      //   still import framer-motion directly.
+      // - charts: recharts (+ its bundled redux/immer/reselect internals)
+      //   was duplicated across 3 separate page chunks. One shared chunk
+      //   means it downloads once and is reused/cached across chart pages.
+      // - radix / lucide: used by many components; splitting avoids these
+      //   being duplicated into every chunk that imports a Radix primitive
+      //   or an icon.
+      // - commonApp: catches OUR OWN code shared by 2+ routes — this is
+      //   what pulls DashboardLayout.jsx (+its icon imports) out of ~15
+      //   separate dashboard chunk copies into one cached chunk.
+      // - vendor: catch-all for remaining node_modules not matched above.
+      // ---------------------------------------------------------------*/
+      if (process.env.NODE_ENV === "production") {
+        webpackConfig.optimization.splitChunks = {
+          chunks: "all",
+          maxInitialRequests: 10,
+          cacheGroups: {
+            reactVendor: {
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              name: "vendor-react",
+              priority: 40,
+              reuseExistingChunk: true,
+            },
+            motion: {
+              test: /[\\/]node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/,
+              name: "vendor-motion",
+              priority: 30,
+              reuseExistingChunk: true,
+            },
+            charts: {
+              test: /[\\/]node_modules[\\/](recharts|d3-[a-z-]+|@reduxjs|redux|redux-thunk|immer|reselect|react-redux|es-toolkit|decimal\.js-light|eventemitter3|internmap|use-sync-external-store)[\\/]/,
+              name: "vendor-charts",
+              priority: 30,
+              reuseExistingChunk: true,
+            },
+            radix: {
+              test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
+              name: "vendor-radix",
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+            lucide: {
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              name: "vendor-lucide",
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+            commonApp: {
+              minChunks: 2,
+              name: "common",
+              priority: 10,
+              reuseExistingChunk: true,
+              chunks: "all",
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendor",
+              priority: 5,
+              reuseExistingChunk: true,
+            },
+          },
+        };
+      }
+
       return webpackConfig;
     },
   },

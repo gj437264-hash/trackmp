@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import os
+import jwt
+import hmac
+import bcrypt
+import hashlib
+import secrets as _secrets
+
+
 from datetime import timedelta
 from typing import Optional
-
-import bcrypt
-import jwt
 from bson import ObjectId
 from fastapi import Depends, HTTPException, Request, status
-
 from db import get_db, utcnow
 
 JWT_ALGORITHM = "HS256"
@@ -32,22 +35,28 @@ def _secret() -> str:
     return os.environ["JWT_SECRET"]
 
 
-def create_access_token(user_id: str, email: str, role: str) -> str:
+def create_access_token(user_id: str, email: str, role: str, token_version: int = 0) -> str:
+    now = utcnow()
     payload = {
         "sub": user_id,
         "email": email,
         "role": role,
-        "exp": utcnow() + ACCESS_TOKEN_TTL,
+        "iat": now,
+        "exp": now + ACCESS_TOKEN_TTL,
         "type": "access",
+        "tv": token_version,  # bump user's stored token_version to invalidate all outstanding tokens
     }
     return jwt.encode(payload, _secret(), algorithm=JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: str, token_version: int = 0) -> str:
+    now = utcnow()
     payload = {
         "sub": user_id,
-        "exp": utcnow() + REFRESH_TOKEN_TTL,
+        "iat": now,
+        "exp": now + REFRESH_TOKEN_TTL,
         "type": "refresh",
+        "tv": token_version,
     }
     return jwt.encode(payload, _secret(), algorithm=JWT_ALGORITHM)
 
@@ -83,6 +92,15 @@ async def get_current_user(request: Request) -> dict:
     user = await db.users.find_one({"_id": ObjectId(payload["sub"]), "deleted_at": None})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+
+    # Optional revocation check: if a user doc has a token_version field,
+    # any token minted before it was bumped (password reset, forced
+    # logout, admin suspension) is rejected even though it hasn't expired.
+    # Tokens minted without "tv" (older clients) default to 0 and still
+    # work as long as the user's stored token_version is also 0/unset.
+    if user.get("token_version", 0) != payload.get("tv", 0):
+        raise HTTPException(status_code=401, detail="Token revoked")
+
     user["_id"] = str(user["_id"])
     user.pop("password_hash", None)
     return user
@@ -102,24 +120,7 @@ async def get_current_user_optional(request: Request) -> Optional[dict]:
     user = await db.users.find_one({"_id": ObjectId(payload["sub"]), "deleted_at": None})
     if not user:
         return None
-    user["_id"] = str(user["_id"])
-    user.pop("password_hash", None)
-    return user
-
-
-async def get_current_user_optional(request: Request) -> Optional[dict]:
-    token = _extract_token(request)
-    if not token:
-        return None
-    try:
-        payload = decode_token(token)
-        if payload.get("type") != "access":
-            return None
-    except jwt.InvalidTokenError:
-        return None
-    db = get_db()
-    user = await db.users.find_one({"_id": ObjectId(payload["sub"]), "deleted_at": None})
-    if not user:
+    if user.get("token_version", 0) != payload.get("tv", 0):
         return None
     user["_id"] = str(user["_id"])
     user.pop("password_hash", None)
@@ -146,7 +147,7 @@ def set_auth_cookies(response, access_token: str, refresh_token: str) -> None:
         value=access_token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         max_age=int(ACCESS_TOKEN_TTL.total_seconds()),
         path="/",
     )
@@ -155,8 +156,8 @@ def set_auth_cookies(response, access_token: str, refresh_token: str) -> None:
         value=refresh_token,
         httponly=True,
         secure=True,
-        samesite="none",
-        max_age=int(REFRESH_TOKEN_TTL.total_seconds()),
+        samesite="lax",  # changed from "none" -- frontend/API are same-origin behind nginx,
+        max_age=int(REFRESH_TOKEN_TTL.total_seconds()),  # so "none" only widened CSRF exposure for no reason
         path="/",
     )
 
@@ -166,11 +167,86 @@ def clear_auth_cookies(response) -> None:
     response.delete_cookie("refresh_token", path="/")
 
 # ==========================================================================
-# Append this block to the end of security.py.
-# Follows the exact same factory-function pattern as require_role() above.
+# Anonymous voice-session cookie + IP blocking
 # ==========================================================================
 
-#DASHBOARD_SECTIONS = ["politicians", "articles", "reference_data", "signups", "audit_log"]
+VOICE_HMAC_SECRET = os.environ["VOICE_HMAC_SECRET"]
+VOICE_SESSION_COOKIE = "voice_session"
+
+
+def get_or_create_voice_session(request: Request, response) -> str:
+    """
+    Returns the anonymous session id for this browser, issuing a new
+    session-only cookie (no max_age -> cleared on browser close) if none
+    exists yet. This id is never exposed to the client as anything more
+    than an opaque cookie value — labels/derivations happen server-side.
+    """
+    sid = request.cookies.get(VOICE_SESSION_COOKIE)
+    if sid:
+        return sid
+    sid = _secrets.token_hex(24)
+    response.set_cookie(
+        key=VOICE_SESSION_COOKIE,
+        value=sid,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        path="/",
+        # no max_age/expires => session cookie, cleared on browser close
+    )
+    return sid
+
+
+def voice_anon_label(session_id: str, article_id: str) -> str:
+    """Deterministic per-thread anon label, derived server-side via HMAC
+    so the raw session id is never used directly and can't be reversed."""
+    digest = hmac.new(
+        VOICE_HMAC_SECRET.encode("utf-8"),
+        f"{session_id}::{article_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"Anon-{digest[:8]}"
+
+
+def _client_ip_from_request(request: Request) -> str:
+    """
+    Trust order matters here. nginx's `X-Real-IP` header is set from
+    $remote_addr (the actual TCP peer) and is always OVERWRITTEN by
+    proxy_set_header -- it cannot be spoofed by the client.
+
+    X-Forwarded-For, by contrast, is APPENDED to by nginx
+    ($proxy_add_x_forwarded_for), meaning a client can prepend their own
+    fake entries and the *first* item in that list is attacker-controlled.
+    Taking fwd.split(",")[0] (the old behavior) let anyone bypass
+    blocked_ips and IP-based voice throttling by just sending their own
+    X-Forwarded-For header.
+
+    So: prefer X-Real-IP. Only fall back to XFF (taking the LAST entry,
+    the one nginx itself appended) if X-Real-IP is somehow missing.
+    """
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[-1].strip()
+    return request.client.host if request.client else "unknown"
+
+
+async def check_ip_not_blocked(request: Request) -> str:
+    """Dependency: raises 403 if the caller's IP is on the manual block
+    list. Returns the resolved IP so routes can reuse it without a second
+    lookup."""
+    ip = _client_ip_from_request(request)
+    db = get_db()
+    blocked = await db.blocked_ips.find_one({"ip": ip})
+    if blocked:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return ip
+
+# ==========================================================================
+# Dashboard section permissions
+# ==========================================================================
 
 DASHBOARD_SECTIONS = [
     "admins",           # Admins.jsx
@@ -183,7 +259,8 @@ DASHBOARD_SECTIONS = [
     "signups",          # SignupQueue.jsx
     "tickets",          # TicketDetail.jsx
     "trash",            # Trash.jsx
-    "visitors"          # Visitors.jsx, VisitorDetail.jsx
+    "visitors",         # Visitors.jsx, VisitorDetail.jsx
+    "voice",            # Visitors.jsx, VisitorDetail.jsx
 ]
 
 
@@ -216,8 +293,8 @@ def can_access_politician(user: dict, politician: dict) -> bool:
     if user.get("role") == "super_admin":
         return True
     scope = user.get("geo_scope") or {}
-    if scope.get("unrestricted", True):
-        return True
+    if scope.get("unrestricted", False):
+        return False
     field_by_level = {
         "country": "country_code",
         "state": "state_id",

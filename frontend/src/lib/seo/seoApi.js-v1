@@ -1,0 +1,120 @@
+import { api } from "@/lib/api";
+import { getContentType, resolveTemplate } from "./contentTypes";
+
+/**
+ * SEO Data Layer
+ * -----------------------------------------------------------------------
+ * WHAT IS REAL:
+ *   - searchContentItems() calls the ACTUAL existing admin list endpoints
+ *     (e.g. GET /admin/politicians). No new backend code required.
+ *
+ * WHAT IS MOCKED (backend does not exist yet — see integration notes):
+ *   - getSEOConfig() / saveSEOConfig() read/write an in-memory mock store.
+ *   - Every mocked function is written with the EXACT request/response
+ *     shape the real backend should implement, so swapping the mock body
+ *     for a real `api.get(...)` / `api.put(...)` call is a one-line change
+ *     per function — the calling components never need to change.
+ *
+ * When the backend exists, delete the in-memory store and MOCK_LATENCY,
+ * and replace each function body with the commented-out `api.*` call.
+ */
+
+const MOCK_LATENCY_MS = 250;
+const mockDelay = () => new Promise((r) => setTimeout(r, MOCK_LATENCY_MS));
+
+// In-memory mock store: Map<"contentType:itemId", SEOConfig>
+// Resets on page reload — intentional, this is a frontend-only placeholder.
+const mockStore = new Map();
+
+function storeKey(contentType, itemId) {
+  return `${contentType}:${itemId}`;
+}
+
+function buildDefaultConfig(contentType, item) {
+  const ct = getContentType(contentType);
+  const generatedTitle = resolveTemplate(ct?.defaultTitleTemplate, item);
+  const generatedDescription = resolveTemplate(ct?.defaultDescriptionTemplate, item);
+
+  return {
+    content_type: contentType,
+    content_id: ct?.getItemId(item),
+    basic: {
+      title: { value: "", is_custom: false, generated_value: generatedTitle },
+      description: { value: "", is_custom: false, generated_value: generatedDescription },
+      canonical_url: "",
+      slug: "",
+      robots: { index: true, follow: true },
+    },
+    social: {
+      og: { title: "", description: "", image_url: "" },
+      twitter: {
+        title: "",
+        description: "",
+        image_url: "",
+        card_type: "summary_large_image",
+      },
+    },
+    structured_data: {
+      schema_type: ct?.schemaType || "Thing",
+      fields: {},
+    },
+    meta: {
+      updated_at: null,
+      updated_by: null,
+      is_mocked: true, // flips to false once wired to a real backend
+    },
+  };
+}
+
+/**
+ * Search content items for a given content type.
+ * REAL: hits the existing admin list endpoint for that content type.
+ */
+export async function searchContentItems(contentType, { q = "", page = 1, limit = 20 } = {}) {
+  const ct = getContentType(contentType);
+  if (!ct) throw new Error(`Unknown content type: ${contentType}`);
+
+  const params = { page, limit };
+  if (q) params.q = q;
+
+  const { data } = await api.get(ct.searchEndpoint, { params });
+  return {
+    items: data.items || [],
+    total: data.total ?? data.items?.length ?? 0,
+  };
+}
+
+/**
+ * Fetch the SEO configuration for one content item.
+ * MOCKED — see file header. Falls back to registry-derived defaults
+ * when nothing has been saved yet, so the UI always has something to show.
+ *
+ * Future real call:
+ *   const { data } = await api.get(`${ct.seoEndpointBase}/${itemId}`);
+ *   return data;
+ */
+export async function getSEOConfig(contentType, itemId, item) {
+  await mockDelay();
+  const key = storeKey(contentType, itemId);
+  if (mockStore.has(key)) return structuredClone(mockStore.get(key));
+  return buildDefaultConfig(contentType, item);
+}
+
+/**
+ * Persist the SEO configuration for one content item.
+ * MOCKED — see file header.
+ *
+ * Future real call:
+ *   const { data } = await api.put(`${ct.seoEndpointBase}/${itemId}`, config);
+ *   return data;
+ */
+export async function saveSEOConfig(contentType, itemId, config) {
+  await mockDelay();
+  const key = storeKey(contentType, itemId);
+  const toSave = {
+    ...config,
+    meta: { ...config.meta, updated_at: new Date().toISOString(), is_mocked: true },
+  };
+  mockStore.set(key, toSave);
+  return structuredClone(toSave);
+}

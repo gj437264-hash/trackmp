@@ -1,14 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { api, formatApiError } from "@/lib/api";
 import { useAuth, hasRole } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Tag, Eye, EyeOff, Sparkles, X, CheckCircle2, Clock, FileText } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Trash2,
+  Tag,
+  Eye,
+  EyeOff,
+  Sparkles,
+  X,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Filter,
+  Grid3x3,
+  List,
+  ArrowUpDown,
+  Calendar,
+  User,
+  BookOpen,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 const CATEGORIES = ["News", "Updates", "Research", "Reports"];
+const ITEMS_PER_PAGE = 9;
 
-function StatusBadge({ status }) {
+// Memoized StatusBadge component
+const StatusBadge = React.memo(({ status }) => {
   const isPublished = status === "published";
   return (
     <span
@@ -22,273 +46,686 @@ function StatusBadge({ status }) {
       {status}
     </span>
   );
-}
+});
 
-function ArticleCardSkeleton() {
+StatusBadge.displayName = 'StatusBadge';
+
+// Memoized ArticleCard component
+const ArticleCard = React.memo(({ article, isSuperAdmin, onTogglePublish, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="bg-white/60 backdrop-blur-sm border border-slate-100 rounded-2xl p-5 animate-pulse">
-      <div className="flex items-center justify-between mb-3">
-        <div className="h-3 bg-slate-200 rounded-full w-16" />
-        <div className="h-4 bg-slate-100 rounded-full w-16" />
+    <div
+      className="group relative bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      data-testid={`article-card-${article.id}`}
+    >
+      {/* Gradient accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <span className="font-mono text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg inline-block">
+              {article.article_id}
+            </span>
+            <Link
+              to={`/dashboard/articles/${article.id}`}
+              className="block mt-2 font-display font-bold text-base text-slate-800 hover:text-indigo-600 transition-colors line-clamp-2"
+            >
+              {article.title}
+            </Link>
+          </div>
+          <StatusBadge status={article.status} />
+        </div>
+
+        {/* Meta info */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-full">
+            <BookOpen size={11} />
+            {article.category}
+          </span>
+          {article.author && (
+            <span className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-full">
+              <User size={11} />
+              {article.author}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-full">
+            <Calendar size={11} />
+            {new Date(article.created_at).toLocaleDateString()}
+          </span>
+        </div>
+
+        {/* Tags */}
+        {(article.tags || []).length > 0 && (
+          <div className="flex gap-1.5 flex-wrap mt-3">
+            {(article.tags || []).slice(0, 3).map((t) => (
+              <span
+                key={t}
+                className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100"
+              >
+                {t}
+              </span>
+            ))}
+            {(article.tags || []).length > 3 && (
+              <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
+                +{(article.tags || []).length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+          <button
+            onClick={() => onTogglePublish(article)}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              article.status === "published"
+                ? "bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200"
+                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
+            }`}
+            data-testid={`toggle-publish-${article.id}`}
+          >
+            {article.status === "published" ? (
+              <>
+                <EyeOff size={12} /> Unpublish
+              </>
+            ) : (
+              <>
+                <Eye size={12} /> Publish
+              </>
+            )}
+          </button>
+          
+          {isSuperAdmin && (
+            <button
+              onClick={() => onDelete(article)}
+              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+              data-testid={`delete-article-${article.id}`}
+              aria-label="Delete article"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
-      <div className="h-5 bg-slate-200 rounded-full w-3/4 mb-2" />
-      <div className="h-3 bg-slate-100 rounded-full w-1/3 mb-4" />
-      <div className="h-8 bg-slate-100 rounded-xl w-1/2" />
     </div>
   );
-}
+});
+
+ArticleCard.displayName = 'ArticleCard';
+
+// Memoized Skeleton component
+const ArticleCardSkeleton = React.memo(() => (
+  <div className="bg-white rounded-xl border border-slate-200/80 p-5 animate-pulse">
+    <div className="flex items-start justify-between">
+      <div className="flex-1">
+        <div className="h-3 bg-slate-200 rounded w-16" />
+        <div className="h-5 bg-slate-200 rounded w-3/4 mt-2" />
+      </div>
+      <div className="h-6 bg-slate-200 rounded-full w-20" />
+    </div>
+    <div className="mt-3 flex gap-2">
+      <div className="h-5 bg-slate-100 rounded-full w-16" />
+      <div className="h-5 bg-slate-100 rounded-full w-16" />
+    </div>
+    <div className="mt-3 flex gap-1.5">
+      <div className="h-4 bg-slate-100 rounded-full w-12" />
+      <div className="h-4 bg-slate-100 rounded-full w-12" />
+    </div>
+    <div className="mt-4 pt-4 border-t border-slate-100">
+      <div className="h-8 bg-slate-100 rounded-lg w-full" />
+    </div>
+  </div>
+));
+
+ArticleCardSkeleton.displayName = 'ArticleCardSkeleton';
 
 export default function Articles() {
   const { user } = useAuth();
   const isSuperAdmin = hasRole(user, "super_admin");
-  const nav = useNavigate();
+  const navigate = useNavigate();
+
+  // State
   const [items, setItems] = useState([]);
-  const [q, setQ] = useState("");
-  const [tag, setTag] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTag, setSelectedTag] = useState("");
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: "", category: "News", excerpt: "", author: "", tags: [] });
+  const [form, setForm] = useState({
+    title: "",
+    category: "News",
+    excerpt: "",
+    author: "",
+    tags: [],
+  });
   const [tagInput, setTagInput] = useState("");
   const [creating, setCreating] = useState(false);
+  const [viewMode, setViewMode] = useState("grid"); // grid | list
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = () => {
-    setLoading(true);
-    const params = {};
-    if (q) params.q = q;
-    if (tag) params.tag = tag;
-    api.get("/admin/articles", { params })
-      .then((r) => setItems(r.data.items || []))
-      .finally(() => setLoading(false));
-  };
+  // Memoized filtered and sorted items
+  const filteredItems = useMemo(() => {
+    let result = [...items];
 
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q, tag]);
+    // Filter by search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.article_id.toLowerCase().includes(query) ||
+          item.title.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query)
+      );
+    }
 
-  const addTag = () => {
+    // Filter by tag
+    if (selectedTag) {
+      result = result.filter((item) => (item.tags || []).includes(selectedTag));
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "newest":
+        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
+      case "oldest":
+        result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        break;
+      case "title":
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      default:
+        break;
+    }
+
+    return result;
+  }, [items, searchQuery, selectedTag, sortBy]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
+
+  // Load articles with debounce
+  const loadArticles = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const params = {};
+      if (searchQuery) params.q = searchQuery;
+      if (selectedTag) params.tag = selectedTag;
+
+      const response = await api.get("/admin/articles", { params });
+      setItems(response.data.items || []);
+      setCurrentPage(1);
+    } catch (error) {
+      toast.error(formatApiError(error));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [searchQuery, selectedTag]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!loading) loadArticles();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedTag]);
+
+  // Initial load
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  // Tag management
+  const addTag = useCallback(() => {
     const t = tagInput.trim();
     if (!t || form.tags.includes(t)) return;
-    setForm({ ...form, tags: [...form.tags, t] });
+    setForm((prev) => ({ ...prev, tags: [...prev.tags, t] }));
     setTagInput("");
-  };
-  const removeTag = (t) => setForm({ ...form, tags: form.tags.filter((x) => x !== t) });
+  }, [tagInput, form.tags]);
 
-  const createArticle = async () => {
-    if (!form.title.trim()) { toast.error("Title required."); return; }
+  const removeTag = useCallback((tagToRemove) => {
+    setForm((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tagToRemove),
+    }));
+  }, []);
+
+  // Create article
+  const createArticle = useCallback(async () => {
+    if (!form.title.trim()) {
+      toast.error("Title is required.");
+      return;
+    }
+
     setCreating(true);
     try {
       const { data } = await api.post("/admin/articles", form);
-      toast.success(`Article ${data.article_id} created.`);
+      toast.success(`Article "${data.title}" created successfully.`);
       setShowCreate(false);
       setForm({ title: "", category: "News", excerpt: "", author: "", tags: [] });
-      nav(`/dashboard/articles/${data.id}`);
-    } catch (e) { toast.error(formatApiError(e)); }
-    finally { setCreating(false); }
-  };
+      await loadArticles();
+      navigate(`/dashboard/articles/${data.id}`);
+    } catch (error) {
+      toast.error(formatApiError(error));
+    } finally {
+      setCreating(false);
+    }
+  }, [form, navigate, loadArticles]);
 
-  const togglePublish = async (a) => {
+  // Toggle publish status
+  const togglePublish = useCallback(async (article) => {
     try {
-      const { data } = await api.put(`/admin/articles/${a.id}/status`);
+      const { data } = await api.put(`/admin/articles/${article.id}/status`);
       toast.success(`Article ${data.status}.`);
-      setItems((its) => its.map((x) => x.id === a.id ? { ...x, status: data.status } : x));
-    } catch (e) { toast.error(formatApiError(e)); }
-  };
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === article.id ? { ...item, status: data.status } : item
+        )
+      );
+    } catch (error) {
+      toast.error(formatApiError(error));
+    }
+  }, []);
 
-  const deleteArticle = async (a) => {
-    if (!window.confirm(`Delete "${a.title}"? This cannot be undone.`)) return;
+  // Delete article
+  const deleteArticle = useCallback(async (article) => {
+    if (!window.confirm(`Delete "${article.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
     try {
-      await api.delete(`/admin/articles/${a.id}`);
-      toast.success("Article deleted.");
-      setItems((its) => its.filter((x) => x.id !== a.id));
-    } catch (e) { toast.error(formatApiError(e)); }
-  };
+      await api.delete(`/admin/articles/${article.id}`);
+      toast.success("Article deleted successfully.");
+      setItems((prev) => prev.filter((item) => item.id !== article.id));
+    } catch (error) {
+      toast.error(formatApiError(error));
+    }
+  }, []);
+
+  // Reset form
+  const resetForm = useCallback(() => {
+    setForm({ title: "", category: "News", excerpt: "", author: "", tags: [] });
+    setTagInput("");
+    setShowCreate(false);
+  }, []);
 
   return (
     <DashboardLayout>
-      {/* Soft ambient background, consistent with the rest of the redesign */}
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/20 via-white to-purple-50/10 -z-20 pointer-events-none" />
-      <div className="absolute top-10 -right-20 w-72 h-72 bg-gradient-to-br from-indigo-200/15 to-purple-200/15 rounded-full blur-3xl -z-10 pointer-events-none" />
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20 -z-20 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-indigo-200/10 to-purple-200/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-200/10 to-indigo-200/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-      <div className="p-6 md:p-10 relative">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="p-6 md:p-8 lg:p-10 relative">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-200/50">
-              <Sparkles size={13} className="text-indigo-400" /> Content
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-indigo-200/50">
+              <Sparkles size={13} className="text-indigo-400" />
+              Content Management
             </div>
-            <h1 className="mt-3 font-display font-black text-4xl tracking-tight text-slate-900">Articles</h1>
+            <h1 className="mt-3 font-display font-black text-3xl md:text-4xl tracking-tight text-slate-900">
+              Articles
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage and organize your content library
+            </p>
           </div>
-          <button
-            onClick={() => setShowCreate((s) => !s)}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-display font-bold text-sm px-6 py-3 rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-            data-testid="create-article-btn"
-          >
-            <Plus size={16} /> Create Article
-          </button>
-        </div>
 
-        {showCreate && (
-          <div
-            className="mt-6 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-4 relative overflow-hidden"
-            data-testid="create-article-form"
-          >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 opacity-50" />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-              <input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Title *"
-                className="w-full bg-slate-50/80 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-                data-testid="new-article-title"
-              />
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full bg-slate-50/80 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-              >
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <input
-                value={form.author}
-                onChange={(e) => setForm({ ...form, author: e.target.value })}
-                placeholder="Author"
-                className="w-full bg-slate-50/80 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-              />
-              <input
-                value={form.excerpt}
-                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-                placeholder="Excerpt"
-                className="w-full bg-slate-50/80 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-              />
-            </div>
-
-            <div className="relative">
-              <div className="flex gap-2 flex-wrap mb-2">
-                {form.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold pl-3 pr-2 py-1.5 rounded-full border border-indigo-200/60"
-                  >
-                    {t}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(t)}
-                      className="hover:bg-indigo-200/60 rounded-full p-0.5 transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-                  placeholder="Add tag..."
-                  className="flex-1 bg-slate-50/80 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-                  data-testid="new-article-tag-input"
-                />
-                <button
-                  onClick={addTag}
-                  className="inline-flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-semibold text-xs px-4 py-2 rounded-xl transition-all duration-200"
-                  data-testid="add-tag-btn"
-                >
-                  <Tag size={12} /> Add Tag
-                </button>
-              </div>
-            </div>
-
+          <div className="flex items-center gap-3">
             <button
-              onClick={createArticle}
-              disabled={creating}
-              className="relative inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-display font-bold text-sm px-6 py-3 rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300"
-              data-testid="submit-create-article"
+              onClick={() => loadArticles(true)}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 disabled:opacity-50"
             >
-              {creating ? "Creating…" : "Create"}
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowCreate((prev) => !prev)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              data-testid="create-article-btn"
+            >
+              <Plus size={18} />
+              Create Article
             </button>
           </div>
-        )}
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by ID or title…"
-              className="w-full bg-white/80 backdrop-blur-sm hover:bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 shadow-sm"
-              data-testid="article-search"
-            />
-          </div>
-          <input
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            placeholder="Filter by tag…"
-            className="w-auto bg-white/80 backdrop-blur-sm hover:bg-white border border-slate-200 rounded-2xl px-4 py-3 font-medium text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 shadow-sm"
-            data-testid="article-tag-filter"
-          />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, i) => <ArticleCardSkeleton key={i} />)
-          ) : items.length === 0 ? (
-            <div className="col-span-full bg-white/60 backdrop-blur-sm border-2 border-dashed border-indigo-200 rounded-3xl p-16 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-50 rounded-full mb-4">
-                <FileText size={28} className="text-indigo-400" />
-              </div>
-              <h3 className="font-display font-bold text-xl text-slate-700 mb-1">No Articles Found</h3>
-              <p className="text-slate-500 text-sm">Try adjusting your search or create a new article.</p>
-            </div>
-          ) : (
-            items.map((a) => (
-              <div
-                key={a.id}
-                className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
-                data-testid={`article-card-${a.id}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">
-                    {a.article_id}
-                  </span>
-                  <StatusBadge status={a.status} />
-                </div>
-                <Link
-                  to={`/dashboard/articles/${a.id}`}
-                  className="block mt-3 font-display font-bold text-lg text-slate-800 hover:text-indigo-600 transition-colors"
+        {/* Create Form */}
+        {showCreate && (
+          <div
+            className="mt-6 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden"
+            data-testid="create-article-form"
+          >
+            <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+            
+            <div className="p-6 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-display font-bold text-slate-800">
+                  New Article
+                </h2>
+                <button
+                  onClick={resetForm}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  {a.title}
-                </Link>
-                <div className="text-xs font-medium text-slate-400 mt-1">{a.category}</div>
-                <div className="flex gap-1.5 flex-wrap mt-3">
-                  {(a.tags || []).map((t) => (
-                    <span key={t} className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="Enter article title"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white"
+                    data-testid="new-article-title"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    Author
+                  </label>
+                  <input
+                    value={form.author}
+                    onChange={(e) => setForm({ ...form, author: e.target.value })}
+                    placeholder="Author name"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    Excerpt
+                  </label>
+                  <input
+                    value={form.excerpt}
+                    onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                    placeholder="Brief summary"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="mt-4">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {form.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-200"
+                    >
                       {t}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(t)}
+                        className="hover:bg-indigo-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={11} />
+                      </button>
                     </span>
                   ))}
                 </div>
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2">
+                  <input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                    placeholder="Add a tag..."
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 focus:bg-white"
+                    data-testid="new-article-tag-input"
+                  />
                   <button
-                    onClick={() => togglePublish(a)}
-                    className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-semibold text-xs px-3 py-2 rounded-xl transition-all duration-200"
-                    data-testid={`toggle-publish-${a.id}`}
+                    onClick={addTag}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-all duration-200"
+                    data-testid="add-tag-btn"
                   >
-                    {a.status === "published" ? <EyeOff size={12} /> : <Eye size={12} />}
-                    {a.status === "published" ? "Unpublish" : "Publish"}
+                    <Tag size={14} /> Add
                   </button>
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => deleteArticle(a)}
-                      className="inline-flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 hover:border-red-200 rounded-xl px-3 py-2 transition-all duration-200"
-                      data-testid={`delete-article-${a.id}`}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
                 </div>
               </div>
-            ))
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 mt-6 pt-6 border-t border-slate-100">
+                <button
+                  onClick={createArticle}
+                  disabled={creating}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-semibold text-sm rounded-lg shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300"
+                  data-testid="submit-create-article"
+                >
+                  {creating ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      Create Article
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={resetForm}
+                  className="px-6 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filters & Controls */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by ID, title, or category..."
+              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              data-testid="article-search"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative">
+              <Filter size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                placeholder="Filter by tag..."
+                className="w-40 bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                data-testid="article-tag-filter"
+              />
+            </div>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="title">By Title</option>
+            </select>
+
+            <div className="flex bg-white border border-slate-200 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 transition-colors duration-200 ${
+                  viewMode === "grid"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+                aria-label="Grid view"
+              >
+                <Grid3x3 size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 transition-colors duration-200 ${
+                  viewMode === "list"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+                aria-label="List view"
+              >
+                <List size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results count */}
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            {loading ? (
+              "Loading..."
+            ) : (
+              <>
+                Showing <span className="font-semibold text-slate-700">{filteredItems.length}</span> articles
+                {filteredItems.length !== items.length && (
+                  <> (filtered from <span className="font-semibold text-slate-700">{items.length}</span>)</>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Articles Grid */}
+        <div className="mt-4">
+          {loading ? (
+            <div className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-4`}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ArticleCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="bg-white/80 backdrop-blur-sm border-2 border-dashed border-indigo-200 rounded-2xl p-16 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-50 rounded-full mb-4">
+                <FileText size={28} className="text-indigo-400" />
+              </div>
+              <h3 className="font-display font-bold text-xl text-slate-700 mb-1">
+                No Articles Found
+              </h3>
+              <p className="text-slate-500 text-sm">
+                {searchQuery || selectedTag
+                  ? "Try adjusting your search or filters"
+                  : "Create your first article to get started"}
+              </p>
+              {!searchQuery && !selectedTag && (
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  <Plus size={14} /> Create Article
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className={`grid ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"} gap-4`}>
+              {paginatedItems.map((article) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  isSuperAdmin={isSuperAdmin}
+                  onTogglePublish={togglePublish}
+                  onDelete={deleteArticle}
+                />
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && filteredItems.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-slate-500">
+              Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === pageNum
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

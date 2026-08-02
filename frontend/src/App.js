@@ -19,6 +19,7 @@ const YourVoicePage = lazy(() => import("@/pages/YourVoicePage"));
 const BudgetAnalysisPage = lazy(() => import("@/pages/BudgetAnalysisPage"));
 const PoliticianProfile = lazy(() => import("@/pages/PoliticianProfile"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
+const PromiseMethodology = lazy(() => import("@/pages/PromiseMethodology"));
 
 // --- Lazy Load Auth Pages ---
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
@@ -42,6 +43,9 @@ const Articles = lazy(() => import("@/pages/dashboard/Articles"));
 const ArticleEditor = lazy(() => import("@/pages/dashboard/ArticleEditor"));
 const VisitorDetail = lazy(() => import("@/pages/dashboard/VisitorDetail"));
 const PoliticianForm = lazy(() => import("@/pages/dashboard/PoliticianForm"));
+const VoiceModerationPage = lazy(() => import ("@/pages/dashboard/VoiceModerationPage"));
+const SEOManagement = lazy(() => import("@/pages/dashboard/SEOManagement"));
+const SEOEditor = lazy(() => import("@/pages/dashboard/SEOEditor"));
 const AuditLog = lazy(() => import("@/pages/dashboard/AuditLog"));
 const Trash = lazy(() => import("@/pages/dashboard/Trash"));
 
@@ -72,6 +76,7 @@ function AnimatedRoutes() {
           <Route path="/budget-analysis" element={<PageTransition><BudgetAnalysisPage /></PageTransition>} />
           <Route path="/politicians/:id" element={<PageTransition><PoliticianProfile /></PageTransition>} />
           <Route path="/search" element={<PageTransition><SearchPage /></PageTransition>} />
+          <Route path="/how-promises-are-tracked" element={<PageTransition><PromiseMethodology /></PageTransition>} />
 
           {/* Auth */}
           <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
@@ -84,6 +89,7 @@ function AnimatedRoutes() {
           {/* Dashboard */}
           <Route path="/dashboard" element={<ProtectedRoute roles={ADMIN_ROLES}><DashboardHome /></ProtectedRoute>} />
           <Route path="/dashboard/politicians" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticiansList /></ProtectedRoute>} />
+	  <Route path="/dashboard/voice" element={<ProtectedRoute roles={ADMIN_ROLES}><VoiceModerationPage /></ProtectedRoute>} />
           <Route path="/dashboard/community" element={<ProtectedRoute roles={ADMIN_ROLES}><CommunityDesk /></ProtectedRoute>} />
           <Route path="/dashboard/community/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/dashboard/visitors" element={<ProtectedRoute roles={ADMIN_ROLES}><Visitors /></ProtectedRoute>} />
@@ -92,6 +98,8 @@ function AnimatedRoutes() {
           <Route path="/dashboard/visitors/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><VisitorDetail /></ProtectedRoute>} />
           <Route path="/dashboard/politicians/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticianForm /></ProtectedRoute>} />
           <Route path="/dashboard/reference" element={<ProtectedRoute roles={ADMIN_ROLES}><ReferenceData /></ProtectedRoute>} />
+	  <Route path="/dashboard/seo" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOManagement /></ProtectedRoute>} />
+	  <Route path="/dashboard/seo/:contentType/:itemId" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOEditor /></ProtectedRoute>} />
           <Route path="/dashboard/signups" element={<ProtectedRoute roles={SUPER}><SignupQueue /></ProtectedRoute>} />
           <Route path="/dashboard/admins" element={<ProtectedRoute roles={SUPER}><Admins /></ProtectedRoute>} />
           <Route path="/dashboard/audit" element={<ProtectedRoute roles={SUPER}><AuditLog /></ProtectedRoute>} />

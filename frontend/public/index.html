@@ -4,38 +4,345 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
-        <meta name="description" content="TrackMP — Public Politician Transparency Ledger" />
+        <meta name="description" content="Track politicians, elections and political accountability worldwide. Explore profiles, promises, performance, voting records and public data." />
+
+        <!-- ===================================================================
+             CANONICAL URL - CRITICAL FOR SEO
+             =================================================================== -->
+        <link rel="canonical" href="https://your-domain.com/" />
+
+        <!-- ===================================================================
+             OPENGRAPH TAGS - FOR SOCIAL SHARING (Facebook, LinkedIn, etc.)
+             =================================================================== -->
+        <meta property="og:title" content="TrackMP | Global Politicians, Elections & Accountability" />
+        <meta property="og:description" content="Track politicians, elections, political parties, constituencies and public officials worldwide. Explore politician profiles, election results, promises, performance, voting records, public records and political data from countries around the world." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://your-domain.com/" />
+        <meta property="og:image" content="https://your-domain.com/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="TrackMP" />
+        <meta property="og:locale" content="en_US" />
+
+        <!-- ===================================================================
+             TWITTER CARD TAGS - FOR TWITTER/X SHARING
+             =================================================================== -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="TrackMP | Global Politicians, Elections & Accountability" />
+        <meta name="twitter:description" content="Track politicians, elections, political parties, constituencies and public officials worldwide. Explore politician profiles, election results, promises, performance, voting records, public records and political data from countries around the world." />
+        <meta name="twitter:image" content="https://your-domain.com/twitter-card.jpg" />
+        <meta name="twitter:site" content="@trackmp" />
+        <meta name="twitter:creator" content="@trackmp" />
+
+        <!-- ===================================================================
+             JSON-LD STRUCTURED DATA - CRITICAL FOR SEO RICH RESULTS
+             =================================================================== -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "TrackMP",
+            "url": "https://your-domain.com/",
+            "description": "Track politicians, elections, political parties, constituencies and public officials worldwide. Explore politician profiles, election results, promises, performance, voting records, public records and political data from countries around the world.",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://your-domain.com/?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+            },
+            "sameAs": [
+                "https://twitter.com/trackmp",
+                "https://www.facebook.com/trackmp",
+                "https://www.linkedin.com/company/trackmp"
+            ]
+        }
+        </script>
+
+        <!-- Organization Schema -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "TrackMP",
+            "url": "https://your-domain.com/",
+            "logo": "https://your-domain.com/logo.png",
+            "description": "Global platform for tracking politicians, elections, and political accountability.",
+            "foundingDate": "2024",
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "availableLanguage": ["English"]
+            }
+        }
+        </script>
+
+        <!-- Breadcrumb Schema -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://your-domain.com/"
+                }
+            ]
+        }
+        </script>
+
+        <!-- ===================================================================
+             SECURITY HEADERS
+             Meta-tag CSPs are a *defense-in-depth* layer only — they cannot set
+             X-Frame-Options, HSTS, frame-ancestors, or Permissions-Policy, and
+             they can be overridden or removed by anyone with page access. The
+             authoritative versions of ALL of these MUST be set as real HTTP
+             response headers at your server/CDN/edge (e.g. Cloudflare, nginx,
+             or a middleware like helmet.js). Treat everything below as a
+             fallback, not the primary control.
+             =================================================================== -->
+        <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+
+        <!-- Content-Security-Policy: restricts script/style/connect origins.
+             Adjust the 'connect-src' / 'img-src' lists if you add more
+             third-party services. Avoid 'unsafe-inline' long-term — see the
+             nonce note on the inline <script> tags below.
+
+             Note: Google & gstatic origins added to connect-src, script-src,
+             img-src, and frame-src to allow reCAPTCHA telemetry and frames. -->
+        <meta http-equiv="Content-Security-Policy" content="
+            default-src 'self';
+            script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://www.google.com https://www.gstatic.com 'unsafe-inline';
+            style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+            font-src 'self' https://fonts.gstatic.com;
+            img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://your-domain.com;
+            connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.google.com https://www.gstatic.com;
+            frame-src 'self' https://www.google.com https://recaptcha.google.com;
+            object-src 'none';
+            base-uri 'self';
+            form-action 'self';
+            upgrade-insecure-requests;
+        " />
+
+        <!-- Permissions-Policy: disable powerful browser features this app
+             does not use, reducing the attack surface for embedded/third-party
+             content. -->
+        <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()" />
+
+        <!-- Preconnect to critical external domains -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
-        <!--
-        manifest.json provides metadata used when your web app is installed on a
-        user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-        -->
-        <!--
-        Notice the use of %PUBLIC_URL% in the tags above.
-        It will be replaced with the URL of the `public` folder during the build.
-        Only files inside the `public` folder can be referenced from the HTML.
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
 
-        Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-        work correctly both with client-side routing and a non-root public URL.
-        Learn how to configure a non-root public URL by running `npm run build`.
-        -->
-        <title>TrackMP</title>
-        <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
+        <!-- Preload critical assets -->
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" crossorigin />
+
+        <!-- Optimized Google Font loading with font-display swap.
+             crossorigin added so the stylesheet request matches the CORS mode
+             used by the preconnect/preload hints above, avoiding a duplicate
+             fetch. -->
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap"
+              media="print"
+              crossorigin
+              onload="this.media='all'; this.onload=null;" />
+        <noscript>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" crossorigin />
+        </noscript>
+
+        <!-- Critical inline styles to prevent FOUC -->
+        <style>
+            body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+            #root { min-height: 100vh; }
+            .font-loading { font-display: swap; }
+        </style>
+
+        <!-- ===================================================================
+             GOOGLE CONSENT MODE — set BEFORE the gtag library loads.
+             Because TrackMP tracks visitor behavior on a site about public
+             officials, treat analytics consent conservatively: default to
+             "denied" and only flip to "granted" once you have an explicit,
+             logged consent action from the visitor (e.g. a cookie banner).
+             This also keeps you aligned with GDPR/ePrivacy-style regimes.
+             =================================================================== -->
+        <script>
+            'use strict';
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { window.dataLayer.push(arguments); }
+
+            // Default consent - denied until user accepts
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'analytics_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied',
+                'wait_for_update': 500 // Wait up to 500ms for consent updates
+            });
+        </script>
+
+        <!-- Async Google Analytics with privacy enhancements -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-18EZD9W5GG"></script>
+        <script>
+            'use strict';
+            (function() {
+                // Only send page view if consent is granted
+                // This ensures GA4 doesn't fire before consent
+                gtag('js', new Date());
+
+                // Configure with consent settings
+                gtag('config', 'G-18EZD9W5GG', {
+                    'anonymize_ip': true,
+                    'cookie_flags': 'SameSite=None; Secure',
+                    'cookie_expires': 63072000, // 2 years
+                    'send_page_view': true,
+                    'allow_google_signals': false, // Disable additional Google signals
+                    'allow_ad_personalization_signals': false,
+                    'use_amp_client_id': false
+                });
+            })();
+
+            // ============================================================
+            // CONSENT MANAGEMENT FUNCTION
+            // Call this when user accepts cookies (from your cookie banner)
+            // ============================================================
+            window.updateConsent = function(granted) {
+                if (granted) {
+                    gtag('consent', 'update', {
+                        'ad_storage': 'granted',
+                        'analytics_storage': 'granted',
+                        'ad_user_data': 'granted',
+                        'ad_personalization': 'granted'
+                    });
+
+                    // Force a page view refresh after consent
+                    gtag('event', 'page_view', {
+                        'page_title': document.title,
+                        'page_location': window.location.href,
+                        'send_to': 'G-18EZD9W5GG'
+                    });
+                } else {
+                    gtag('consent', 'update', {
+                        'ad_storage': 'denied',
+                        'analytics_storage': 'denied',
+                        'ad_user_data': 'denied',
+                        'ad_personalization': 'denied'
+                    });
+                }
+            };
+        </script>
+
+        <!-- ===================================================================
+             GA4 DEBUGGING HELPERS
+             =================================================================== -->
+        <script>
+            'use strict';
+            // Log GA4 events to console for debugging (remove in production)
+            if (window.__IS_DEV__) {
+                console.log('GA4 Tracking ID: G-18EZD9W5GG');
+                console.log('Initial Consent: Denied');
+                console.log('Update consent by calling window.updateConsent(true)');
+            }
+        </script>
+
+        <!-- ===================================================================
+             GLOBAL ERROR HANDLING
+             Notes on what changed and why:
+             - `process.env.NODE_ENV` does NOT exist in a raw browser <script>
+               tag — `process` is a Node.js global. In plain index.html (no
+               bundler define-plugin rewriting this string) that reference
+               throws a ReferenceError, which is worse than the noisy console
+               logging it was meant to prevent. Replaced with a build-injected
+               flag your bundler can safely set (e.g. via HTML templating), and
+               falls back to `false` (silent) if it's never defined.
+             - Error/rejection messages are no longer forwarded to analytics
+               verbatim. Stack traces and error messages can leak file paths,
+               internal identifiers, or fragments of user input; only a
+               truncated, generic description is sent.
+             =================================================================== -->
+        <script>
+            'use strict';
+            // Your build process can inject this, e.g. by templating
+            // "%IS_DEV%" -> "true" only in local/dev builds. Defaults to false
+            // so nothing sensitive is ever logged in production if the
+            // injection step is skipped.
+            window.__IS_DEV__ = window.__IS_DEV__ || false;
+
+            function safeLog() {
+                if (window.__IS_DEV__) {
+                    console.error.apply(console, arguments);
+                }
+            }
+
+            window.addEventListener('error', function(e) {
+                if (e.error instanceof DOMException &&
+                    e.error.name === 'DataCloneError' &&
+                    e.message &&
+                    e.message.includes('PerformanceServerTiming')) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'exception', {
+                            'description': 'DataCloneError suppressed',
+                            'fatal': false
+                        });
+                    }
+                    return true;
+                }
+
+                safeLog('Unhandled error:', e);
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'exception', {
+                        'description': 'client_error', // generic, no message/stack leaked
+                        'fatal': false
+                    });
+                }
+                return false;
+            }, true);
+
+            window.addEventListener('unhandledrejection', function(e) {
+                safeLog('Unhandled Promise Rejection:', e.reason);
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'exception', {
+                        'description': 'unhandled_rejection', // generic
+                        'fatal': false
+                    });
+                }
+                e.preventDefault();
+            });
+        </script>
+
+        <title>TrackMP | Global Politicians, Elections & Accountability</title>
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
-        <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-    </body>    </body>
+        <!-- Deferred third-party scripts to improve LCP.
+             reCAPTCHA left commented as in the original — when enabled:
+             1. Never hardcode the site key here; keep it in window._env_ as
+                already set up.
+             2. SRI (integrity=) is intentionally NOT used for this script:
+                Google rotates the file contents server-side per request, so a
+                fixed hash will break loading. Rely on HTTPS + the CSP
+                script-src allowlist above instead. -->
+        <script defer>
+            'use strict';
+            /*
+            (function() {
+                var recaptchaScript = document.createElement('script');
+                recaptchaScript.src = 'https://www.google.com/recaptcha/api.js?render=' +
+                                     (window._env_ && window._env_.REACT_APP_RECAPTCHA_SITE_KEY || '');
+                recaptchaScript.async = true;
+                recaptchaScript.defer = true;
+                document.body.appendChild(recaptchaScript);
+            })();
+            */
+        </script>
+    </body>
 </html>

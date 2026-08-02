@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreCrawl Local Setup & SSL Troubleshooting Guide</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --muted-text: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-hover: #0284c7;
+            --border-color: #334155;
+            --code-bg: #090d16;
+            --error-color: #f87171;
+            --success-color: #4ade80;
+            --warning-color: #fbbf24;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-top: 0;
+            font-size: 2rem;
+        }
+
+        p.subtitle {
+            color: var(--muted-text);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-top: 0;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            margin-top: 1.2rem;
+        }
+
+        .error-box {
+            background-color: rgba(248, 113, 113, 0.1);
+            border-left: 4px solid var(--error-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #fca5a5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .solution-box {
+            background-color: rgba(74, 222, 128, 0.05);
+            border-left: 4px solid var(--success-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        code {
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            background-color: var(--code-bg);
+            color: #38bdf8;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        .step-num {
+            display: inline-block;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            font-weight: bold;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 8px;
+            font-size: 0.85rem;
+        }
+
+        ul, ol {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 75%;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge-danger { background-color: rgba(248, 113, 113, 0.2); color: var(--error-color); }
+        .badge-warning { background-color: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+    }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>LibreCrawl Local Setup & SSL Troubleshooting</h1>
+        <p class="subtitle">Complete technical reference guide for resolving Python PEP 668, requests SSL errors, and Playwright/Chromium certificate failures on WSL/Linux.</p>
+    </header>
+
+    <!-- ISSUE 1 -->
+    <div class="section">
+        <h2>Issue 1: Externally Managed Environment (PEP 668)</h2>
+        <span class="badge badge-warning">Setup / Environment</span>
+        
+        <h3>Error Logs</h3>
+        <div class="error-box">error: externally-managed-environment
+× This environment is externally managed
+╰─> To install Python packages system-wide, try apt install python3-xyz...
+Failed to install dependencies!</div>
+
+        <h3>Cause</h3>
+        <p>Modern Debian/Ubuntu installations prevent global <code>pip install</code> commands on system Python to protect OS package dependencies.</p>
+
+        <div class="solution-box">
+            <h3>Fix 1: Virtual Environment (Recommended)</h3>
+            <pre><code># 1. Install Python venv package
+sudo apt update && sudo apt install -y python3-venv python3-full
+
+# 2. Create virtual environment inside project directory
+python3 -m venv venv
+
+# 3. Activate the virtual environment
+source venv/bin/activate
+
+# 4. Re-run start script
+bash start-librecrawl.sh</code></pre>
+
+            <h3>Fix 2: Bypass PEP 668 Globally</h3>
+            <pre><code>pip config set global.break-system-packages true
+bash start-librecrawl.sh</code></pre>
+        </div>
+    </div>
+
+    <!-- ISSUE 2 -->
+    <div class="section">
+        <h2>Issue 2: Python HTTP Requests Certificate Verification Failure</h2>
+        <span class="badge badge-danger">SSL / Network</span>
+
+        <h3>Error Logs</h3>
+        <div class="error-box">HTTPSConnectionPool(host='your-domain.com', port=443): Max retries exceeded with url: /robots.txt
+(Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)')))</div>
+
+        <h3>Cause</h3>
+        <p>Python running inside WSL relies on the Linux CA trust store or <code>certifi</code> bundle, which does not automatically include <code>mkcert</code> root CAs installed on Windows host system.</p>
+
+        <div class="solution-box">
+            <h3>Fix: Import Windows mkcert CA into WSL</h3>
+            <ol>
+                <li>
+                    Get the <code>mkcert</code> Root CA directory in Windows PowerShell:
+                    <pre><code>mkcert -CAROOT</code></pre>
+                </li>
+                <li>
+                    Copy the certificate into WSL trust store and update system CA database:
+                    <pre><code># Create directory
+sudo mkdir -p /usr/local/share/ca-certificates/
+
+# Copy root certificate from Windows (replace YourUsername)
+sudo cp /mnt/c/Users/YourUsername/AppData/Local/mkcert/rootCA.pem /usr/local/share/ca-certificates/mkcert-rootCA.crt
+
+# Update Linux trusted certificates
+sudo update-ca-certificates</code></pre>
+                </li>
+                <li>
+                    Set Python SSL environment variables (Add to <code>~/.bashrc</code> for persistence):
+                    <pre><code>export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt</code></pre>
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- ISSUE 3 -->
+    <div class="section">
+        <h2>Issue 3: Playwright / Chromium Headless Navigation Certificate Error</h2>
+        <span class="badge badge-danger">Headless Browser</span>
+
+        <h3>Error Logs</h3>
+        <div class="error-box">Status Code: 0 (SSL/TLS Error)
+Error: Navigation error: Page.goto: net::ERR_CERT_AUTHORITY_INVALID at https://your-domain.com/
+Call log: - navigating to "https://your-domain.com/", waiting until "domcontentloaded"</div>
+
+        <h3>Cause</h3>
+        <p>LibreCrawl uses Playwright/Chromium to crawl pages and gather DOM elements. Chromium does not use Python's CA settings or Linux system cert store by default; it uses Network Security Services (NSS) or strict internal certificate checks.</p>
+
+        <div class="solution-box">
+            <h3>Fix 1: Trust CA in Chromium's NSS Database (Linux)</h3>
+            <pre><code># 1. Install NSS tools
+sudo apt update && sudo apt install -y libnss3-tools
+
+# 2. Create NSS database folder if missing
+mkdir -p ~/.pki/nssdb
+certutil -d sql:$HOME/.pki/nssdb -N --empty-password
+
+# 3. Add mkcert CA to Chromium trust store
+certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "mkcert root ca" -i /usr/local/share/ca-certificates/mkcert-rootCA.crt</code></pre>
+
+            <h3>Fix 2: Launch Playwright with SSL Flag (Code Level)</h3>
+            <p>If modifying source code, add browser context options in the crawler startup:</p>
+            <pre><code># Playwright Python context settings
+context = await browser.new_context(
+    ignore_https_errors=True
+)
+
+# Playwright Launch Arguments
+browser = await playwright.chromium.launch(
+    args=['--ignore-certificate-errors', '--allow-insecure-localhost']
+)</code></pre>
+        </div>
+    </div>
+
+    <!-- QUICK REFERENCE COMMANDS -->
+    <div class="section">
+        <h2>Quick Workflow Reference</h2>
+        <pre><code># 1. Start virtualenv
+source venv/bin/activate
+
+# 2. Export system CA paths
+export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
+# 3. Run application
+bash start-librecrawl.sh</code></pre>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+import { UserSquare2 } from "lucide-react";
+
+/**
+ * SEO Content Type Registry
+ * -----------------------------------------------------------------------
+ * This is the ONLY place "politicians" is wired into the SEO Management
+ * feature. To support a new content type later (countries, parties,
+ * elections, articles, ...), add one entry here — no other SEO component
+ * needs to change.
+ *
+ * Each entry describes:
+ *  - how to search/list items of that type (reuses REAL existing endpoints
+ *    where possible, e.g. /admin/politicians)
+ *  - how to read/write SEO config for that type (MOCKED for now — see
+ *    lib/seo/seoApi.js — backend does not exist yet)
+ *  - how to render an item in search results and previews
+ *  - default metadata templates (for the "generated automatically" state)
+ */
+export const CONTENT_TYPES = {
+  politicians: {
+    key: "politicians",
+    label: "Politicians",
+    icon: UserSquare2,
+
+    // REAL: reuses the existing admin politicians list endpoint.
+    // Params follow the same shape PoliticiansList.jsx already sends.
+    searchEndpoint: "/admin/politicians",
+
+    // REAL: reuses the existing single-item endpoint (same one
+    // PoliticianForm.jsx already calls) so the SEO editor can show the
+    // item's name/role/etc. without duplicating any data-fetching logic.
+    getDetailEndpoint: (itemId) => `/admin/politicians/${itemId}`,
+
+    // MOCKED for now (see seoApi.js). This is the endpoint shape the
+    // backend should eventually implement — see Section 9 of the writeup.
+    seoEndpointBase: "/admin/seo/politicians",
+
+    getItemId: (item) => item.id,
+    getItemLabel: (item) => item.name,
+    getItemSubLabel: (item) =>
+      [item.role, item.country_code].filter(Boolean).join(" • ") || "—",
+    getPublicPath: (item) => `/politicians/${item.id}`,
+
+    // Template tokens are resolved against the raw content item.
+    // {name}, {role}, {region}, {country} etc. — resolved in seoApi.js
+    defaultTitleTemplate: "{name} | {role}, {region} | TrackMP",
+    defaultDescriptionTemplate:
+      "Track {name}'s promises, career history, and public record on TrackMP — independent political accountability tracking.",
+
+    schemaType: "Person",
+    structuredDataFields: [
+      { key: "jobTitle", label: "Job Title", placeholder: "Prime Minister" },
+      { key: "nationality", label: "Nationality", placeholder: "Indian" },
+      { key: "birthDate", label: "Birth Date", placeholder: "YYYY-MM-DD" },
+      {
+        key: "sameAs",
+        label: "Same As (social/official URLs)",
+        placeholder: "https://twitter.com/...",
+        isList: true,
+      },
+    ],
+  },
+
+  // ---------------------------------------------------------------------
+  // FUTURE CONTENT TYPES — add entries like this when the backend and
+  // corresponding list endpoints exist. Nothing else in the SEO feature
+  // needs to be touched.
+  // ---------------------------------------------------------------------
+  // countries: {
+  //   key: "countries",
+  //   label: "Countries",
+  //   icon: Globe2,
+  //   searchEndpoint: "/ref/countries",
+  //   seoEndpointBase: "/admin/seo/countries",
+  //   getItemId: (item) => item.code,
+  //   getItemLabel: (item) => item.name,
+  //   getItemSubLabel: (item) => item.code,
+  //   getPublicPath: (item) => `/countries/${item.code}`,
+  //   defaultTitleTemplate: "{name} | Political Landscape | TrackMP",
+  //   defaultDescriptionTemplate: "Explore political data for {name}.",
+  //   schemaType: "Country",
+  //   structuredDataFields: [],
+  // },
+};
+
+export const CONTENT_TYPE_LIST = Object.values(CONTENT_TYPES);
+
+export function getContentType(key) {
+  return CONTENT_TYPES[key] || null;
+}
+
+/** Resolves {token} placeholders in a template string against a content item. */
+export function resolveTemplate(template, item, extra = {}) {
+  if (!template) return "";
+  const dict = {
+    name: item?.name || "",
+    role: item?.role || "",
+    region: item?.state_name || item?.country_code || "",
+    country: item?.country_code || "",
+    ...extra,
+  };
+  return template.replace(/\{(\w+)\}/g, (_, key) => dict[key] ?? "");
+}

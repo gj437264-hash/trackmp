@@ -44,6 +44,30 @@ code, .font-mono, pre {
     --chart-4: 8 50% 47%;
     --chart-5: 20 20% 13%;
     --radius: 1rem;
+  /* Add this block directly below your existing :root block inside the
+   first `@layer base { :root { ... } }` in index.css — i.e. as a
+   sibling `.dark { ... }` selector, same @layer base. */
+  .dark {
+    --background: 20 18% 9%;
+    --foreground: 36 30% 92%;
+    --card: 20 16% 13%;
+    --card-foreground: 36 30% 92%;
+    --popover: 20 16% 13%;
+    --popover-foreground: 36 30% 92%;
+    --primary: 11 70% 58%;
+    --primary-foreground: 20 20% 10%;
+    --secondary: 20 14% 20%;
+    --secondary-foreground: 36 30% 92%;
+    --muted: 20 14% 18%;
+    --muted-foreground: 36 15% 68%;
+    --accent: 164 45% 42%;
+    --accent-foreground: 20 18% 9%;
+    --destructive: 8 55% 55%;
+    --destructive-foreground: 20 18% 9%;
+    --border: 36 15% 25%;
+    --input: 36 15% 25%;
+    --ring: 11 70% 58%;
+  }  
   }
 }
 
@@ -94,7 +118,7 @@ code, .font-mono, pre {
   .data-num {
     font-family: 'IBM Plex Mono', ui-monospace, monospace;
   }
-  
+
   .gradient-strong {
     @apply bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500 bg-clip-text text-transparent;
   }
@@ -113,17 +137,17 @@ code, .font-mono, pre {
   .soft-table td {
     @apply p-3 border-b border-slate-100 text-slate-700;
   }
-  
+
   /* Subtle gradient - best for smaller text */
   .gradient-subtle {
     @apply bg-gradient-to-r from-emerald-400 via-teal-400 to-indigo-400 bg-clip-text text-transparent;
   }
-  
+
   /* Dark gradient - best for dark backgrounds */
   .gradient-dark {
     @apply bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent;
   }
-  
+
   /* Primary gradient - your original */
   .gradient-primary {
     @apply bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent;
@@ -133,11 +157,11 @@ code, .font-mono, pre {
   .soft-card {
     @apply bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-soft;
   }
-  
+
   .soft-card-hover {
     @apply hover:shadow-soft-lg hover:border-indigo-200/80 hover:-translate-y-1 transition-all duration-300;
   }
-  
+
   .soft-input {
     @apply w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl
            text-slate-800 placeholder:text-slate-400
@@ -184,21 +208,21 @@ code, .font-mono, pre {
   }
 
   .btn-soft-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 font-display font-bold text-sm tracking-wide text-white 
-           bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 
-           rounded-2xl shadow-soft-emerald hover:shadow-xl hover:shadow-emerald-500/40 
+    @apply inline-flex items-center justify-center px-6 py-3 font-display font-bold text-sm tracking-wide text-white
+           bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700
+           rounded-2xl shadow-soft-emerald hover:shadow-xl hover:shadow-emerald-500/40
            hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
   }
 
   .btn-soft-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 font-display font-bold text-sm tracking-wide text-white 
-           bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 
-           rounded-2xl shadow-soft-indigo hover:shadow-xl hover:shadow-indigo-500/40 
+    @apply inline-flex items-center justify-center px-6 py-3 font-display font-bold text-sm tracking-wide text-white
+           bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700
+           rounded-2xl shadow-soft-indigo hover:shadow-xl hover:shadow-indigo-500/40
            hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
   }
 
   .stat-box {
-    @apply border border-slate-200 rounded-2xl p-5 bg-white/80 backdrop-blur-sm shadow-sm 
+    @apply border border-slate-200 rounded-2xl p-5 bg-white/80 backdrop-blur-sm shadow-sm
            hover:shadow-md transition-all duration-300 hover:-translate-y-0.5;
   }
 
@@ -213,17 +237,17 @@ code, .font-mono, pre {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
-  
+
   @keyframes swing {
     0%, 100% { transform: rotate(-3deg); }
     50% { transform: rotate(3deg); }
   }
-  
+
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
   }
-  
+
   @keyframes fade-slide-up {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -244,18 +268,31 @@ code, .font-mono, pre {
     to { opacity: 1; transform: scale(1); }
   }
 
+  @keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.25; }
+  50%      { transform: translateY(-14px) rotate(12deg); opacity: 0.55; }
+  }
+  .animate-float {
+    animation-name: float;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float { animation: none; }
+  }
+
   .animate-pulse-slow {
     animation: pulse-slow 3s ease-in-out infinite;
   }
-  
+
   .animate-swing {
     animation: swing 5s ease-in-out infinite;
   }
-  
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-fade-slide-up {
     animation: fade-slide-up 300ms ease-out;
   }
@@ -298,21 +335,21 @@ code, .font-mono, pre {
   .scrollbar-thin {
     scrollbar-width: thin;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: #CBD5E1;
     border-radius: 8px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #94A3B8;
   }
@@ -321,7 +358,7 @@ code, .font-mono, pre {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
   }
@@ -331,4 +368,25 @@ code, .font-mono, pre {
   [data-debug-wrapper="true"] {
     display: contents !important;
   }
+}
+
+
+/* Force injected article content to take full available width */
+.article-rendered-content {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Override narrow inline style wrappers from uploaded HTML files */
+.article-rendered-content [style*="max-width"],
+.article-rendered-content [style*="width"] {
+  max-width: 100% !important;
+}
+
+/* Ensure embedded images, tables, and wrappers don't overflow or shrink abnormally */
+.article-rendered-content img,
+.article-rendered-content table,
+.article-rendered-content iframe {
+  max-width: 100% !important;
+  height: auto !important;
 }

@@ -22,6 +22,7 @@ class UserOut(BaseModel):
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
+    captcha_token: str
 
 
 class GeoScopeRuleIn(BaseModel):
@@ -71,6 +72,7 @@ class SignupRequestIn(BaseModel):
     full_name: str = Field(min_length=1, max_length=200)
     email: EmailStr
     country_code: str = Field(min_length=2, max_length=2)
+    captcha_token: str
 
 
 class SignupDecisionIn(BaseModel):
@@ -161,9 +163,15 @@ class WealthEntryIn(BaseModel):
 
 class PromiseStatus(str, Enum):
     pending = "pending"
+    stalled = "stalled"
     in_progress = "in_progress"
+    compromised = "compromised"
     delivered = "delivered"
     broken = "broken"
+
+class PromiseLinkIn(BaseModel):
+    name: Optional[str] = None
+    url: str
 
 class PromiseIn(BaseModel):
     title: str
@@ -171,6 +179,7 @@ class PromiseIn(BaseModel):
     status: PromiseStatus = PromiseStatus.pending
     date_made: Optional[str] = None
     source_url: Optional[str] = None
+    source_links: Optional[List[PromiseLinkIn]] = None
 
 class PromiseUpdateIn(BaseModel):
     title: Optional[str] = None
@@ -244,6 +253,7 @@ class ContactIn(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
+    captcha_token: str
     country_code: Optional[str] = None
     subject: str
     message: str
@@ -255,6 +265,7 @@ class UpdateRequestIn(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
+    captcha_token: str
     country_code: Optional[str] = None
     organization: Optional[str] = None
 
@@ -321,6 +332,24 @@ class PurgeIn(BaseModel):
     entity_id: str
     confirm_name: str  # must match entity primary name/label
 
+# ==========================================================================
+# Voice / discussion models
+# ==========================================================================
+
+class VoiceCommentIn(BaseModel):
+    body: str = Field(..., min_length=1, max_length=500)
+    parent_id: Optional[str] = None          # set when posting a reply
+    website: Optional[str] = ""              # honeypot — must stay empty
+    form_rendered_at: Optional[str] = None   # ISO timestamp, soft anti-bot check
+
+
+class VoiceReportIn(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=200)
+
+
+class BlockedIpIn(BaseModel):
+    ip: str = Field(..., min_length=3, max_length=45)
+    reason: Optional[str] = None
 
 # ---------- AUDIT ----------
 class AuditFilterOut(BaseModel):

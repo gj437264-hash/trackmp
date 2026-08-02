@@ -18,6 +18,13 @@ Disallow: /admin/
 Disallow: /api/internal/
 Disallow: /private/
 Disallow: /draft/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /auth/callback
+Disallow: /auth/reset-password
+Disallow: /dashboard
+Disallow: /profile
+
 
 # Disallow authentication pages
 Disallow: /login
@@ -32,6 +39,7 @@ Disallow: /filter?
 # Disallow user account pages (privacy)
 Disallow: /user/*
 Disallow: /profile/*
+Disallow: /dashboard/*
 
 # Allow core content pages
 Allow: /about

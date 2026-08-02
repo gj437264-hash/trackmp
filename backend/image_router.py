@@ -51,6 +51,7 @@ import warnings
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
+from starlette.responses import Response
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 from PIL import Image as PILImage
@@ -98,7 +99,7 @@ class ImageConfig:
     }
 
     CACHE_VERSION = 2
-    CACHE_TTL_HOURS = 24
+    CACHE_TTL_HOURS = 8760
     MAX_CACHE_SIZE_BYTES = 100 * 1024 * 1024
 
     FILE_PERMISSIONS = 0o640          # not world-readable
@@ -773,8 +774,8 @@ async def upload_image(
     )
     return JSONResponse(result)
 
-
-@router.get("/{file_id}")
+#@router.get("/{file_id}", methods=["GET", "HEAD"])
+@router.api_route("/{file_id}", methods=["GET", "HEAD"])
 async def get_image(file_id: str, request: Request):
     file_id = require_valid_file_id(file_id)
     device_type = processor.detect_device(request)
@@ -788,7 +789,7 @@ async def get_metadata(file_id: str):
     if not meta:
         raise HTTPException(404, "Image metadata not found")
     meta["file_id"] = meta.pop("_id")
-    return JSONResponse(meta, default=str)
+    return Response(content=json.dumps(meta, default=str), media_type="application/json")
 
 
 @router.get("")
@@ -798,7 +799,7 @@ async def list_my_images(context: Optional[str] = None, owner_id: str = Depends(
     docs = await mongo_store.list_by_owner(owner_id, context)
     for d in docs:
         d["file_id"] = d.pop("_id")
-    return JSONResponse(docs, default=str)
+    return Response(content=json.dumps(docs, default=str), media_type="application/json")
 
 
 @router.delete("/{file_id}")

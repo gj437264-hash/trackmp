@@ -50,7 +50,8 @@ export default function ArticleDetail() {
         </div>
 
         <div
-          className="mt-8 prose prose-slate max-w-none prose-headings:font-display prose-a:text-emerald-600"
+          //className="mt-8 prose prose-slate max-w-none prose-headings:font-display prose-a:text-emerald-600"
+          className="article-rendered-content prose prose-slate md:prose-lg lg:prose-xl max-w-none w-full prose-headings:font-display prose-a:text-emerald-600"
           dangerouslySetInnerHTML={{ __html: article.body_html || "<p><em>This article has no content yet.</em></p>" }}
         />
 

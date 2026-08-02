@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PublicLayout } from "@/components/PublicLayout";
 import { api, formatApiError } from "@/lib/api";
 import { CheckCircle2, ArrowLeft, ArrowRight, Plus, Trash, Upload } from "lucide-react";
+import { loadRecaptcha, getRecaptchaToken } from "@/lib/recaptcha";
 
 const UPDATE_TYPES = [
   "Incorrect Information", "Missing Information", "New Position", "Previous Position",
@@ -114,6 +115,7 @@ export default function SubmitUpdatePage() {
   const [uploadWarning, setUploadWarning] = useState(false);
 
   useEffect(() => {
+    loadRecaptcha().catch(() => {});
     api.get("/ref/countries").then((r) => setCountries(r.data.items || [])).catch(() => {});
   }, []);
 
@@ -137,6 +139,8 @@ export default function SubmitUpdatePage() {
     setBusy(true);
     setError("");
     try {
+      const captchaToken = await getRecaptchaToken("submit_update");
+
       const payload = requestType === "update_existing"
         ? {
             request_type: "update_existing",
@@ -146,6 +150,7 @@ export default function SubmitUpdatePage() {
             description: existing.description,
             evidence_urls: evidenceUrls.filter((u) => u.trim()),
             notes: notes || null,
+            captcha_token: captchaToken,
           }
         : {
             request_type: "add_new",
@@ -154,6 +159,7 @@ export default function SubmitUpdatePage() {
             new_politician_data: newPol,
             evidence_urls: evidenceUrls.filter((u) => u.trim()),
             notes: notes || null,
+            captcha_token: captchaToken,
           };
       const { data } = await api.post("/update-requests", payload);
       setTicketNumber(data.ticket_number);
@@ -169,7 +175,10 @@ export default function SubmitUpdatePage() {
         if (results.some((r) => r.status === "rejected")) setUploadWarning(true);
       }
     } catch (e) {
-      setError(formatApiError(e));
+      const msg = e?.message === "reCAPTCHA not loaded. Please refresh the page and try again."
+        ? e.message
+        : formatApiError(e);
+      setError(msg);
     } finally {
       setBusy(false);
     }
@@ -308,6 +317,12 @@ export default function SubmitUpdatePage() {
                 {busy ? "Submitting…" : "Submit"}
               </button>
             </div>
+            <p className="text-[11px] text-slate-400 text-center mt-4">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Privacy Policy</a>{" "}
+              and{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">Terms of Service</a> apply.
+            </p>
           </div>
         )}
 
@@ -378,6 +393,12 @@ export default function SubmitUpdatePage() {
                 {busy ? "Submitting…" : "Submit"}
               </button>
             </div>
+            <p className="text-[11px] text-slate-400 text-center mt-4">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Privacy Policy</a>{" "}
+              and{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">Terms of Service</a> apply.
+            </p>
           </div>
         )}
       </div>

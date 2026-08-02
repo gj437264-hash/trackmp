@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackMP → Next.js Migration Guide</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+            color: #1e1e2a;
+            background: #f8fafc;
+        }
+        h1 {
+            color: #0b3b2c;
+            border-bottom: 4px solid #0b3b2c;
+            padding-bottom: 12px;
+            font-weight: 600;
+        }
+        h2 {
+            color: #14532d;
+            margin-top: 44px;
+            border-left: 6px solid #14532d;
+            padding-left: 16px;
+            font-weight: 500;
+        }
+        h3 {
+            color: #1e3a8a;
+            margin-top: 28px;
+            font-weight: 500;
+        }
+        .box {
+            background: #ffffff;
+            border: 1px solid #dce1e9;
+            border-radius: 12px;
+            padding: 18px 24px;
+            margin: 20px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .warn {
+            background: #fff8e7;
+            border-left: 6px solid #f0b429;
+            padding: 14px 20px;
+            margin: 18px 0;
+            border-radius: 8px;
+        }
+        .tip {
+            background: #e2f0ea;
+            border-left: 6px solid #0f6b4f;
+            padding: 14px 20px;
+            margin: 18px 0;
+            border-radius: 8px;
+        }
+        .danger {
+            background: #fee9ec;
+            border-left: 6px solid #c42e44;
+            padding: 14px 20px;
+            margin: 18px 0;
+            border-radius: 8px;
+        }
+        code {
+            background: #1e293b;
+            color: #e9edf5;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        pre {
+            background: #1e293b;
+            color: #e9edf5;
+            padding: 16px 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 0.86em;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 18px 0;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        th, td {
+            border: 1px solid #dce1e9;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.92em;
+        }
+        th {
+            background: #14532d;
+            color: #fff;
+            font-weight: 500;
+        }
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+        .checklist li {
+            margin-bottom: 10px;
+            padding-left: 28px;
+            position: relative;
+        }
+        .checklist li::before {
+            content: "☐";
+            font-size: 1.2em;
+            position: absolute;
+            left: 0;
+            color: #14532d;
+        }
+        .step-num {
+            display: inline-block;
+            background: #14532d;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 12px;
+            font-weight: 600;
+        }
+        .toc {
+            background: #fff;
+            border: 1px solid #dce1e9;
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin: 28px 0;
+        }
+        .toc a {
+            text-decoration: none;
+            color: #14532d;
+            font-weight: 500;
+        }
+        .toc a:hover { text-decoration: underline; }
+        .toc li {
+            margin-bottom: 7px;
+        }
+        footer {
+            margin-top: 54px;
+            padding-top: 20px;
+            border-top: 1px solid #dce1e9;
+            font-size: 0.85em;
+            color: #5b6778;
+        }
+        hr { border: none; border-top: 2px dashed #dce1e9; margin: 30px 0; }
+        .badge {
+            background: #14532d;
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🇹​rackMP → Next.js Migration Guide <span style="font-weight:400; font-size:0.9rem; color:#3d5a4b;">(test‑server‑first)</span></h1>
+<p style="font-size:1.05rem; margin-top:-6px;"><em>Reference for migrating TrackMP frontend from Create React App to Next.js 14 App Router — safe, step‑by‑step, with rollback.</em></p>
+
+<div class="toc">
+    <strong style="font-size:1.1rem;">📑 Contents</strong>
+    <ol style="margin-top:10px; columns: 2 220px; column-gap: 30px;">
+        <li><a href="#overview">Overview &amp; Goal</a></li>
+        <li><a href="#glossary">Glossary (plain‑English)</a></li>
+        <li><a href="#strategy">Overall Strategy</a></li>
+        <li><a href="#backup">Step 1 — Backup Everything</a></li>
+        <li><a href="#testserver">Step 2 — Set Up Test Server</a></li>
+        <li><a href="#phase1">Step 3 — Install Next.js</a></li>
+        <li><a href="#phase2">Step 4 — Reorganize Pages</a></li>
+        <li><a href="#phase3">Step 5 — Client vs Server</a></li>
+        <li><a href="#phase4">Step 6 — SEO &amp; Metadata</a></li>
+        <li><a href="#phase5">Step 7 — Connect to FastAPI</a></li>
+        <li><a href="#testing">Step 8 — Testing Checklist</a></li>
+        <li><a href="#cutover">Step 9 — Going Live</a></li>
+        <li><a href="#rollback">Step 10 — Rollback Plan</a></li>
+        <li><a href="#postlaunch">Step 11 — After Launch</a></li>
+        <li><a href="#extra">Extra Points</a></li>
+    </ol>
+</div>
+
+<h2 id="overview">1. Overview &amp; Goal</h2>
+<div class="box">
+    <p><strong>TrackMP</strong> currently uses a React frontend built with Create React App (CRA) and React Router. We are migrating to <strong>Next.js 14 (App Router)</strong> to improve search engine visibility (SEO) and performance.</p>
+    <p>✅ The backend (FastAPI + MongoDB) stays <strong>unchanged</strong>. Only the frontend is rebuilt.</p>
+    <p>🎯 <strong>Goal:</strong> A fully working Next.js app that looks and behaves exactly like the old one, but with server‑rendered politician and article pages for better Google rankings and social previews.</p>
+</div>
+
+<h2 id="glossary">2. Glossary (Plain‑English Terms)</h2>
+<table>
+    <tr><th>Term</th><th>What it means in simple words</th></tr>
+    <tr><td>Frontend</td><td>The part people see and click (pages, buttons, forms).</td></tr>
+    <tr><td>Backend / API</td><td>Stores and processes data (FastAPI + MongoDB). Stays the same.</td></tr>
+    <tr><td>Next.js</td><td>The new framework/tool we're switching the frontend to.</td></tr>
+    <tr><td>CRA</td><td>Create React App — the old tool the current frontend was built with.</td></tr>
+    <tr><td>Server Component</td><td>A page built on the server (fast, great for SEO).</td></tr>
+    <tr><td>Client Component</td><td>Runs in the visitor's browser (needed for buttons, forms, interactive stuff).</td></tr>
+    <tr><td>systemd</td><td>Linux tool that keeps our app running and restarts it if it crashes.</td></tr>
+    <tr><td>nginx</td><td>"Traffic director" — decides which requests go to frontend vs backend.</td></tr>
+    <tr><td>Mongo dump / restore</td><td>Full copy of the database, and putting that copy onto another server.</td></tr>
+    <tr><td>Cutover</td><td>The moment we switch the live website from old to new version.</td></tr>
+    <tr><td>Rollback</td><td>Undoing the switch and going back to the old working version.</td></tr>
+</table>
+
+<h2 id="strategy">3. Overall Strategy</h2>
+<div class="tip">
+    <strong>🧪 Test server first!</strong> Instead of changing the live site directly, we take a full backup, set up a separate test server, do the entire migration there, and only bring the finished result back to production.
+</div>
+<p>Since the live website’s data will <strong>not change</strong> during the migration (no new signups, submissions, or admin edits while we work), one backup at the start is enough — no need to keep data in sync.</p>
+
+<h2 id="backup">4. Step 1 — Backup Everything</h2>
+<div class="box">
+    <p><strong>On the production server (as root),</strong> back up three things:</p>
+    <ol class="checklist">
+        <li><strong>App code</strong> — FastAPI backend + React frontend folders</li>
+        <li><strong>Database</strong> — full MongoDB dump (politicians, articles, promises, users, comments, etc.)</li>
+        <li><strong>Uploaded files</strong> — politician photos, article images, ticket attachments, promise attachments</li>
+    </ol>
+    <pre>
+mkdir -p /opt/trackmp-backup-$(date +%Y%m%d)
+cd /opt/trackmp-backup-$(date +%Y%m%d)
+
+# 1. App code (exclude node_modules, caches)
+rsync -a --exclude='node_modules' --exclude='__pycache__' --exclude='venv' \
+  --exclude='build' /opt/trackmp/ ./trackmp-code/
+
+# 2. Database dump
+mongodump --uri="mongodb://localhost:27017/trackmp_db" --out=./mongo-dump/
+
+# 3. Uploaded media files
+rsync -a /opt/trackmp/backend/uploads/ ./uploads/
+rsync -a /opt/trackmp/politician_media/ ./politician_media/ 2>/dev/null
+rsync -a /opt/trackmp/article_media/ ./article_media/ 2>/dev/null
+rsync -a /opt/trackmp/ticket_attachments/ ./ticket_attachments/ 2>/dev/null
+rsync -a /opt/trackmp/promise_media/ ./promise_media/ 2>/dev/null
+
+# 4. Compress everything into one file
+tar czf /root/trackmp-full-backup-$(date +%Y%m%d).tar.gz .
+    </pre>
+    <div class="warn">
+        <strong>📋 Also save separately (outside code folder):</strong>
+        <ul>
+            <li><code>.env</code> file (secrets/passwords) — but <strong>do not reuse</strong> these secrets on the test server (see security note below).</li>
+            <li>systemd service files (backend/frontend)</li>
+            <li>nginx configuration file</li>
+            <li>Sitemap XML files (<code>sitemap.xml</code>, <code>sitemap-politicians-*.xml</code>)</li>
+        </ul>
+    </div>
+    <div class="danger">
+        <strong>🔐 Security:</strong> Because the test server will be reachable over the internet, generate <strong>brand‑new</strong> secret keys there (<code>JWT_SECRET</code>, <code>VOICE_HMAC_SECRET</code>, <code>RECAPTCHA_SECRET_KEY</code>). Do <strong>not</strong> copy production secrets. This is also a good chance to rotate the flagged production secrets later.
+    </div>
+</div>
+
+<h2 id="testserver">5. Step 2 — Set Up the Test Server</h2>
+<div class="box">
+    <p><strong>On the test server,</strong> install the same versions of Python, Node.js, MongoDB, and nginx as production to avoid “works on one server but not the other” issues.</p>
+    <pre>
+# Copy the backup file to the test server, then:
+tar xzf trackmp-full-backup-*.tar.gz -C /opt/trackmp/
+
+# Restore the database
+mongorestore --uri="mongodb://localhost:27017/trackmp_db" ./mongo-dump/trackmp_db/
+
+# Restore uploaded files
+rsync -a ./uploads/ /opt/trackmp/backend/uploads/
+# (repeat for other media folders: politician_media, article_media, etc.)
+    </pre>
+    <div class="tip">
+        <strong>✅ Sanity check:</strong> Before touching anything, get the <em>existing, unmodified</em> CRA website running correctly on the test server. If that works, you know the backup/restore is solid — any later problems are from the migration, not a bad backup.
+    </div>
+</div>
+
+<h2 id="phase1">6. Step 3 — Install Next.js (Phase 1)</h2>
+<div class="box">
+    <p>Create a brand‑new Next.js project <strong>alongside</strong> the existing frontend folder — this avoids conflicts between the old build tool (Craco) and the new one.</p>
+    <pre>
+cd /opt/trackmp
+npx create-next-app@latest frontend-next --js --tailwind --eslint --app --src-dir --import-alias "@/*"
+    </pre>
+    <p><strong>Copy over, unchanged:</strong> Shadcn UI components, Tailwind design colors/fonts, and any plain helpers that don’t depend on React Router (e.g. <code>api.js</code>, <code>format.js</code>).</p>
+    <p><strong>Remove:</strong> <code>craco</code>, <code>react-router-dom</code>, <code>react-scripts</code>.<br>
+    <strong>Add:</strong> <code>next</code> (version 14).</p>
+    <p>Set up a rewrite so the new frontend can talk to the FastAPI backend immediately:</p>
+    <pre>
+// frontend-next/next.config.js
+module.exports = {
+  async rewrites() {
+    return [{
+      source: '/api/:path*',
+      destination: `${process.env.BACKEND_URL || 'http://127.0.0.1:8001'}/api/:path*`,
+    }];
+  },
+};
+    </pre>
+</div>
+
+<h2 id="phase2">7. Step 4 — Reorganize Pages (Phase 2)</h2>
+<div class="box">
+    <p>Each existing page moves into a new folder structure. Every page gets its own folder with a <code>page.jsx</code> file.</p>
+    <table>
+        <tr><th>Old file</th><th>New location</th></tr>
+        <tr><td>HomePage.jsx</td><td>app/page.jsx</td></tr>
+        <tr><td>AboutPage.jsx</td><td>app/about/page.jsx</td></tr>
+        <tr><td>PoliticianProfile.jsx</td><td>app/politicians/[slug]/page.jsx</td></tr>
+        <tr><td>ArticleDetail.jsx</td><td>app/articles/[id]/page.jsx</td></tr>
+        <tr><td>ContactPage.jsx</td><td>app/contact/page.jsx</td></tr>
+        <tr><td>LoginPage.jsx</td><td>app/(auth)/login/page.jsx</td></tr>
+        <tr><td>dashboard/* (all admin pages)</td><td>app/(dashboard)/dashboard/*</td></tr>
+    </table>
+    <p>The admin dashboard pages share a single “logged‑in” layout and permission check via the <code>(dashboard)</code> group folder.</p>
+    <p>The old <code>PublicLayout.jsx</code> and <code>DashboardLayout.jsx</code> become <code>layout.jsx</code> files that wrap groups automatically.</p>
+</div>
+
+<h2 id="phase3">8. Step 5 — Client vs Server Components (Phase 3)</h2>
+<div class="box">
+    <p><strong>This is the biggest conceptual change.</strong> Next.js pages are server‑rendered by default (faster, better for SEO) — but interactive parts (buttons, forms, dropdowns) still need to run in the browser.</p>
+    <p><strong>Must be “Client Components”</strong> (add <code>'use client'</code> at the top):</p>
+    <ul>
+        <li>UI library components (buttons, dialogs, dropdowns)</li>
+        <li>Login/theme context providers</li>
+        <li>Any form with typing, file uploads, or reCAPTCHA</li>
+        <li>The entire admin dashboard (mostly interactive tables/forms)</li>
+    </ul>
+    <p><strong>Convert to “Server Components”</strong> (fetch data on the server):</p>
+    <ul>
+        <li>Politician profile page — fetch data on the server, then pass to a smaller interactive component for tabs</li>
+        <li>Article detail page — same pattern</li>
+    </ul>
+    <div class="tip">
+        💡 The Promises‑tab work pairs naturally: the extracted tab component can be lazy‑loaded with <code>next/dynamic</code> (Next.js’s version of <code>React.lazy</code>).
+    </div>
+</div>
+
+<h2 id="phase4">9. Step 6 — SEO &amp; Metadata (Phase 4)</h2>
+<div class="box">
+    <p><strong>This is the main reason for the migration —</strong> making politician and article pages rank better in Google and show rich previews on social media.</p>
+    <ul>
+        <li>Each politician/article page uses <code>generateMetadata()</code> to produce title, description, and social‑share image automatically from that politician’s data.</li>
+        <li>Structured data (invisible code that tells Google “this is a person, here’s their job”) is added directly into the page.</li>
+    </ul>
+    <div class="warn">
+        <strong>🗺️ Sitemaps stay as‑is.</strong> The existing Python sitemap‑generation script handles the large number of politician records well (chunked into multiple files). We keep that system — Next.js only generates sitemap entries for static pages (Home, About, Contact).
+    </div>
+</div>
+
+<h2 id="phase5">10. Step 7 — Connect to FastAPI Backend (Phase 5)</h2>
+<div class="box">
+    <p><strong>Traffic routing:</strong> nginx keeps sending <code>/api/...</code> requests to FastAPI (port 8001). Everything else goes to the Next.js app (port 3000).</p>
+    <pre>
+location /api/ {
+    proxy_pass http://127.0.0.1:8001;
+}
+location / {
+    proxy_pass http://127.0.0.1:3000;
+}
+    </pre>
+    <p><strong>Authentication change:</strong> Currently the login token is stored in browser localStorage. Server‑rendered pages can’t read localStorage. The fix: switch to storing the token in a secure, http‑only cookie set by FastAPI on login. Both server and browser can then read it.</p>
+    <div class="tip">
+        Bonus: with this change, we can add middleware that blocks access to <code>/dashboard/...</code> pages before they load if the user isn’t logged in — preventing the “flash” of a page that then redirects.
+    </div>
+</div>
+
+<h2 id="testing">11. Step 8 — Testing Checklist (on test server)</h2>
+<div class="box">
+    <ul class="checklist">
+        <li>☐ Homepage loads with correct design (colors, animations, stats)</li>
+        <li>☐ Politician profile page loads, and “View Page Source” shows the politician’s name/info in the raw HTML (proves SSR works)</li>
+        <li>☐ Social share preview looks right when pasting a politician page link into WhatsApp/Twitter/Facebook</li>
+        <li>☐ Search and filters on politicians list still work</li>
+        <li>☐ Login works, and staying logged in across a page refresh works</li>
+        <li>☐ Admin dashboard: politicians list, edit, admin management, audit log, voice moderation all load correctly</li>
+        <li>☐ Submitting a contact form / update / voice comment (with reCAPTCHA) works</li>
+        <li>☐ Trying to open a dashboard page while logged out correctly redirects to login</li>
+        <li>☐ Old URLs (bookmarked links, Google links) still lead to the correct page and don’t show broken links</li>
+        <li>☐ Mobile view looks correct on a phone or narrow browser window</li>
+        <li>☐ <code>sitemap.xml</code> still loads and lists politician pages correctly</li>
+    </ul>
+</div>
+
+<h2 id="cutover">12. Step 9 — Going Live (Cutover)</h2>
+<div class="box">
+    <p>Once everything passes on the test server, moving to production is mostly copying files and flipping a switch in nginx — the live database was never touched, so there’s no data to move back.</p>
+    <pre>
+# On the production server
+
+# 1. Stop the old frontend service
+systemctl stop trackmp-frontend
+
+# 2. Copy the finished Next.js app from the test server
+rsync -a testserver:/opt/trackmp/frontend-next/ /opt/trackmp/frontend-next/
+cd /opt/trackmp/frontend-next
+npm run build
+
+# 3. Set up and start the new service
+systemctl daemon-reload
+systemctl start trackmp-nextjs
+systemctl enable trackmp-nextjs
+
+# 4. Switch nginx to point to the new app, then reload
+nginx -t && systemctl reload nginx
+
+# 5. Ensure backend is still running
+systemctl start trackmp-backend
+    </pre>
+    <div class="warn"><strong>⏰ Pick a low‑traffic time window</strong> (e.g. late night) for the switch, in case there’s a brief interruption.</div>
+</div>
+
+<h2 id="rollback">13. Step 10 — Rollback Plan (if something breaks)</h2>
+<div class="danger">
+    <p><strong>Do not delete the old frontend folder</strong> — keep it for at least a week as an instant safety net.</p>
+    <p>If something goes wrong, reverting takes one minute:</p>
+    <pre>
+# Point nginx back at the old app
+# (edit nginx config: proxy_pass back to the old CRA build port)
+nginx -t && systemctl reload nginx
+
+# Restart the old frontend service
+systemctl start trackmp-frontend
+    </pre>
+    <p>Since the database was never modified during migration, there is no data to “undo” — rollback is purely a code/service switch.</p>
+</div>
+
+<h2 id="postlaunch">14. Step 11 — After Launch</h2>
+<div class="box">
+    <ul class="checklist">
+        <li>☐ Watch server logs for the first few hours (<code>journalctl -u trackmp-nextjs -f</code>)</li>
+        <li>☐ Check Google Search Console over the following weeks for crawl errors</li>
+        <li>☐ Confirm social sharing previews work correctly on the live domain (not just test server)</li>
+        <li>☐ Once confident everything is stable (a week or two), archive and remove the old CRA frontend folder</li>
+        <li>☐ Rotate the flagged production secrets (<code>JWT_SECRET</code>, <code>VOICE_HMAC_SECRET</code>, <code>RECAPTCHA_SECRET_KEY</code>) if not already done</li>
+    </ul>
+</div>
+
+<h2 id="extra">15. Extra Points Worth Considering</h2>
+<div class="box">
+    <ul class="checklist">
+        <li><strong>SSL/HTTPS certificates</strong> — ensure the test server has its own certificate (or is accessed by IP/hosts‑file) so you’re not accidentally reusing the production domain’s certificate.</li>
+        <li><strong>Environment variables checklist</strong> — before cutover, list every value in the old <code>.env</code> and confirm each one has an equivalent set on the new Next.js app (backend URL, recaptcha site key, etc.) so nothing is silently missing.</li>
+        <li><strong>DNS/caching</strong> — if using a CDN or Cloudflare, remember cached pages may need purging right after cutover so visitors see the new version immediately.</li>
+        <li><strong>Team/staff notice</strong> — give admins a heads‑up about the cutover window so they’re not mid‑edit when the switch happens.</li>
+        <li><strong>Browser cache for returning visitors</strong> — not usually an issue for server‑rendered pages, but spot‑check that returning visitors aren’t shown a broken mixed old/new version.</li>
+        <li><strong>Keep the migration out of Git history mess</strong> — consider doing the Next.js work in its own git branch/repo so the eventual merge into your main project is a clean, reviewable diff.</li>
+    </ul>
+</div>
+
+<footer>
+    <span class="badge">📄 Reference</span> Generated from TrackMP migration planning — civic transparency platform. Keep this alongside <code>DEPLOYMENT.md</code> for future reference.
+</footer>
+
+</body>
+</html>

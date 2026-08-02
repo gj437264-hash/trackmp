@@ -63,6 +63,8 @@ export default function ArticleEditor() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
+  const htmlFileRef = useRef(null);   // NEW
+  const mediaFileRef = useRef(null);  // NEW
 
   const load = () => {
     setLoading(true);
@@ -196,22 +198,41 @@ export default function ArticleEditor() {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Media & Files (images, video, PDF, or upload .html to replace content)
             </span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,video/*,application/pdf,.html,.htm"
-              onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])}
-              className="hidden"
-              data-testid="article-file-input"
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 disabled:opacity-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-semibold text-xs px-4 py-2.5 rounded-xl transition-all duration-200"
-              data-testid="upload-article-file-btn"
-            >
-              <Upload size={13} /> {uploading ? "Uploading…" : "Upload File"}
-            </button>
+            <div className="flex gap-2">
+              <input
+                ref={htmlFileRef}
+                type="file"
+                accept=".html,.htm"
+                onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])}
+                className="hidden"
+                data-testid="article-html-file-input"
+              />
+              <button
+                onClick={() => htmlFileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 disabled:opacity-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-semibold text-xs px-4 py-2.5 rounded-xl transition-all duration-200"
+                data-testid="upload-article-html-btn"
+              >
+                <FileText size={13} /> {uploading ? "Uploading…" : "Upload HTML (replaces content)"}
+              </button>
+
+              <input
+                ref={mediaFileRef}
+                type="file"
+                accept="image/*,video/*,application/pdf"
+                onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0])}
+                className="hidden"
+                data-testid="article-media-file-input"
+              />
+              <button
+                onClick={() => mediaFileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 disabled:opacity-50 border border-slate-200 hover:border-indigo-200 text-slate-600 hover:text-indigo-600 font-semibold text-xs px-4 py-2.5 rounded-xl transition-all duration-200"
+                data-testid="upload-article-media-btn"
+              >
+                <Upload size={13} /> {uploading ? "Uploading…" : "Upload Image / Video / PDF"}
+              </button>
+            </div>
           </div>
 
           {(article.media || []).length === 0 ? (

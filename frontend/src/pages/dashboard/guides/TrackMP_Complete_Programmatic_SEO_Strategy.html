@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackMP · Complete Programmatic SEO Strategy</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f4f8fe;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 2rem 1.5rem;
+      color: #0b223a;
+      line-height: 1.5;
+    }
+    .container { max-width: 1440px; margin: 0 auto; }
+
+    .card {
+      background: #ffffff;
+      border-radius: 2rem;
+      padding: 2rem 2.2rem;
+      box-shadow: 0 12px 30px -10px rgba(0,20,40,0.06);
+      border: 1px solid #e5edf8;
+      margin-bottom: 2.2rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid #eef4fe;
+      padding-bottom: 0.9rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .card-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0a294b;
+    }
+    .card-header i { color: #1c5b9e; font-size: 1.8rem; }
+
+    .badge {
+      background: #e1edfd;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #0e3762;
+      margin-left: 0.5rem;
+    }
+
+    .grid-2, .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.8rem;
+    }
+    .grid-3 { grid-template-columns: repeat(3,1fr); }
+
+    .template-tag {
+      background: #f0f6ff;
+      border-radius: 30px;
+      padding: 0.3rem 1rem 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #10345e;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d3e2fc;
+      margin: 0.2rem 0.15rem;
+    }
+    .template-tag i { color: #1f6bb0; font-size: 0.7rem; }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.6rem;
+      margin: 0.5rem 0 0.2rem;
+    }
+    .pill-list .pill {
+      background: #eaf1fc;
+      padding: 0.2rem 1.2rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #123a66;
+      border: 1px solid #d0e1fa;
+    }
+
+    .example-box {
+      background: #f8fcff;
+      border-radius: 20px;
+      padding: 1rem 1.5rem;
+      margin: 0.8rem 0 1.2rem;
+      border-left: 4px solid #1f6bb0;
+      font-family: 'SF Mono', 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #00337a;
+      overflow-x: auto;
+    }
+
+    .schema-block {
+      background: #1a2639;
+      color: #dbecff;
+      border-radius: 18px;
+      padding: 1.2rem 1.5rem;
+      font-family: 'SF Mono', 'Courier New', monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      margin: 1rem 0;
+    }
+
+    .link-graph {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3rem 1.2rem;
+      background: #e8f1fe;
+      padding: 0.7rem 1.8rem;
+      border-radius: 60px;
+      font-weight: 500;
+      color: #0b2c50;
+    }
+    .link-graph i { color: #1f6bb0; margin: 0 4px; }
+
+    .sitemap-tree {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 1.5rem;
+      background: #edf4fd;
+      padding: 1rem 1.8rem;
+      border-radius: 40px;
+      font-size: 0.9rem;
+    }
+    .sitemap-tree code {
+      background: #d5e4fc;
+      padding: 0.1rem 0.8rem;
+      border-radius: 30px;
+      color: #00337a;
+    }
+
+    .table-wrap { overflow-x: auto; margin: 1rem 0; }
+    .template-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .template-table td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #e3ecf9;
+    }
+    .template-table tr:last-child td { border: none; }
+    .template-table td:first-child {
+      font-weight: 600;
+      color: #00337a;
+      width: 30%;
+    }
+    .template-table td:last-child {
+      color: #1c3d64;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .keyword-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.4rem;
+      margin-top: 0.2rem;
+    }
+    .keyword-tag {
+      background: #f0f5fe;
+      padding: 0.2rem 0.9rem;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 450;
+      color: #1a3c66;
+      border: 1px solid #e3eaf8;
+      transition: 0.1s ease;
+      line-height: 1.6;
+    }
+    .keyword-tag i { margin-right: 4px; font-size: 0.6rem; color: #4b7bc0; opacity: 0.7; }
+    .keyword-tag:hover { background: #dce7fc; border-color: #acc3ec; }
+
+    .cluster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem 1.8rem;
+      margin: 2.5rem 0 3rem;
+    }
+    .cluster-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 1.6rem 1.6rem 1.8rem;
+      box-shadow: 0 6px 20px rgba(0, 20, 40, 0.04);
+      transition: all 0.2s ease;
+      border: 1px solid #eef2f9;
+      display: flex;
+      flex-direction: column;
+    }
+    .cluster-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 30px -12px rgba(0, 40, 80, 0.12);
+      border-color: #cddefa;
+    }
+    .cluster-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid #eef4fe;
+      padding-bottom: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .cluster-header .num {
+      background: #1a3a6b;
+      color: white;
+      font-weight: 700;
+      font-size: 0.8rem;
+      width: 30px;
+      height: 30px;
+      border-radius: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e3d72;
+    }
+    .cluster-header h3 {
+      font-weight: 600;
+      font-size: 1.2rem;
+      letter-spacing: -0.01em;
+      color: #0e2747;
+    }
+    .cluster-header .kw-count {
+      margin-left: auto;
+      background: #dce6f5;
+      padding: 0.2rem 0.9rem;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #14315a;
+    }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem 4rem;
+      background: #f2f8ff;
+      padding: 1.4rem 2rem;
+      border-radius: 60px;
+      margin: 1.5rem 0 2rem;
+    }
+    .stats-row span {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 500;
+      color: #1f3a60;
+    }
+    .stats-row .num {
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #00337a;
+    }
+    .query-examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.8rem;
+      background: #fafcff;
+      padding: 1.2rem 1.8rem;
+      border-radius: 40px;
+      border: 1px dashed #b6ccea;
+      margin: 1.2rem 0 1.6rem;
+    }
+    .query-examples code {
+      background: #e6eefa;
+      padding: 0.2rem 1rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      color: #00337a;
+      font-weight: 500;
+      border: 1px solid #c8dbfa;
+    }
+    .build-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 1.8rem;
+      margin-top: 1.2rem;
+      background: #fafdff;
+      padding: 1.5rem 2rem;
+      border-radius: 30px;
+    }
+    .build-list li {
+      list-style: none;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.95rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #ebf1fa;
+    }
+    .build-list li i { color: #1f5a9e; width: 1.2rem; font-size: 0.9rem; }
+
+    .footnote {
+      margin-top: 2rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid #dfe8f5;
+      font-size: 0.95rem;
+      color: #2b446e;
+      background: #f5faff;
+      border-radius: 30px;
+      padding: 1.2rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+      gap: 0.8rem 1.2rem;
+      background: #f5faff;
+      padding: 1.2rem 1.8rem;
+      border-radius: 30px;
+    }
+    .hub-grid span {
+      background: #ffffff;
+      padding: 0.2rem 1.2rem;
+      border-radius: 40px;
+      border: 1px solid #c8dcf5;
+      font-weight: 500;
+      color: #13417a;
+      font-size: 0.85rem;
+      display: inline-block;
+      text-align: center;
+    }
+
+    @media (max-width: 750px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .card { padding: 1.5rem; }
+      .cluster-grid { grid-template-columns: 1fr; }
+      .stats-row { border-radius: 30px; flex-direction: column; gap: 0.4rem; }
+      .build-list { grid-template-columns: 1fr; }
+      .query-examples { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ====== MAIN INTRO (combined) ====== -->
+  <div class="card" style="background: linear-gradient(145deg, #ffffff, #f7fbff); border-color: #cddefa;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+      <div>
+        <h1 style="font-size: 2.6rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(135deg, #0b2b5c, #1f4f84); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Programmatic SEO · TrackMP</h1>
+        <div style="font-size: 1.2rem; color: #1f4570; margin-top: 0.2rem;">
+          <i class="fas fa-arrow-right" style="color: #1f6bb0;"></i> Entity‑first · topical authority · from 200 generic to millions of long-tail keywords
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+        <span class="badge" style="background: #dce7fc; padding: 0.4rem 1.4rem;"><i class="fas fa-database"></i> FastAPI + React + MongoDB</span>
+        <span class="badge" style="background: #dce7fc;"><i class="fas fa-rocket"></i> 100+ templates</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin-top: 1.8rem; background: #eaf2fd; padding: 0.8rem 2rem; border-radius: 60px;">
+      <span><i class="fas fa-check-circle" style="color: #1a7a3e;"></i> <strong>Not</strong> static HTML · <strong>programmatic</strong> from DB</span>
+      <span><i class="fas fa-entity"></i> Google ranks entities & topical hubs</span>
+      <span><i class="fas fa-chart-line"></i> 1M+ unique search queries</span>
+      <span><i class="fas fa-times-circle" style="color: #b33c3c;"></i> Outdated: 200 generic keywords</span>
+    </div>
+  </div>
+
+  <!-- ====== PART 1: CONTENT PILLARS & KEYWORD CLUSTERS ====== -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-th-list"></i><h2>Content Pillars &amp; Keyword Clusters</h2><span class="badge">10 pillars · 200+ keywords</span></div>
+    <p style="margin-bottom: 0.8rem; color: #1f3c5e;">Instead of 200 random keywords, these are organized into topical clusters that map to your content pillars.</p>
+
+    <div class="cluster-grid">
+      <!-- Cluster 1 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">1</span><h3>Politician Profiles</h3><span class="kw-count">30</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Indian politician</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Member of Parliament</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MLA</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MP profile</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MLA profile</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Biography</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political career</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Education</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Net worth</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Criminal cases</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Assets</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Liabilities</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election affidavit</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political party</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>State</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>District</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Contact details</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Email</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Office address</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Phone number</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Social media</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Facebook</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Twitter</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Instagram</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Performance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public promises</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Parliamentary attendance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Voting record</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Latest updates</span>
+        </div>
+      </div>
+
+      <!-- Cluster 2 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">2</span><h3>Elections</h3><span class="kw-count">25</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Lok Sabha election</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Rajya Sabha</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Vidhan Sabha</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election results</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election winner</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election candidate</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election history</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Previous election</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Margin of victory</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Vote share</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency winner</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election statistics</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Polling booth</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Voter turnout</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Candidate list</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election affidavit</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election Commission</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Independent candidate</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>General election</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>State election</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election promises</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Manifesto</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Candidate comparison</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election analysis</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency map</span>
+        </div>
+      </div>
+
+      <!-- Cluster 3 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">3</span><h3>Political Parties</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>BJP</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>INC</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Congress</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>AAP</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>BSP</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>SP</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>CPI(M)</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>NCP</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Shiv Sena</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>TMC</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>DMK</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>AIADMK</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>BJD</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>JD(U)</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>RJD</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political alliance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Coalition</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Party leadership</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Party manifesto</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Party performance</span>
+        </div>
+      </div>
+
+      <!-- Cluster 4 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">4</span><h3>Constituencies</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Lok Sabha constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Assembly constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency profile</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency demographics</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency population</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency map</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Reserved constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>SC constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>ST constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Urban constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Rural constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Polling stations</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MLA constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MP constituency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Development</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Local issues</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Infrastructure</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Education</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Healthcare</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Economy</span>
+        </div>
+      </div>
+
+      <!-- Cluster 5 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">5</span><h3>Accountability</h3><span class="kw-count">25</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Political promises</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Promise tracker</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Promise fulfilled</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Promise status</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Promise progress</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Government accountability</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public accountability</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MP performance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MLA performance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Development tracker</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Work completed</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Pending promises</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public funds</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MPLADS</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>MLALADS</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Questions asked</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Parliamentary debates</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Committee membership</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Attendance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Productivity</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Transparency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Governance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public service</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Citizen engagement</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Accountability report</span>
+        </div>
+      </div>
+
+      <!-- Cluster 6 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">6</span><h3>Search Intent</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Who is</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Biography of</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Contact</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Age</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Education</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Family</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Wife</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Husband</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Children</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political history</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election history</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Net worth</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Assets</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Criminal record</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Affidavit</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Performance</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Promises</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>News</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Latest speech</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Videos</span>
+        </div>
+      </div>
+
+      <!-- Cluster 7 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">7</span><h3>Government</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Government schemes</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>PMAY</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Ayushman Bharat</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>PM Kisan</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Digital India</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Make in India</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Skill India</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Smart Cities</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Jal Jeevan Mission</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Swachh Bharat</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Budget</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Parliament</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Lok Sabha</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Rajya Sabha</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Cabinet</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Ministry</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Minister</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public policy</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Development projects</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Welfare schemes</span>
+        </div>
+      </div>
+
+      <!-- Cluster 8 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">8</span><h3>Data &amp; Analytics</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Political analytics</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election analytics</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Voting trends</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Constituency trends</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public dashboard</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Performance dashboard</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Data visualization</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political statistics</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Ranking</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Top MPs</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Top MLAs</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Best performers</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Worst performers</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political insights</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election insights</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Reports</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public records</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Open data</span>
+        </div>
+      </div>
+
+      <!-- Cluster 9 -->
+      <div class="cluster-card">
+        <div class="cluster-header"><span class="num">9</span><h3>Trust &amp; Research</h3><span class="kw-count">20</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-hashtag"></i>Verified information</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Fact checked</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public records</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Official data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election Commission data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Parliament records</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Government data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>RTI</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Transparency</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Open government</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Research</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Analysis</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Reports</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Public documents</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Official sources</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Verified politician profile</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Election archive</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Historical data</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>Political database</span><span class="keyword-tag"><i class="fas fa-hashtag"></i>India politics</span>
+        </div>
+      </div>
+
+      <!-- Cluster 10 - Global relevance -->
+      <div class="cluster-card" style="background: #f3f8ff; border: 1px solid #d2e2fd;">
+        <div class="cluster-header"><span class="num">10</span><h3>Global relevance</h3><span class="kw-count">∞</span></div>
+        <div class="keyword-list">
+          <span class="keyword-tag"><i class="fas fa-globe"></i>MP performance</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>constituency dashboard</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>election analytics</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>political transparency</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>government accountability</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>public promise tracker</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>voter information</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>civic tech</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>open parliament</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>citizen engagement</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>representative scorecard</span>
+          <span class="keyword-tag"><i class="fas fa-globe"></i>political data platform</span>
+        </div>
+        <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #1a4270; background: #e3edfd; padding: 0.3rem 1rem; border-radius: 30px; align-self: flex-start;">
+          <i class="fas fa-arrow-right"></i> adaptable to any democracy
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PART 2: PROGRAMMATIC SEO OPPORTUNITY ====== -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-cogs"></i><h2>The bigger opportunity: Programmatic SEO</h2><span class="badge">combinations · not a fixed list</span></div>
+    <p style="font-size: 1.1rem; color: #1c3e67;">Your site's real strength isn't a fixed list of 200 keywords—it's the combinations you can generate automatically.</p>
+
+    <div class="stats-row">
+      <span><span class="num">5,000+</span> politicians</span>
+      <span><span class="num">543</span> Lok Sabha constituencies</span>
+      <span><span class="num">4,000+</span> Assembly constituencies</span>
+      <span><span class="num">36</span> states &amp; UTs</span>
+      <span><span class="num">multiple</span> election years</span>
+    </div>
+
+    <div class="query-examples">
+      <code><i class="fas fa-search"></i> Narendra Modi promises</code>
+      <code><i class="fas fa-search"></i> Rahul Gandhi attendance</code>
+      <code><i class="fas fa-search"></i> MP from Pune</code>
+      <code><i class="fas fa-search"></i> MLA from Indore</code>
+      <code><i class="fas fa-search"></i> BJP MPs Maharashtra</code>
+      <code><i class="fas fa-search"></i> Congress MLAs Karnataka</code>
+      <code><i class="fas fa-search"></i> 2024 Lok Sabha results Jaipur</code>
+      <code><i class="fas fa-search"></i> criminal cases of [politician]</code>
+      <code><i class="fas fa-search"></i> assets of [politician]</code>
+      <code><i class="fas fa-search"></i> best performing MPs India</code>
+    </div>
+
+    <div style="margin: 1.8rem 0 0.8rem; font-weight: 600; font-size: 1.2rem; color: #0d2d54;">
+      <i class="fas fa-arrow-right" style="color: #1f67b1;"></i> What I would build for TrackMP
+    </div>
+    <ul class="build-list">
+      <li><i class="fas fa-copy"></i> 100+ reusable SEO page templates (politician, constituency, party, state, election, comparison, rankings, etc.)</li>
+      <li><i class="fas fa-tag"></i> Automatic title &amp; meta description generation</li>
+      <li><i class="fas fa-code"></i> Dynamic JSON-LD (Person, Organization, Election, Breadcrumb, WebPage, FAQ)</li>
+      <li><i class="fas fa-project-diagram"></i> Internal linking graph connecting politicians, constituencies, parties, elections &amp; rankings</li>
+      <li><i class="fas fa-sitemap"></i> Programmatically generated XML sitemaps split by content type</li>
+      <li><i class="fas fa-layer-group"></i> Topical hubs (state pages, party pages, election pages) that strengthen authority</li>
+    </ul>
+
+    <div class="footnote">
+      <span><i class="fas fa-bullseye"></i> With this approach, the site can realistically target <strong>well over one million unique search queries</strong> while remaining maintainable — everything generated from your MongoDB data.</span>
+      <span style="background: #dce7fc; padding: 0.2rem 1.4rem; border-radius: 40px; font-weight: 500;"><i class="fas fa-database"></i> FastAPI + React + MongoDB</span>
+    </div>
+  </div>
+
+  <!-- ====== PART 3: ARCHITECTURE DEEP DIVE ====== -->
+
+  <!-- 1. Templates -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-copy"></i><h2>1. 100+ Reusable SEO templates</h2><span class="badge">build once · fill from MongoDB</span></div>
+    <p style="margin-bottom: 0.6rem; color: #1f3c5e;">One template, thousands of pages. Examples:</p>
+    <div class="grid-3">
+      <div><span class="template-tag"><i class="fas fa-user-tie"></i> Politician</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/politicians/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-map-pin"></i> Constituency</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/constituencies/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-flag"></i> Party</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/parties/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-city"></i> State</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/states/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-vote-yea"></i> Election</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/elections/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-ranking-star"></i> Ranking</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/rankings/top-...</code></div>
+      <div><span class="template-tag"><i class="fas fa-scale-balanced"></i> Comparison</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/compare/...</code></div>
+      <div><span class="template-tag"><i class="fas fa-clock"></i> Timeline</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/timeline/{slug}</code></div>
+      <div><span class="template-tag"><i class="fas fa-magnifying-glass"></i> Search</span> <code style="background:#e4edfc; padding:0 6px; border-radius:12px;">/search?q=...</code></div>
+    </div>
+    <div style="margin-top: 1.2rem; background: #f2f9ff; padding: 1rem 1.8rem; border-radius: 30px;">
+      <i class="fas fa-arrow-right" style="color: #1f6bb0;"></i> <strong>Politician template</strong> includes: biography, party, constituency, education, assets, criminal cases, promises, performance, attendance, voting history, timeline, related politicians.
+    </div>
+  </div>
+
+  <!-- 2. Title & Meta -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-tag"></i><h2>2. Automatic Title &amp; Meta Description</h2><span class="badge">rules · not manual</span></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.8rem;">
+      <div>
+        <div style="font-weight: 600; color: #0a2a4a;">Title pattern</div>
+        <div class="example-box">{Name} ({Party}) – MP from {Constituency} | Biography, Performance &amp; Promises | TrackMP</div>
+        <div style="font-size: 0.85rem; color: #1a4a7a;"><i class="fas fa-arrow-right"></i> <strong>Example:</strong> Narendra Modi (BJP) – MP from Varanasi | Biography, Performance &amp; Promises | TrackMP</div>
+      </div>
+      <div>
+        <div style="font-weight: 600; color: #0a2a4a;">Meta description</div>
+        <div class="example-box">View {Name}'s political profile including biography, education, assets, criminal cases, parliamentary attendance, election history, promises, and performance.</div>
+        <div style="font-size: 0.85rem; color: #1a4a7a;"><i class="fas fa-arrow-right"></i> Every politician gets a unique description automatically.</div>
+      </div>
+    </div>
+    <div style="margin-top: 1.2rem; background: #e8f1fe; border-radius: 30px; padding: 0.8rem 1.8rem;">
+      <span class="template-tag"><i class="fas fa-flag"></i> Party page</span> <span class="template-tag"><i class="fas fa-city"></i> Constituency</span> <span class="template-tag"><i class="fas fa-vote-yea"></i> Election</span> — all have distinct title/meta rules.
+    </div>
+  </div>
+
+  <!-- 3. JSON-LD -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-code"></i><h2>3. Dynamic JSON‑LD · structured entities</h2><span class="badge">rich results</span></div>
+    <p style="color: #1c3d64;">Google sees entities, not just text. Example for politician:</p>
+    <div class="schema-block">{
+  "@type": "Person",
+  "name": "Narendra Modi",
+  "jobTitle": "Prime Minister",
+  "memberOf": "BJP",
+  "worksFor": "Lok Sabha"
+}</div>
+    <div class="pill-list">
+      <span class="pill"><i class="fas fa-building"></i> Organization (party)</span>
+      <span class="pill"><i class="fas fa-calendar"></i> Event (election)</span>
+      <span class="pill"><i class="fas fa-newspaper"></i> NewsArticle</span>
+      <span class="pill"><i class="fas fa-layer-group"></i> CollectionPage (rankings)</span>
+      <span class="pill"><i class="fas fa-home"></i> WebSite</span>
+      <span class="pill"><i class="fas fa-breadcrumb"></i> BreadcrumbList</span>
+      <span class="pill"><i class="fas fa-question-circle"></i> FAQPage</span>
+    </div>
+    <div style="margin-top: 0.8rem; font-size: 0.9rem; color: #10345e;"><i class="fas fa-check-circle" style="color: #1f7a3e;"></i> Increases eligibility for rich search results.</div>
+  </div>
+
+  <!-- 4. Internal linking -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-project-diagram"></i><h2>4. Internal Linking Graph</h2><span class="badge">connect everything</span></div>
+    <div class="link-graph">
+      <i class="fas fa-user-tie"></i> Narendra Modi <i class="fas fa-arrow-right"></i> 
+      <i class="fas fa-flag"></i> BJP <i class="fas fa-arrow-right"></i> 
+      <i class="fas fa-map-pin"></i> Varanasi <i class="fas fa-arrow-right"></i> 
+      <i class="fas fa-city"></i> Uttar Pradesh <i class="fas fa-arrow-right"></i> 
+      <i class="fas fa-vote-yea"></i> 2024 Election <i class="fas fa-arrow-right"></i> 
+      <i class="fas fa-ranking-star"></i> Top Attendance
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin-top: 1rem;">
+      <div><span class="template-tag"><i class="fas fa-map-pin"></i> Constituency</span> links to current MP, previous MPs, state, election, nearby constituencies.</div>
+      <div><span class="template-tag"><i class="fas fa-flag"></i> Party</span> links to all MPs, MLAs, states governed, manifesto, election results.</div>
+    </div>
+    <div style="background: #e3edfd; padding: 0.5rem 1.5rem; border-radius: 40px; margin-top: 0.8rem; font-size: 0.9rem;">
+      <i class="fas fa-arrow-right" style="color: #1f6bb0;"></i> Google follows these links and discovers pages naturally.
+    </div>
+  </div>
+
+  <!-- 5. Sitemaps -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-sitemap"></i><h2>5. XML Sitemaps by content type</h2><span class="badge">split · faster crawling</span></div>
+    <div class="sitemap-tree">
+      <code>/sitemap.xml</code> <i class="fas fa-arrow-right"></i>
+      <code>sitemap-politicians.xml</code>
+      <code>sitemap-parties.xml</code>
+      <code>sitemap-states.xml</code>
+      <code>sitemap-constituencies.xml</code>
+      <code>sitemap-elections.xml</code>
+      <code>sitemap-rankings.xml</code>
+      <code>sitemap-news.xml</code>
+      <code>sitemap-promises.xml</code>
+      <code>sitemap-search.xml</code>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.8rem 2rem; margin-top: 1rem;">
+      <span><i class="fas fa-check-circle" style="color: #1a7a3e;"></i> Faster crawling</span>
+      <span><i class="fas fa-check-circle" style="color: #1a7a3e;"></i> Easier debugging</span>
+      <span><i class="fas fa-check-circle" style="color: #1a7a3e;"></i> Better Search Console reporting</span>
+      <span><i class="fas fa-check-circle" style="color: #1a7a3e;"></i> <code>lastmod</code> derived from content updates</span>
+    </div>
+  </div>
+
+  <!-- 6. Topical hubs -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-layer-group"></i><h2>6. Topical Hubs · authority</h2><span class="badge">entity clusters</span></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem;">
+      <div style="background: #f2f9ff; border-radius: 24px; padding: 1rem 1.2rem;">
+        <div style="font-weight: 700; color: #0a2a4a;"><i class="fas fa-city"></i> Maharashtra hub</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; margin-top: 0.5rem;">
+          <span class="template-tag">MPs</span><span class="template-tag">MLAs</span><span class="template-tag">Election results</span>
+          <span class="template-tag">Parties</span><span class="template-tag">Government</span><span class="template-tag">Constituencies</span>
+          <span class="template-tag">Rankings</span><span class="template-tag">News</span><span class="template-tag">Promises</span>
+        </div>
+      </div>
+      <div style="background: #f2f9ff; border-radius: 24px; padding: 1rem 1.2rem;">
+        <div style="font-weight: 700; color: #0a2a4a;"><i class="fas fa-flag"></i> BJP hub</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; margin-top: 0.5rem;">
+          <span class="template-tag">MPs</span><span class="template-tag">MLAs</span><span class="template-tag">Manifesto</span>
+          <span class="template-tag">Election history</span><span class="template-tag">Promises</span><span class="template-tag">Performance</span>
+        </div>
+      </div>
+      <div style="background: #f2f9ff; border-radius: 24px; padding: 1rem 1.2rem;">
+        <div style="font-weight: 700; color: #0a2a4a;"><i class="fas fa-vote-yea"></i> Lok Sabha 2024 hub</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; margin-top: 0.5rem;">
+          <span class="template-tag">Candidates</span><span class="template-tag">Results</span><span class="template-tag">Winning margin</span>
+          <span class="template-tag">Party performance</span><span class="template-tag">Maps</span><span class="template-tag">State results</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 1.2rem; background: #dfebfc; border-radius: 40px; padding: 0.5rem 1.8rem; font-weight: 500;">
+      <i class="fas fa-arrow-right"></i> Google understands: TrackMP → Indian Politics → Elections → Parties → Constituencies → Politicians → Performance → that's topical authority.
+    </div>
+  </div>
+
+  <!-- ====== EXTRA: HIGH-VALUE TEMPLATES TABLE ====== -->
+  <div class="card">
+    <div class="card-header"><i class="fas fa-table"></i><h2>Additional high‑value templates</h2><span class="badge">expand to 100k+ pages</span></div>
+    <div class="table-wrap">
+      <table class="template-table">
+        <tr><td>Politician</td><td>/politicians/narendra-modi</td></tr>
+        <tr><td>Constituency</td><td>/constituencies/varanasi</td></tr>
+        <tr><td>State</td><td>/states/uttar-pradesh</td></tr>
+        <tr><td>District</td><td>/districts/pune</td></tr>
+        <tr><td>Party</td><td>/parties/bjp</td></tr>
+        <tr><td>Election</td><td>/elections/lok-sabha-2024</td></tr>
+        <tr><td>Promise</td><td>/promises/one-nation-one-election</td></tr>
+        <tr><td>Manifesto</td><td>/manifestos/bjp-2024</td></tr>
+        <tr><td>Ranking</td><td>/rankings/highest-attendance-mps</td></tr>
+        <tr><td>Comparison</td><td>/compare/narendra-modi-vs-rahul-gandhi</td></tr>
+        <tr><td>Timeline</td><td>/timeline/narendra-modi</td></tr>
+        <tr><td>Search</td><td>/search?q=education</td></tr>
+        <tr><td>Topic</td><td>/topics/agriculture</td></tr>
+        <tr><td>Scheme</td><td>/schemes/pm-kisan</td></tr>
+        <tr><td>FAQ</td><td>/faq/lok-sabha</td></tr>
+        <tr><td>Glossary</td><td>/glossary/no-confidence-motion</td></tr>
+      </table>
+    </div>
+    <div style="background: #eaf2fd; border-radius: 30px; padding: 0.7rem 1.8rem; margin-top: 0.5rem;">
+      <i class="fas fa-rocket" style="color: #1f6bb0;"></i> These templates can expand into <strong>hundreds of thousands of high‑quality pages</strong> from the same underlying data.
+    </div>
+  </div>
+
+  <!-- ====== RECOMMENDATION ====== -->
+  <div class="card" style="background: #e3f0fe; border-color: #b3cef0;">
+    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+      <i class="fas fa-lightbulb" style="font-size: 2.2rem; color: #0e4b82;"></i>
+      <div>
+        <h3 style="font-size: 1.6rem; font-weight: 700; color: #052140;">My recommendation</h3>
+        <p style="font-size: 1.05rem; color: #133a62; max-width: 900px;">Rather than micro‑optimizations, prioritise a <strong>programmatic SEO architecture</strong> on your existing FastAPI + React + MongoDB stack. With rich reusable templates, automated metadata, comprehensive structured data, strong internal linking, well‑organised sitemaps, and interconnected topical hubs, TrackMP can rank for a broad range of political searches while remaining maintainable — because nearly everything is generated from your database, not managed manually.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.6rem 1.5rem; margin-top: 1rem;">
+          <span class="badge" style="background: #0b2c50; color: white; padding: 0.4rem 1.4rem;"><i class="fas fa-check"></i> 1M+ unique queries</span>
+          <span class="badge" style="background: #0b2c50; color: white; padding: 0.4rem 1.4rem;"><i class="fas fa-check"></i> entity‑first</span>
+          <span class="badge" style="background: #0b2c50; color: white; padding: 0.4rem 1.4rem;"><i class="fas fa-check"></i> scalable &amp; maintainable</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 2.2rem; font-size: 0.85rem; color: #3b5b7f; border-top: 1px solid #d2e2f5; padding-top: 1.5rem;">
+    <i class="fas fa-globe-asia"></i> Built for India · adaptable to any parliamentary democracy · programmatic SEO strategy · TrackMP
+  </div>
+</div>
+</body>
+</html>

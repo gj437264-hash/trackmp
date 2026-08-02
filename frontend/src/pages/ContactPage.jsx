@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PublicLayout } from "@/components/PublicLayout";
 import { api, formatApiError } from "@/lib/api";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
+import { loadRecaptcha, getRecaptchaToken } from "@/lib/recaptcha";
 
 const empty = { first_name: "", last_name: "", email: "", country_code: "", subject: "", message: "" };
 
@@ -14,6 +15,7 @@ export default function ContactPage() {
   const [ticketNumber, setTicketNumber] = useState(null);
 
   useEffect(() => {
+    loadRecaptcha().catch(() => {});
     api.get("/ref/countries").then((r) => setCountries(r.data.items || [])).catch(() => {});
   }, []);
 
@@ -34,14 +36,19 @@ export default function ContactPage() {
     if (!validate()) return;
     setBusy(true);
     try {
+      const captchaToken = await getRecaptchaToken("contact");
       const { data } = await api.post("/contact", {
         ...form,
         country_code: form.country_code || null,
         source_page: window.location.pathname,
+        captcha_token: captchaToken,
       });
       setTicketNumber(data.ticket_number);
     } catch (e) {
-      setErrors({ _global: formatApiError(e) });
+      const msg = e?.message === "reCAPTCHA not loaded. Please refresh the page and try again."
+        ? e.message
+        : formatApiError(e);
+      setErrors({ _global: msg });
     } finally {
       setBusy(false);
     }
@@ -155,6 +162,18 @@ export default function ContactPage() {
           <button type="submit" disabled={busy} className="btn-soft-primary disabled:opacity-50" data-testid="contact-submit">
             {busy ? "Sending…" : "Send Message"}
           </button>
+
+          <p className="text-[11px] text-slate-400 text-center">
+            This site is protected by reCAPTCHA and the Google{" "}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">
+              Terms of Service
+            </a>{" "}
+            apply.
+          </p>
         </form>
       </div>
     </PublicLayout>

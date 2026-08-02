@@ -1,0 +1,14 @@
+[Unit]
+Description=TrackMP SEO maintenance (slugs, static pages, sitemap)
+After=network-online.target mongod.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=trackmp
+Group=trackmp
+WorkingDirectory=/opt/trackmp/seo-tasks
+EnvironmentFile=/opt/trackmp/seo-tasks/.env
+ExecStart=/opt/trackmp/seo-tasks/venv/bin/python -m seo_tasks.cli run-all
+TimeoutStartSec=30min
+OnFailure=trackmp-seo-alert.service
