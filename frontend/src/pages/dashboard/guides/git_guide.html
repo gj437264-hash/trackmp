@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Ultimate Beginner's Guide to Git & GitHub</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --code-bg: #0f172a;
+      --code-text: #38bdf8;
+      --border: #e2e8f0;
+      --sidebar-bg: #ffffff;
+      --accent-note: #eff6ff;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #60a5fa;
+      --primary-hover: #3b82f6;
+      --code-bg: #020617;
+      --code-text: #7dd3fc;
+      --border: #334155;
+      --sidebar-bg: #1e293b;
+      --accent-note: #1e3a8a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Sidebar Navigation */
+    nav {
+      width: 280px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    nav h3 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: var(--primary);
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    nav li {
+      margin-bottom: 10px;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      display: block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--primary);
+      background-color: var(--bg);
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      max-width: 900px;
+      padding: 40px 32px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--primary);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-top: 0;
+      font-size: 1.35rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 20px;
+    }
+
+    code {
+      background-color: rgba(100, 116, 139, 0.15);
+      color: var(--text);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9em;
+    }
+
+    /* Code Blocks with Copy Button */
+    .code-container {
+      position: relative;
+      margin: 16px 0;
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Collapsible Accordion */
+    details {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 12px;
+      background: var(--bg);
+    }
+
+    summary {
+      font-weight: 600;
+      padding: 14px;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: '▶';
+      font-size: 0.8rem;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    details[open] summary::after {
+      transform: rotate(90deg);
+    }
+
+    .accordion-content {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+
+    .note {
+      background-color: var(--accent-note);
+      border-left: 4px solid var(--primary);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      nav { width: 100%; height: auto; position: relative; }
+      main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <nav>
+    <h3>Table of Contents</h3>
+    <ul>
+      <li><a href="#basics">1. Git vs. GitHub</a></li>
+      <li><a href="#workflow">2. Daily Workflow</a></li>
+      <li><a href="#zip-setup">3. ZIP to Custom Branch</a></li>
+      <li><a href="#undoing">4. Undoing Mistakes</a></li>
+      <li><a href="#merging">5. Pull Requests & Merging</a></li>
+      <li><a href="#conflicts">6. Resolving Conflicts</a></li>
+      <li><a href="#stashing">7. Stashing Temporary Work</a></li>
+      <li><a href="#troubleshooting">8. Common Error Fixes</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <header>
+      <div>
+        <h1>Git & GitHub Handbook</h1>
+        <div style="color: var(--muted);">Simple guide for developers and non-programmers</div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section id="basics" class="card">
+      <h2>1. The Basics: What are Git and GitHub?</h2>
+      <p>Think of your project like writing a manuscript:</p>
+      <ul>
+        <li><strong>Git:</strong> An automatic "save history" manager on your local computer. It records snapshots of your files every time you commit.</li>
+        <li><strong>GitHub:</strong> A cloud host (like Google Drive for code) that backs up your Git repositories so you can share and collaborate online.</li>
+        <li><strong>Repository (Repo):</strong> Your project folder tracked by Git.</li>
+        <li><strong>Branch:</strong> A safe parallel line of work (e.g., <code>phase4</code>) where you can build features without breaking the working <code>main</code> version.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="workflow" class="card">
+      <h2>2. Standard Commands: Push & Pull</h2>
+      <p>The core three-step cycle to push work to GitHub:</p>
+      
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre># 1. Stage all changed files
+git add .
+
+# 2. Save snapshot with a descriptive note
+git commit -m "Update homepage layout"
+
+# 3. Upload to GitHub
+git push</pre>
+      </div>
+
+      <h3>Fetching Remote Updates</h3>
+      <p>If someone else updated GitHub or you made edits on another machine, pull down the latest version:</p>
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre>git pull origin main</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="zip-setup" class="card">
+      <h2>3. Setting Up a Downloaded ZIP on a New Branch</h2>
+      <p>Downloaded a ZIP instead of cloning? Relink it to your online repo and push your changes to a new branch like <code>phase4</code>:</p>
+
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre># Initialize tracking in this folder
+git init
+
+# Connect to your remote repository
+git remote add origin https://github.com/username/repository.git
+
+# Create & switch to new branch
+git checkout -b phase4
+
+# Commit and push up your files
+git add .
+git commit -m "Add local progress to phase4"
+git push -u origin phase4</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="undoing" class="card">
+      <h2>4. Undoing Mistakes & Checking Status</h2>
+      <p>Git acts as your safety net. Here is how to inspect and undo local changes:</p>
+      <ul>
+        <li><code>git status</code> — See which files have been edited, staged, or remain untracked.</li>
+        <li><code>git diff</code> — Preview line-by-line changes before staging them.</li>
+        <li><code>git restore filename.js</code> — Discard local edits and reset a file back to its last committed state.</li>
+        <li><code>git reset HEAD~1 --soft</code> — Undo your last commit, but keep all your file changes safe on your computer.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section id="merging" class="card">
+      <h2>5. Merging & Pull Requests</h2>
+      <p>Once your work on <code>phase4</code> is complete, you will want to combine it back into the main codebase.</p>
+
+      <h3>Option A: The GitHub Way (Recommended)</h3>
+      <ol>
+        <li>Push your branch to GitHub (<code>git push -u origin phase4</code>).</li>
+        <li>Open GitHub in your browser—you will see a banner asking to <strong>"Compare & pull request"</strong>.</li>
+        <li>Click it, add a summary of your changes, and hit <strong>Create Pull Request</strong>.</li>
+        <li>Review your changes online and click <strong>Merge Pull Request</strong>.</li>
+      </ol>
+
+      <h3>Option B: Command Line Merge</h3>
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre># Switch back to main
+git checkout main
+
+# Download latest main updates
+git pull origin main
+
+# Combine phase4 into main
+git merge phase4
+
+# Push updated main to GitHub
+git push origin main</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section id="conflicts" class="card">
+      <h2>6. Understanding & Resolving Merge Conflicts</h2>
+      <p>A <strong>merge conflict</strong> happens when two people (or branches) change the exact same line of a file in different ways, and Git doesn't know which one to keep.</p>
+      
+      <div class="note">
+        <strong>What Git does:</strong> Git pauses the merge and highlights the conflict inside your file like this:
+        <pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD (Your Current Code)
+const title = "Welcome back!";
+=======
+const title = "Hello World!";
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; phase4 (Incoming Code)</pre>
+      </div>
+
+      <h3>How to fix a conflict:</h3>
+      <ol>
+        <li>Open the file in your code editor.</li>
+        <li>Delete the unwanted version along with Git's marker lines (<code>&lt;&lt;&lt;</code>, <code>===</code>, <code>&gt;&gt;&gt;</code>).</li>
+        <li>Save the file.</li>
+        <li>Run:
+          <div class="code-container">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>git add .
+git commit -m "Resolved merge conflict"</pre>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section id="stashing" class="card">
+      <h2>7. Stashing: Temporarily Hiding Unfinished Work</h2>
+      <p>Need to quickly switch branches to fix a bug, but your current edits aren't ready to be committed?</p>
+
+      <div class="code-container">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre># Save unfinished edits to a temporary shelf
+git stash
+
+# Switch branches and do whatever work is needed...
+git checkout main
+
+# Switch back and restore your stashed edits
+git checkout phase4
+git stash pop</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 8: COLLAPSIBLE TROUBLESHOOTING -->
+    <section id="troubleshooting" class="card">
+      <h2>8. Troubleshooting Accordion (Common Errors)</h2>
+
+      <details>
+        <summary>Error: "fatal: detected dubious ownership in repository"</summary>
+        <div class="accordion-content">
+          <p><strong>Cause:</strong> You are accessing a repository owned by a different system user (e.g., executing as <code>root</code> in Linux/WSL).</p>
+          <p><strong>Fix:</strong> Instruct Git to trust the project path globally:</p>
+          <div class="code-container">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>git config --global --add safe.directory /opt/trackmp</pre>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Error: "Password authentication is not supported"</summary>
+        <div class="accordion-content">
+          <p><strong>Cause:</strong> GitHub disabled standard account password auth for Git operations.</p>
+          <p><strong>Fix:</strong> Generate a Personal Access Token (PAT):</p>
+          <ol>
+            <li>Go to GitHub: <strong>Settings &gt; Developer settings &gt; Personal access tokens &gt; Tokens (classic)</strong>.</li>
+            <li>Generate a token checking the <code>repo</code> permissions box.</li>
+            <li>Paste this token when Git prompts for your password in terminal.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>How to ignore specific directories (e.g., backend/uploads/)</summary>
+        <div class="accordion-content">
+          <p>Append the relative path from your repo root to <code>.gitignore</code>:</p>
+          <div class="code-container">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>echo "backend/uploads/" >> .gitignore</pre>
+          </div>
+          <p>If the folder was already tracked previously, untrack it without deleting local files:</p>
+          <div class="code-container">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre>git rm -r --cached backend/uploads/
+git commit -m "Stop tracking uploads directory"</pre>
+          </div>
+        </div>
+      </details>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT FOR INTERACTIVITY -->
+  <script>
+    // Copy Code snippet functionality
+    function copyCode(button) {
+      const container = button.parentElement;
+      const codeText = container.querySelector('pre').innerText;
+
+      navigator.clipboard.writeText(codeText).then(() => {
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+      }).catch(() => {
+        button.innerText = 'Failed';
+      });
+    }
+
+    // Theme toggle functionality
+    function toggleTheme() {
+      const body = document.body;
+      const btn = document.getElementById('themeBtn');
+      
+      if (body.getAttribute('data-theme') === 'dark') {
+        body.removeAttribute('data-theme');
+        btn.innerText = '🌙 Dark Mode';
+      } else {
+        body.setAttribute('data-theme', 'dark');
+        btn.innerText = '☀️ Light Mode';
+      }
+    }
+  </script>
+
+</body>
+</html>
