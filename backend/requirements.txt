@@ -30,6 +30,9 @@ cryptography==49.0.0
 bcrypt==5.0.0
 passlib==1.7.4
 
+# Not currently used. Planned migration from Passlib/bcrypt to Argon2id.
+pwdlib[argon2]==0.3.0
+
 # ------------------------------------------------------------
 # HTTP / OAuth / Configuration
 # ------------------------------------------------------------
