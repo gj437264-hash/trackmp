@@ -1,0 +1,166 @@
+/*
+ * Homepage-only CSS.
+ * Everything animated on this page (fades, stagger, progress bars, ambient
+ * drift, marquee pulses) is driven by these classes + native CSS
+ * transitions/keyframes instead of a JS animation library. React only ever
+ * toggles a class name (via IntersectionObserver) or sets a CSS variable —
+ * it never runs per-frame animation logic. This keeps the homepage's JS
+ * bundle smaller and animation work on the compositor thread.
+ *
+ * Colors and fonts are intentionally untouched: every rule below only
+ * targets opacity/transform/width and structural concerns.
+ */
+
+/* ---------------------------------------------------------------- */
+/* Scroll/mount reveal — parent toggles .is-visible, children ride it */
+/* ---------------------------------------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children inside a revealed group. Each child sets its own
+   --i-delay inline; no per-child observer needed. */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition-delay: var(--i-delay, 0ms);
+}
+
+.reveal.is-visible .reveal-item,
+.is-visible .reveal-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Progress bars: width animates in once the ancestor is revealed. */
+.bar-fill {
+  width: 0%;
+  transition: width 0.8s ease;
+  transition-delay: var(--bar-delay, 0ms);
+}
+
+.reveal.is-visible .bar-fill,
+.is-visible .bar-fill {
+  width: var(--bar-pct, 0%);
+}
+
+/* ---------------------------------------------------------------- */
+/* Ambient hero motion — independent of scroll position (no scroll     */
+/* listeners), pure compositor-friendly transforms.                    */
+/* ---------------------------------------------------------------- */
+
+.orb-drift {
+  animation: orb-drift 16s ease-in-out infinite alternate;
+}
+
+.orb-drift-slow {
+  animation: orb-drift 22s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes orb-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, -32px, 0) scale(1.05);
+  }
+}
+
+.hero-in {
+  animation: hero-in 0.6s ease both;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Respect reduced motion everywhere on this page in one place        */
+/* ---------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-item,
+  .bar-fill,
+  .hero-in,
+  .orb-drift,
+  .orb-drift-slow,
+  .animate-float,
+  .animate-marquee,
+  .animate-ticker-pulse {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+    transform: none !important;
+  }
+
+  .reveal,
+  .reveal-item {
+    opacity: 1 !important;
+  }
+
+  .bar-fill {
+    width: var(--bar-pct, 0%) !important;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Keyboard accessibility: visible focus ring on interactive cards.   */
+/* Uses the site's existing indigo accent, not a new color.           */
+/* ---------------------------------------------------------------- */
+
+.homepage-root a:focus-visible,
+.homepage-root button:focus-visible,
+.homepage-root [tabindex]:focus-visible {
+  outline: 2px solid #6366f1; /* existing indigo-500 accent already used across this page */
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+/* ---------------------------------------------------------------- */
+/* Graceful degradation for browsers without backdrop-filter support  */
+/* (older Safari/Firefox, some in-app WebViews). Keeps cards legible.  */
+/* ---------------------------------------------------------------- */
+
+@supports not (backdrop-filter: blur(1px)) {
+  .homepage-root .backdrop-blur-sm {
+    background-color: rgba(255, 255, 255, 0.94);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Small-viewport tightening (very small phones / foldables).         */
+/* ---------------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .homepage-root h1 {
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Print: strip decorative/animated chrome, keep content readable. */
+@media print {
+  .homepage-root .orb-drift,
+  .homepage-root .orb-drift-slow,
+  .homepage-root [aria-hidden="true"] {
+    display: none !important;
+  }
+}

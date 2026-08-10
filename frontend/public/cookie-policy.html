@@ -1,0 +1,1615 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- ===== CHARACTER ENCODING & VIEWPORT ===== -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- ===== SECURITY HEADERS ===== -->
+  <!-- Strict Transport Security (HSTS) - Force HTTPS -->
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  
+  <!-- Content Security Policy - With nonce placeholder (will be replaced server-side) -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'nonce-{CSP_NONCE}' https://www.google.com https://www.gstatic.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:;
+    img-src 'self' data: https:;
+    connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com;
+    frame-src 'self' https://*.google.com;
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+    block-all-mixed-content;
+  ">
+
+  <!-- X-Content-Type-Options: Prevent MIME type sniffing -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  
+  <!-- X-Frame-Options: Prevent clickjacking -->
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  
+  <!-- X-XSS-Protection: Enable browser XSS filtering -->
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  
+  <!-- Referrer Policy: Control what information is sent -->
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
+  <!-- Permissions Policy: Restrict browser features -->
+  <meta http-equiv="Permissions-Policy" content="
+    accelerometer=(),
+    camera=(),
+    geolocation=(),
+    gyroscope=(),
+    magnetometer=(),
+    microphone=(),
+    payment=(),
+    usb=(),
+    interest-cohort=()
+  ">
+
+  <!-- Cache Control: Prevent caching of sensitive pages -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- ===== PRIMARY META TAGS ===== -->
+  <title>Cookie Policy | TrackMP</title>
+  <meta name="description" content="TrackMP's Cookie Policy explains how we use cookies, analytics, and similar technologies to operate, secure, and improve our transparency platform.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://trackmp.com/cookie-policy">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- ===== OPEN GRAPH / SOCIAL MEDIA ===== -->
+  <meta property="og:title" content="Cookie Policy | TrackMP">
+  <meta property="og:description" content="Learn how TrackMP uses cookies and similar technologies for analytics, security, and website functionality.">
+  <meta property="og:url" content="https://trackmp.com/cookie-policy">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TrackMP">
+
+  <!-- ===== TWITTER CARD ===== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cookie Policy | TrackMP">
+  <meta name="twitter:description" content="Learn how TrackMP uses cookies and similar technologies for analytics, security, and website functionality.">
+
+  <!-- ===== DNS PREFETCH & PRECONNECT ===== -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- ===== FONT LOADING WITH SRI ===== -->
+  <!-- Note: Integrity hash should be verified and updated regularly -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+  <link 
+    rel="stylesheet" 
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    integrity="sha384-4bw+/aepP/YCgVdCXgNXjR5o2xVYOP1y5iI7dUQZ2xY9h1gWJ3+mO3Bf6j6U9t4"
+    crossorigin="anonymous"
+    media="print" 
+    onload="this.media='all'"
+  >
+  <noscript>
+    <link 
+      rel="stylesheet" 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      integrity="sha384-4bw+/aepP/YCgVdCXgNXjR5o2xVYOP1y5iI7dUQZ2xY9h1gWJ3+mO3Bf6j6U9t4"
+      crossorigin="anonymous"
+    >
+  </noscript>
+
+  <style>
+    /* ============================================
+       TRACKMP DESIGN SYSTEM - Static HTML Version
+       Matches PublicLayout.jsx exactly
+       ============================================ */
+
+    /* ---------- CSS Variables ---------- */
+    :root {
+      /* Colors - Light Mode */
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f8fafc;
+      --color-text: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-muted: #94a3b8;
+      --color-border: #e2e8f0;
+      --color-border-light: #f1f5f9;
+      --color-surface: #ffffff;
+      --color-surface-hover: #f1f5f9;
+
+      /* Brand Colors */
+      --color-emerald-600: #059669;
+      --color-emerald-500: #10b981;
+      --color-teal-600: #0d9488;
+      --color-indigo-600: #4f46e5;
+      --color-rose-50: #fff1f2;
+      --color-rose-600: #e11d48;
+
+      /* Gradients */
+      --gradient-brand: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      --gradient-text: linear-gradient(135deg, #059669, #0d9488, #4f46e5);
+      --gradient-cta: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --shadow-emerald: 0 4px 14px rgba(5, 150, 105, 0.25);
+
+      /* Typography */
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+      /* Spacing */
+      --container-max: 1280px;
+      --header-height: 64px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* Dark Mode - matches your app's dark theme */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #0f172a;
+        --color-bg-secondary: #1e293b;
+        --color-text: #f1f5f9;
+        --color-text-secondary: #94a3b8;
+        --color-text-muted: #64748b;
+        --color-border: #1e293b;
+        --color-border-light: #1e293b;
+        --color-surface: #0f172a;
+        --color-surface-hover: #1e293b;
+        --color-rose-50: #1e293b;
+      }
+    }
+
+    /* ---------- Reset & Base ---------- */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font: 400 16px/1.7 var(--font-family);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color var(--transition-slow), color var(--transition-slow);
+    }
+
+    /* ---------- Typography ---------- */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: var(--font-family);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--color-text);
+    }
+
+    /* ---------- Links ---------- */
+    a {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color var(--transition-fast), background-color var(--transition-fast);
+    }
+
+    a:hover {
+      color: var(--color-emerald-600);
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--color-emerald-600);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* ---------- Skip Link ---------- */
+    .skip-link {
+      position: absolute;
+      top: -9999px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background: var(--color-emerald-600);
+      color: white;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 14px;
+      z-index: 9999;
+      transition: top var(--transition-normal);
+    }
+
+    .skip-link:focus {
+      top: 16px;
+    }
+
+    /* ============================================
+       HEADER - Matches PublicLayout.jsx
+       ============================================ */
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      height: var(--header-height);
+      transition: background-color var(--transition-slow), border-color var(--transition-slow);
+    }
+
+    /* Dark mode header */
+    @media (prefers-color-scheme: dark) {
+      .site-header {
+        background: rgba(15, 23, 42, 0.9);
+      }
+    }
+
+    .header-container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 16px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Brand / Logo */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-text);
+    }
+
+    .brand-link:hover {
+      color: var(--color-text);
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-brand);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: transform var(--transition-normal);
+    }
+
+    .brand-link:hover .brand-icon {
+      transform: scale(1.05);
+    }
+
+    .brand-text {
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      color: var(--color-text);
+    }
+
+    .brand-text .highlight {
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Desktop Navigation - matches PublicLayout exactly */
+    .nav-desktop {
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    @media (min-width: 768px) {
+      .nav-desktop {
+        display: flex;
+      }
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius);
+      color: var(--color-text-secondary);
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .nav-link:hover {
+      background: var(--color-surface-hover);
+      color: var(--color-text);
+    }
+
+    .nav-link.active {
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: var(--shadow-emerald);
+    }
+
+    /* Sign In / Sign Out buttons - matches PublicLayout */
+    .btn-signin {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius);
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: var(--shadow-emerald);
+      transition: all var(--transition-fast);
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-signin:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+      color: white;
+    }
+
+    .btn-signup {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius);
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-signup:hover {
+      background: var(--color-surface-hover);
+      color: var(--color-text);
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+
+    .main-content {
+      flex: 1;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 16px 48px;
+      width: 100%;
+      animation: fadeSlideUp 0.4s ease both;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Page Header */
+    .page-header {
+      padding: 48px 0 32px;
+    }
+
+    .page-header h1 {
+      font-size: clamp(36px, 5vw, 48px);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .page-header h1 .highlight {
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-header p {
+      font-size: 18px;
+      color: var(--color-text-secondary);
+      max-width: 680px;
+      line-height: 1.6;
+    }
+
+    .page-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 14px;
+      background: #ecfdf5;
+      border: 1px solid #d1fae5;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-emerald-600);
+      margin-bottom: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .page-header .badge {
+        background: rgba(5, 150, 105, 0.15);
+        border-color: rgba(5, 150, 105, 0.2);
+      }
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--color-emerald-600);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Notice / Draft Banner */
+    .notice-banner {
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .notice-banner {
+        background: rgba(251, 191, 36, 0.1);
+        border-color: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+      }
+    }
+
+    .notice-banner strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #92400e;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .notice-banner strong {
+        color: #fcd34d;
+      }
+    }
+
+    /* Content Card - matches app's card style */
+    .content-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color var(--transition-slow), background var(--transition-slow);
+    }
+
+    @media (max-width: 768px) {
+      .content-card {
+        padding: 28px 20px;
+      }
+    }
+
+    .content-card .last-updated {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: var(--color-border-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+    }
+
+    .content-card h2 {
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 800;
+      margin: 40px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content-card h2:first-of-type {
+      margin-top: 0;
+    }
+
+    .content-card h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: #ecfdf5;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--color-emerald-600);
+      flex-shrink: 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .content-card h2 .num {
+        background: rgba(5, 150, 105, 0.15);
+      }
+    }
+
+    .content-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      margin: 24px 0 8px;
+      color: var(--color-text);
+    }
+
+    .content-card p {
+      margin: 0 0 16px;
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+    }
+
+    .content-card ul {
+      margin: 0 0 16px;
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .content-card ul li {
+      position: relative;
+      padding-left: 20px;
+      margin: 6px 0;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .content-card ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--color-emerald-600);
+      font-weight: 700;
+    }
+
+    .content-card code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      padding: 2px 8px;
+      background: var(--color-border-light);
+      border-radius: 4px;
+      color: var(--color-text-secondary);
+    }
+
+    .content-card .highlight {
+      padding: 2px 8px;
+      background: #f0fdf4;
+      border-radius: 4px;
+      font-weight: 600;
+      color: var(--color-emerald-600);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .content-card .highlight {
+        background: rgba(5, 150, 105, 0.1);
+      }
+    }
+
+    /* Table - matches app's table styling */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0 28px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+      background: var(--color-surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      font-size: 14px;
+    }
+
+    thead {
+      background: var(--color-border-light);
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--color-text);
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--color-border-light);
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-status.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-status.enabled {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .badge-status.active {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+      }
+      .badge-status.enabled {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+      }
+    }
+
+    /* Callout */
+    .callout {
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      background: #ecfdf5;
+      border-left: 4px solid var(--color-emerald-600);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--color-text);
+    }
+
+    .callout.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+
+    .callout.warning strong {
+      color: #78350f;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .callout {
+        background: rgba(5, 150, 105, 0.08);
+      }
+      .callout.warning {
+        background: rgba(251, 191, 36, 0.08);
+        border-left-color: #f59e0b;
+      }
+      .callout.warning strong {
+        color: #fcd34d;
+      }
+    }
+
+    /* Contact Block */
+    .contact-block {
+      padding: 24px 28px;
+      background: var(--color-border-light);
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      margin: 24px 0 0;
+      transition: background var(--transition-slow);
+    }
+
+    .contact-block strong {
+      display: block;
+      font-size: 16px;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+
+    .contact-block p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    /* Related Policies */
+    .related-policies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .related-policies a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--color-border-light);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      transition: all var(--transition-fast);
+      border-bottom: none;
+    }
+
+    .related-policies a:hover {
+      background: var(--color-surface);
+      border-color: var(--color-emerald-600);
+      color: var(--color-emerald-600);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ============================================
+       FOOTER - Matches PublicLayout.jsx
+       ============================================ */
+
+    .site-footer {
+      border-top: 1px solid var(--color-border);
+      background: var(--color-bg-secondary);
+      padding: 48px 16px 24px;
+      margin-top: auto;
+      transition: border-color var(--transition-slow), background var(--transition-slow);
+    }
+
+    .footer-container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    @media (min-width: 640px) {
+      .footer-grid {
+        grid-template-columns: 1.4fr 1fr 1fr 1fr;
+      }
+    }
+
+    /* Brand column */
+    .footer-brand .brand {
+      margin-bottom: 12px;
+    }
+
+    .footer-brand p {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      max-width: 320px;
+      line-height: 1.6;
+    }
+
+    /* Footer columns */
+    .footer-col h4 {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+    }
+
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-col ul li a {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      transition: color var(--transition-fast);
+      border-bottom: none;
+    }
+
+    .footer-col ul li a:hover {
+      color: var(--color-emerald-600);
+    }
+
+    /* Footer bottom bar - matches PublicLayout exactly */
+    .footer-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding-top: 24px;
+    }
+
+    @media (min-width: 640px) {
+      .footer-bottom {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
+
+    .footer-bottom .copy {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+    }
+
+    .footer-legal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      align-items: center;
+    }
+
+    .footer-legal a {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+      border-bottom: none;
+      transition: color var(--transition-fast);
+    }
+
+    .footer-legal a:hover {
+      color: var(--color-indigo-600);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .footer-legal a:hover {
+        color: #818cf8;
+      }
+    }
+
+    /* ============================================
+       RESPONSIVE ADJUSTMENTS
+       ============================================ */
+
+    @media (max-width: 767px) {
+      .header-container {
+        padding: 0 12px;
+      }
+
+      .brand-text {
+        font-size: 17px;
+      }
+
+      .page-header {
+        padding: 24px 0;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+      }
+
+      .page-header p {
+        font-size: 16px;
+      }
+
+      .content-card {
+        padding: 20px 16px;
+      }
+
+      .content-card h2 {
+        font-size: 20px;
+      }
+
+      .content-card h2 .num {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      .content-card ul {
+        padding-left: 16px;
+      }
+
+      .content-card ul li {
+        padding-left: 16px;
+        font-size: 14px;
+      }
+
+      table {
+        font-size: 13px;
+        min-width: 480px;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+      }
+
+      .contact-block {
+        padding: 16px 18px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      table {
+        font-size: 12px;
+        min-width: 360px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+      }
+
+      .related-policies {
+        flex-direction: column;
+      }
+
+      .related-policies a {
+        justify-content: center;
+      }
+    }
+
+    /* ---------- Print Styles ---------- */
+    @media print {
+      .site-header {
+        position: static;
+        background: white !important;
+        backdrop-filter: none !important;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .site-footer {
+        background: white !important;
+        border-top: 1px solid #ccc;
+      }
+
+      .content-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+      }
+
+      .table-wrap {
+        border: 1px solid #ccc;
+      }
+
+      tr:hover td {
+        background: transparent !important;
+      }
+
+      .skip-link,
+      .notice-banner {
+        display: none !important;
+      }
+
+      .nav-desktop {
+        display: none !important;
+      }
+    }
+
+    /* ---------- Reduced Motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .main-content {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== SKIP LINK ========== -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- ========== HEADER ========== -->
+  <header class="site-header" role="banner" aria-label="Site header">
+    <div class="header-container">
+      <!-- Brand -->
+      <div class="brand">
+        <a href="/" class="brand-link" aria-label="TrackMP Home">
+          <span class="brand-icon" aria-hidden="true">T</span>
+          <span class="brand-text">
+            Track<span class="highlight">MP</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <nav class="nav-desktop" aria-label="Main navigation">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/search" class="nav-link">Search</a>
+
+        <!-- About Dropdown - simplified for static HTML -->
+        <div class="dropdown-wrapper" style="position:relative;">
+          <a href="/about" class="nav-link">About</a>
+        </div>
+
+        <a href="/signup" class="btn-signup">Request Access</a>
+        <a href="/login" class="btn-signin">Sign In</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main id="main-content" class="main-content">
+
+    <!-- Page Header -->
+    <header class="page-header">
+      <div class="badge">Legal &amp; Privacy</div>
+      <h1>Cookie <span class="highlight">Policy</span></h1>
+      <p>
+        This Cookie Policy explains how TrackMP uses cookies and similar technologies
+        to operate, secure, measure, and improve the website.
+      </p>
+    </header>
+
+    <!-- Draft Notice -->
+    <div class="notice-banner" role="note">
+      <strong>📋 Draft for implementation and legal review.</strong>
+      Replace bracketed placeholders before publication. This policy reflects TrackMP's
+      currently identified analytics and security technologies and should be updated
+      if additional cookies, tags, advertising tools, or third-party services are introduced.
+    </div>
+
+    <!-- Content Card -->
+    <article class="content-card">
+
+      <span class="last-updated">📅 Last updated: 6 August 2026</span>
+
+      <!-- Section 1 -->
+      <h2><span class="num">1</span> What Are Cookies?</h2>
+      <p>
+        Cookies are small text files or similar identifiers that websites may store on
+        or access from your browser or device. They can help a website remember information,
+        maintain functionality, measure usage, and support security.
+      </p>
+      <p>
+        TrackMP and third-party services used by TrackMP may also use technologies that
+        perform functions similar to cookies, including browser storage, tags, pixels,
+        or identifiers.
+      </p>
+
+      <!-- Section 2 -->
+      <h2><span class="num">2</span> How TrackMP Uses Cookies and Similar Technologies</h2>
+      <p>TrackMP uses these technologies for limited purposes including:</p>
+      <ul>
+        <li>Operating and securing website functionality;</li>
+        <li>Preventing spam, abuse, and automated attacks;</li>
+        <li>Understanding how visitors use TrackMP;</li>
+        <li>Measuring page views and website interactions;</li>
+        <li>Improving website content, navigation, and performance; and</li>
+        <li>Supporting technical diagnostics and reliability.</li>
+      </ul>
+      <p>
+        TrackMP does not currently use cookies for a dedicated advertising or
+        behavioral-advertising program.
+      </p>
+
+      <!-- Section 3 - Table -->
+      <h2><span class="num">3</span> Technologies Currently Used by TrackMP</h2>
+      <div class="table-wrap" role="table" aria-label="Technologies currently used by TrackMP">
+        <table>
+          <thead>
+            <tr>
+              <th>Technology</th>
+              <th>Purpose</th>
+              <th>Provider</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Google Analytics 4 / Google tag</strong></td>
+              <td>Website analytics, usage measurement, and performance improvement</td>
+              <td>Google</td>
+              <td><span class="badge-status active">In use</span></td>
+            </tr>
+            <tr>
+              <td><strong>GA4 Enhanced Measurement</strong></td>
+              <td>Measures interactions such as page views, scrolls, outbound clicks, searches, downloads, supported video engagement, and form interactions</td>
+              <td>Google</td>
+              <td><span class="badge-status enabled">Enabled</span></td>
+            </tr>
+            <tr>
+              <td><strong>Google reCAPTCHA v3</strong></td>
+              <td>Security, spam prevention, abuse detection, and protection of forms or relevant functionality</td>
+              <td>Google</td>
+              <td><span class="badge-status active">In use</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 4 -->
+      <h2><span class="num">4</span> Google Analytics 4</h2>
+      <p>
+        TrackMP uses Google Analytics 4 (GA4) to understand how visitors use the website
+        and to improve the platform. The current web stream uses Google tag Measurement ID
+        <code>G-18EZD9W5GG</code>.
+      </p>
+      <p>
+        GA4 may use cookies, browser storage, and other identifiers to distinguish browser
+        or device activity and associate related interactions for analytics purposes.
+      </p>
+      <p>
+        Depending on Google's processing, analytics information may include page URLs and
+        titles, referring information, browser and device characteristics, screen resolution,
+        language settings, approximate geographic information, interaction events, and
+        pseudonymous identifiers.
+      </p>
+
+      <h3>Enhanced Measurement</h3>
+      <p>
+        TrackMP currently has GA4 Enhanced Measurement enabled. Depending on the relevant
+        feature and configuration, this can measure:
+      </p>
+      <ul>
+        <li>Page views;</li>
+        <li>Scroll activity;</li>
+        <li>Outbound link clicks;</li>
+        <li>Site search activity;</li>
+        <li>Video engagement for supported embedded videos;</li>
+        <li>File downloads; and</li>
+        <li>Form interactions.</li>
+      </ul>
+
+      <h3>Google Signals</h3>
+      <p>
+        <span class="highlight">Google Signals data collection is currently disabled</span>
+        for TrackMP's GA4 property. TrackMP therefore does not intentionally enable
+        Google Signals as part of its current analytics configuration.
+      </p>
+
+      <h3>Analytics Retention</h3>
+      <p>
+        TrackMP currently has GA4 event-data retention configured for <strong>2 months</strong>
+        and user-data retention configured for <strong>14 months</strong>. The
+        "reset on new user activity" option is currently enabled.
+      </p>
+      <p>
+        These settings concern the applicable user-level and event-level Analytics data.
+        They should not be interpreted as meaning that all aggregated reporting or every
+        form of data processed by Google is deleted after the same period.
+      </p>
+
+      <!-- Section 5 -->
+      <h2><span class="num">5</span> Google reCAPTCHA v3</h2>
+      <p>
+        TrackMP uses Google reCAPTCHA v3 to help protect forms and relevant functionality
+        against spam, abuse, automated submissions, and malicious activity.
+      </p>
+      <p>
+        reCAPTCHA may process technical and interaction information necessary to assess
+        whether activity is likely to be automated or abusive. This processing is performed
+        by Google and is subject to Google's own terms and privacy practices.
+      </p>
+      <p>
+        For more information, review
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's Privacy Policy</a>
+        and
+        <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Google's Terms of Service</a>.
+      </p>
+
+      <!-- Section 6 -->
+      <h2><span class="num">6</span> Form Submissions and Analytics</h2>
+      <p>
+        TrackMP provides contact, report, correction, and contributor-access forms.
+        TrackMP does not intentionally configure GA4 to send the contents of these
+        form submissions to Google Analytics.
+      </p>
+      <p>
+        Analytics may measure that a form interaction or submission occurred where
+        Enhanced Measurement or another configured event records that interaction.
+        The contents of the submission should remain separate from analytics event data.
+      </p>
+      <div class="callout">
+        <strong>🔒 Implementation note:</strong>
+        TrackMP should avoid placing names, email addresses, messages, report details,
+        passwords, tokens, or other unnecessary personal information into URLs, page
+        titles, GA4 event parameters, or other analytics fields.
+      </div>
+
+      <!-- Section 7 -->
+      <h2><span class="num">7</span> Necessary Website Technologies</h2>
+      <p>
+        Some website functionality may require browser storage, cookies, session identifiers,
+        security tokens, or similar mechanisms. These technologies may be necessary for
+        authentication, contributor/admin dashboard access, security, request handling,
+        rate limiting, or other essential functions.
+      </p>
+      <p>
+        Where such technologies are used, they should be limited to what is reasonably
+        necessary for the relevant function.
+      </p>
+
+      <!-- Section 8 -->
+      <h2><span class="num">8</span> Third-Party Technologies</h2>
+      <p>
+        TrackMP currently uses Google services for analytics and reCAPTCHA. Google may
+        process information on its own systems and may use cookies or similar technologies
+        according to its own policies.
+      </p>
+      <p>
+        TrackMP may add additional third-party services in the future. If a new service
+        materially changes how cookies or similar technologies are used, this Cookie
+        Policy may be updated.
+      </p>
+
+      <!-- Section 9 -->
+      <h2><span class="num">9</span> How to Control Cookies</h2>
+      <p>
+        Most modern browsers allow you to view, block, delete, or restrict cookies through
+        browser settings. The available controls differ by browser and device.
+      </p>
+      <p>
+        You can generally use your browser's privacy or site-settings controls to manage
+        cookies and stored website data.
+      </p>
+      <p>
+        Blocking or deleting cookies may affect some website functions or prevent analytics
+        from accurately measuring your visit.
+      </p>
+
+      <!-- Section 10 -->
+      <h2><span class="num">10</span> Google Analytics Opt-Out Options</h2>
+      <p>
+        You may limit certain analytics collection through browser settings, privacy
+        controls, or available Google tools. Google also provides information about its
+        available controls and choices through its support resources.
+      </p>
+      <p>
+        See
+        <a href="https://support.google.com/analytics/" target="_blank" rel="noopener noreferrer">Google Analytics Help</a>
+        for current information about Analytics controls and configuration.
+      </p>
+
+      <!-- Section 11 -->
+      <h2><span class="num">11</span> Do Not Track Signals</h2>
+      <p>
+        Some browsers provide a "Do Not Track" or similar privacy signal. Because browser
+        implementations and standards vary, TrackMP does not currently represent that
+        every such signal will automatically disable all analytics or third-party technologies.
+      </p>
+      <p>
+        Where legally required, TrackMP will implement applicable privacy-signal requirements.
+      </p>
+
+      <!-- Section 12 -->
+      <h2><span class="num">12</span> Privacy and Personal Information</h2>
+      <p>
+        Cookies and similar technologies may involve information that can be associated
+        with a browser, device, or online activity. TrackMP's broader handling of personal
+        information is described in the
+        <a href="/privacy-policy.html">Privacy Policy</a>.
+      </p>
+      <p>
+        This Cookie Policy should therefore be read together with the Privacy Policy and,
+        where applicable, the Terms of Use.
+      </p>
+
+      <!-- Section 13 -->
+      <h2><span class="num">13</span> Changes to This Cookie Policy</h2>
+      <p>
+        TrackMP may update this Cookie Policy when its technology, analytics configuration,
+        security systems, third-party services, or legal requirements change.
+      </p>
+      <p>
+        The "Last updated" date identifies the most recent revision. We recommend reviewing
+        this page periodically.
+      </p>
+
+      <!-- Section 14 - Contact -->
+      <h2><span class="num">14</span> Contact Us</h2>
+      <p>If you have questions about TrackMP's use of cookies or similar technologies, contact:</p>
+      <div class="contact-block">
+        <strong>[LEGAL ENTITY / OPERATOR NAME]</strong>
+        <p>
+          TrackMP<br>
+          India<br>
+          Email: <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a><br>
+          Address: [REGISTERED / BUSINESS ADDRESS]
+        </p>
+      </div>
+
+      <!-- Section 15 -->
+      <h2><span class="num">15</span> Related Policies</h2>
+      <div class="related-policies">
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/terms-of-use.html">Terms of Use</a>
+        <a href="/data-sourcing.html">Data &amp; Editorial Methodology</a>
+      </div>
+
+    </article>
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-container">
+
+      <!-- Footer Grid -->
+      <div class="footer-grid">
+
+        <!-- Brand Column -->
+        <div class="footer-brand">
+          <div class="brand">
+            <a href="/" class="brand-link" aria-label="TrackMP Home">
+              <span class="brand-icon" aria-hidden="true">T</span>
+              <span class="brand-text">
+                Track<span class="highlight">MP</span>
+              </span>
+            </a>
+          </div>
+          <p>
+            A public, independently maintained transparency ledger tracking the promises,
+            votes, and spending records of elected representatives.
+          </p>
+        </div>
+
+        <!-- Explore Column -->
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/search">Search</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/articles">Articles</a></li>
+            <li><a href="/your-voice">Your Voice</a></li>
+            <li><a href="/budget-analysis">Budget Analysis</a></li>
+          </ul>
+        </div>
+
+        <!-- Get Involved Column -->
+        <div class="footer-col">
+          <h4>Get Involved</h4>
+          <ul>
+            <li><a href="/contact">Contact Us</a></li>
+            <li><a href="/submit-update">Submit an Update</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal Column -->
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="/terms-of-use.html">Terms of Use</a></li>
+            <li><a href="/cookie-policy.html" aria-current="page">Cookie Policy</a></li>
+            <li><a href="/data-sourcing.html">Data Sourcing</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <span class="copy">© 2026 TrackMP · Open Record</span>
+        <div class="footer-legal">
+          <a href="/privacy-policy.html">Privacy Policy</a>
+          <a href="/terms-of-use.html">Terms of Use</a>
+          <a href="/cookie-policy.html" aria-current="page">Cookie Policy</a>
+          <a href="/data-sourcing.html">Data Sourcing</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ========== SECURE JAVASCRIPT WITH NONCE ========== -->
+  <script nonce="{CSP_NONCE}">
+    (function() {
+      'use strict';
+
+      // ===== SECURE DARK MODE DETECTION =====
+      function getTheme() {
+        try {
+          if (window.matchMedia) {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+          // Fallback: check for saved preference
+          if (window.localStorage) {
+            return localStorage.getItem('theme') === 'dark';
+          }
+          return false;
+        } catch (e) {
+          // Silent fail
+          return false;
+        }
+      }
+
+      // Sanitize string to prevent XSS
+      function sanitizeString(str) {
+        if (!str) return '';
+        return str.replace(/[<>"'{}]/g, '').slice(0, 1000);
+      }
+
+      // Set theme securely
+      try {
+        const root = document.documentElement;
+        if (getTheme()) {
+          root.classList.add('dark');
+        }
+
+        // Handle dark mode changes securely
+        const darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        if (darkMode && typeof darkMode.addEventListener === 'function') {
+          darkMode.addEventListener('change', function(e) {
+            try {
+              if (e.matches) {
+                root.classList.add('dark');
+              } else {
+                root.classList.remove('dark');
+              }
+            } catch (err) {
+              // Silent fail
+            }
+          });
+        }
+      } catch (e) {
+        // Silent fail - don't break the page
+      }
+
+      // ===== SECURE EXTERNAL LINKS =====
+      try {
+        document.querySelectorAll('a[target="_blank"]').forEach(function(link) {
+          const href = link.getAttribute('href');
+          if (href && href.startsWith('http')) {
+            // Use noopener for security
+            link.setAttribute('rel', 'noopener noreferrer');
+          }
+        });
+      } catch (e) {
+        // Silent fail
+      }
+
+      // ===== SECURE CURRENT PAGE DETECTION =====
+      try {
+        const currentPath = sanitizeString(window.location.pathname);
+        document.querySelectorAll('a').forEach(function(link) {
+          try {
+            const href = link.getAttribute('href');
+            if (href) {
+              const cleanHref = sanitizeString(href);
+              if (cleanHref === currentPath) {
+                link.setAttribute('aria-current', 'page');
+              }
+            }
+          } catch (e) {
+            // Skip problematic links
+          }
+        });
+      } catch (e) {
+        // Silent fail
+      }
+
+      // ===== CONSOLE SECURITY =====
+      try {
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          console.clear();
+          console.log('%c🔒 TrackMP', 'font-size:16px; font-weight:bold; color:#059669;');
+        }
+      } catch (e) {
+        // Silent fail
+      }
+
+      // ===== PERFORMANCE: DEFER NON-CRITICAL OPERATIONS =====
+      try {
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(function() {
+            // Non-critical operations can go here
+          });
+        }
+      } catch (e) {
+        // Silent fail
+      }
+
+      // ===== CSP REPORTING (Optional) =====
+      // If you have a CSP report endpoint, you can report violations
+      // document.addEventListener('securitypolicyviolation', function(e) {
+      //   // Send violation to your reporting endpoint
+      // });
+
+    })();
+  </script>
+
+  <!-- ===== NOSCRIPT FALLBACK ===== -->
+  <noscript>
+    <div style="padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin:16px auto;max-width:1280px;text-align:center;color:#78350f;">
+      <strong>⚠️ JavaScript is disabled.</strong> For the best experience, please enable JavaScript in your browser settings.
+    </div>
+  </noscript>
+
+</body>
+</html>

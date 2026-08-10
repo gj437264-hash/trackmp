@@ -48,6 +48,7 @@ const SEOManagement = lazy(() => import("@/pages/dashboard/SEOManagement"));
 const SEOEditor = lazy(() => import("@/pages/dashboard/SEOEditor"));
 const AuditLog = lazy(() => import("@/pages/dashboard/AuditLog"));
 const Trash = lazy(() => import("@/pages/dashboard/Trash"));
+const DuplicatePoliticiansFinder = lazy(() => import("@/pages/extensions/DuplicatePoliticiansFinder"));
 
 const ADMIN_ROLES = ["super_admin", "admin"];
 const SUPER = ["super_admin"];
@@ -89,7 +90,8 @@ function AnimatedRoutes() {
           {/* Dashboard */}
           <Route path="/dashboard" element={<ProtectedRoute roles={ADMIN_ROLES}><DashboardHome /></ProtectedRoute>} />
           <Route path="/dashboard/politicians" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticiansList /></ProtectedRoute>} />
-	  <Route path="/dashboard/voice" element={<ProtectedRoute roles={ADMIN_ROLES}><VoiceModerationPage /></ProtectedRoute>} />
+          <Route path="/dashboard/politicians/duplicates" element={<ProtectedRoute roles={ADMIN_ROLES}><DuplicatePoliticiansFinder /></ProtectedRoute>} />
+          <Route path="/dashboard/voice" element={<ProtectedRoute roles={ADMIN_ROLES}><VoiceModerationPage /></ProtectedRoute>} />
           <Route path="/dashboard/community" element={<ProtectedRoute roles={ADMIN_ROLES}><CommunityDesk /></ProtectedRoute>} />
           <Route path="/dashboard/community/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/dashboard/visitors" element={<ProtectedRoute roles={ADMIN_ROLES}><Visitors /></ProtectedRoute>} />
@@ -98,8 +100,8 @@ function AnimatedRoutes() {
           <Route path="/dashboard/visitors/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><VisitorDetail /></ProtectedRoute>} />
           <Route path="/dashboard/politicians/:id" element={<ProtectedRoute roles={ADMIN_ROLES}><PoliticianForm /></ProtectedRoute>} />
           <Route path="/dashboard/reference" element={<ProtectedRoute roles={ADMIN_ROLES}><ReferenceData /></ProtectedRoute>} />
-	  <Route path="/dashboard/seo" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOManagement /></ProtectedRoute>} />
-	  <Route path="/dashboard/seo/:contentType/:itemId" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOEditor /></ProtectedRoute>} />
+          <Route path="/dashboard/seo" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOManagement /></ProtectedRoute>} />
+          <Route path="/dashboard/seo/:contentType/:itemId" element={<ProtectedRoute roles={ADMIN_ROLES}><SEOEditor /></ProtectedRoute>} />
           <Route path="/dashboard/signups" element={<ProtectedRoute roles={SUPER}><SignupQueue /></ProtectedRoute>} />
           <Route path="/dashboard/admins" element={<ProtectedRoute roles={SUPER}><Admins /></ProtectedRoute>} />
           <Route path="/dashboard/audit" element={<ProtectedRoute roles={SUPER}><AuditLog /></ProtectedRoute>} />

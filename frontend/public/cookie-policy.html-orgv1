@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="TrackMP Cookie Policy explains how cookies and similar technologies are used for analytics, security, and website functionality.">
+  <meta name="robots" content="index,follow">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="Cookie Policy | TrackMP">
+  <meta property="og:description" content="Learn how TrackMP uses cookies and similar technologies for analytics, security, and website functionality.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trackmp.com/cookies">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://trackmp.com/cookies">
+  
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
+  <title>Cookie Policy | TrackMP</title>
+  
+  <style>
+    /* Root Variables - Matching TrackMP Design System */
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-strong: #eef1f5;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --accent: #059669;
+      --accent-light: #10b981;
+      --accent-dark: #047857;
+      --accent-gradient: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 16px/1.7 var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      border-bottom: 1px solid transparent;
+    }
+
+    a:hover {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent-light);
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    a[target="_blank"]::after {
+      content: '↗';
+      display: inline-block;
+      margin-left: 2px;
+      font-size: 0.85em;
+      transition: transform 0.2s ease;
+    }
+
+    a[target="_blank"]:hover::after {
+      transform: translate(2px, -2px);
+    }
+
+    /* Skip to content link - accessibility */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      padding: 12px 24px;
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      z-index: 100;
+      font-weight: 600;
+      color: var(--text);
+      transition: top 0.3s ease;
+    }
+
+    .skip-link:focus {
+      top: 20px;
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .site-header .container {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-logo .logo-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .site-logo a {
+      color: var(--text);
+      border: none;
+    }
+
+    .site-logo a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .header-nav a {
+      color: var(--text-secondary);
+      border: none;
+      transition: color 0.2s ease;
+    }
+
+    .header-nav a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav a[aria-current="page"] {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Main Layout */
+    main {
+      max-width: 920px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .hero .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #d1fae5;
+    }
+
+    .hero .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 44px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+      margin: 16px 0 12px;
+      color: var(--text);
+    }
+
+    .hero h1 span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .intro {
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notice strong {
+      color: #92400e;
+    }
+
+    /* Content Section */
+    .content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .content .last-updated {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--border-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 40px 0 12px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content h2:first-child {
+      margin-top: 0;
+    }
+
+    .content h2 .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      background: #ecfdf5;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 8px;
+      color: var(--text);
+    }
+
+    .content p {
+      margin: 0 0 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .content ul {
+      margin: 0 0 16px 0;
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .content ul li {
+      margin: 6px 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .content ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .content .callout {
+      background: #ecfdf5;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .content .callout strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .content .callout.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+
+    .content .callout.warning strong {
+      color: #78350f;
+    }
+
+    .content .policy-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .content .policy-link::after {
+      content: '→';
+      transition: transform 0.2s ease;
+    }
+
+    .content .policy-link:hover::after {
+      transform: translateX(4px);
+    }
+
+    /* Code/technical references */
+    .content code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: var(--border-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .content .highlight {
+      background: #f0fdf4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+      color: var(--accent-dark);
+    }
+
+    /* Table Styles - Enhanced */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0 28px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+      font-size: 14px;
+    }
+
+    thead {
+      background: var(--border-light);
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--border-light);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-badge.enabled {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Contact Section */
+    .contact-block {
+      background: var(--border-light);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 24px 0 0;
+      border: 1px solid var(--border);
+    }
+
+    .contact-block strong {
+      display: block;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .contact-block p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .contact-block a {
+      border-bottom: 1px solid transparent;
+    }
+
+    .contact-block a:hover {
+      border-bottom-color: var(--accent-light);
+    }
+
+    /* Related Policies Section */
+    .related-policies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .related-policies a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--border-light);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: none;
+      transition: all 0.2s ease;
+    }
+
+    .related-policies a:hover {
+      background: var(--surface);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Footer */
+    footer {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    footer .footer-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    footer .footer-links a {
+      color: var(--text-muted);
+      border: none;
+      font-size: 13px;
+      transition: color 0.2s ease;
+    }
+
+    footer .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    footer .footer-dot {
+      color: var(--border);
+    }
+
+    /* Animations */
+    @keyframes pulse-dot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      .site-header {
+        position: static;
+        background: var(--surface);
+        backdrop-filter: none;
+      }
+      
+      .hero::before {
+        display: none;
+      }
+      
+      .hero, .content {
+        box-shadow: none;
+        border-color: #ccc;
+      }
+      
+      .header-nav, .footer-links {
+        display: none;
+      }
+      
+      .table-wrap {
+        border: 1px solid #ccc;
+      }
+      
+      tr:hover td {
+        background: transparent;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .site-header .container {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 16px;
+        font-size: 13px;
+      }
+
+      main {
+        margin-top: 24px;
+      }
+
+      .hero,
+      .content {
+        padding: 28px 20px;
+      }
+
+      .hero .intro {
+        font-size: 16px;
+      }
+
+      .content h2 {
+        font-size: 21px;
+        margin-top: 32px;
+      }
+
+      .content h2 .section-number {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      .contact-block {
+        padding: 20px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding-top: 20px;
+      }
+
+      footer .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .related-policies {
+        flex-direction: column;
+      }
+
+      .related-policies a {
+        justify-content: center;
+      }
+
+      table {
+        font-size: 13px;
+        min-width: 500px;
+      }
+
+      th, td {
+        padding: 10px 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero,
+      .content {
+        padding: 20px 16px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .content h2 {
+        font-size: 19px;
+      }
+
+      .content ul {
+        padding-left: 16px;
+      }
+
+      .content ul li {
+        padding-left: 16px;
+        font-size: 14px;
+      }
+
+      .content .callout {
+        padding: 14px 16px;
+        font-size: 13px;
+      }
+
+      table {
+        font-size: 12px;
+        min-width: 400px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+
+    /* Reduced Motion Preference */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .site-logo .logo-dot {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip to content link -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header" role="banner" aria-label="Site header">
+    <div class="container">
+      <div class="site-logo">
+        <span class="logo-dot" aria-hidden="true"></span>
+        <a href="/">TrackMP</a>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/search">Explore</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/cookies" aria-current="page">Cookies</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">Legal &amp; Privacy</div>
+      <h1 id="hero-title">Cookie <span>Policy</span></h1>
+      <p class="intro">
+        This Cookie Policy explains how TrackMP uses cookies and similar technologies to operate, secure, measure, and improve the website.
+      </p>
+      <div class="notice" role="note">
+        <strong>📋 Draft for implementation and legal review.</strong> Replace bracketed placeholders before publication. This policy reflects TrackMP's currently identified analytics and security technologies and should be updated if additional cookies, tags, advertising tools, or third-party services are introduced.
+      </div>
+    </section>
+
+    <!-- Content -->
+    <article class="content">
+      <span class="last-updated">📅 Last updated: 6 August 2026</span>
+
+      <!-- Section 1 -->
+      <h2><span class="section-number">1</span> What Are Cookies?</h2>
+      <p>
+        Cookies are small text files or similar identifiers that websites may store on or access from your browser or device. They can help a website remember information, maintain functionality, measure usage, and support security.
+      </p>
+      <p>
+        TrackMP and third-party services used by TrackMP may also use technologies that perform functions similar to cookies, including browser storage, tags, pixels, or identifiers.
+      </p>
+
+      <!-- Section 2 -->
+      <h2><span class="section-number">2</span> How TrackMP Uses Cookies and Similar Technologies</h2>
+      <p>TrackMP uses these technologies for limited purposes including:</p>
+      <ul>
+        <li>Operating and securing website functionality;</li>
+        <li>Preventing spam, abuse, and automated attacks;</li>
+        <li>Understanding how visitors use TrackMP;</li>
+        <li>Measuring page views and website interactions;</li>
+        <li>Improving website content, navigation, and performance; and</li>
+        <li>Supporting technical diagnostics and reliability.</li>
+      </ul>
+      <p>
+        TrackMP does not currently use cookies for a dedicated advertising or behavioral-advertising program.
+      </p>
+
+      <!-- Section 3 - Table -->
+      <h2><span class="section-number">3</span> Technologies Currently Used by TrackMP</h2>
+      <div class="table-wrap" role="table" aria-label="Technologies currently used by TrackMP">
+        <table>
+          <thead>
+            <tr>
+              <th>Technology</th>
+              <th>Purpose</th>
+              <th>Provider</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Google Analytics 4 / Google tag</strong></td>
+              <td>Website analytics, usage measurement, and performance improvement</td>
+              <td>Google</td>
+              <td><span class="status-badge active">In use</span></td>
+            </tr>
+            <tr>
+              <td><strong>GA4 Enhanced Measurement</strong></td>
+              <td>Measures interactions such as page views, scrolls, outbound clicks, searches, downloads, supported video engagement, and form interactions</td>
+              <td>Google</td>
+              <td><span class="status-badge enabled">Enabled</span></td>
+            </tr>
+            <tr>
+              <td><strong>Google reCAPTCHA v3</strong></td>
+              <td>Security, spam prevention, abuse detection, and protection of forms or relevant functionality</td>
+              <td>Google</td>
+              <td><span class="status-badge active">In use</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 4 -->
+      <h2><span class="section-number">4</span> Google Analytics 4</h2>
+      <p>
+        TrackMP uses Google Analytics 4 (GA4) to understand how visitors use the website and to improve the platform. The current web stream uses Google tag Measurement ID <code>G-18EZD9W5GG</code>.
+      </p>
+      <p>
+        GA4 may use cookies, browser storage, and other identifiers to distinguish browser or device activity and associate related interactions for analytics purposes.
+      </p>
+      <p>
+        Depending on Google's processing, analytics information may include page URLs and titles, referring information, browser and device characteristics, screen resolution, language settings, approximate geographic information, interaction events, and pseudonymous identifiers.
+      </p>
+
+      <h3>Enhanced Measurement</h3>
+      <p>TrackMP currently has GA4 Enhanced Measurement enabled. Depending on the relevant feature and configuration, this can measure:</p>
+      <ul>
+        <li>Page views;</li>
+        <li>Scroll activity;</li>
+        <li>Outbound link clicks;</li>
+        <li>Site search activity;</li>
+        <li>Video engagement for supported embedded videos;</li>
+        <li>File downloads; and</li>
+        <li>Form interactions.</li>
+      </ul>
+
+      <h3>Google Signals</h3>
+      <p>
+        <span class="highlight">Google Signals data collection is currently disabled</span> for TrackMP's GA4 property. TrackMP therefore does not intentionally enable Google Signals as part of its current analytics configuration.
+      </p>
+
+      <h3>Analytics Retention</h3>
+      <p>
+        TrackMP currently has GA4 event-data retention configured for <strong>2 months</strong> and user-data retention configured for <strong>14 months</strong>. The "reset on new user activity" option is currently enabled.
+      </p>
+      <p>
+        These settings concern the applicable user-level and event-level Analytics data. They should not be interpreted as meaning that all aggregated reporting or every form of data processed by Google is deleted after the same period.
+      </p>
+
+      <!-- Section 5 -->
+      <h2><span class="section-number">5</span> Google reCAPTCHA v3</h2>
+      <p>
+        TrackMP uses Google reCAPTCHA v3 to help protect forms and relevant functionality against spam, abuse, automated submissions, and malicious activity.
+      </p>
+      <p>
+        reCAPTCHA may process technical and interaction information necessary to assess whether activity is likely to be automated or abusive. This processing is performed by Google and is subject to Google's own terms and privacy practices.
+      </p>
+      <p>
+        For more information, review <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Google's Terms of Service</a>.
+      </p>
+
+      <!-- Section 6 -->
+      <h2><span class="section-number">6</span> Form Submissions and Analytics</h2>
+      <p>
+        TrackMP provides contact, report, correction, and contributor-access forms. TrackMP does not intentionally configure GA4 to send the contents of these form submissions to Google Analytics.
+      </p>
+      <p>
+        Analytics may measure that a form interaction or submission occurred where Enhanced Measurement or another configured event records that interaction. The contents of the submission should remain separate from analytics event data.
+      </p>
+      <div class="callout" role="note">
+        <strong>🔒 Implementation note:</strong> TrackMP should avoid placing names, email addresses, messages, report details, passwords, tokens, or other unnecessary personal information into URLs, page titles, GA4 event parameters, or other analytics fields.
+      </div>
+
+      <!-- Section 7 -->
+      <h2><span class="section-number">7</span> Necessary Website Technologies</h2>
+      <p>
+        Some website functionality may require browser storage, cookies, session identifiers, security tokens, or similar mechanisms. These technologies may be necessary for authentication, contributor/admin dashboard access, security, request handling, rate limiting, or other essential functions.
+      </p>
+      <p>
+        Where such technologies are used, they should be limited to what is reasonably necessary for the relevant function.
+      </p>
+
+      <!-- Section 8 -->
+      <h2><span class="section-number">8</span> Third-Party Technologies</h2>
+      <p>
+        TrackMP currently uses Google services for analytics and reCAPTCHA. Google may process information on its own systems and may use cookies or similar technologies according to its own policies.
+      </p>
+      <p>
+        TrackMP may add additional third-party services in the future. If a new service materially changes how cookies or similar technologies are used, this Cookie Policy may be updated.
+      </p>
+
+      <!-- Section 9 -->
+      <h2><span class="section-number">9</span> How to Control Cookies</h2>
+      <p>
+        Most modern browsers allow you to view, block, delete, or restrict cookies through browser settings. The available controls differ by browser and device.
+      </p>
+      <p>
+        You can generally use your browser's privacy or site-settings controls to manage cookies and stored website data.
+      </p>
+      <p>
+        Blocking or deleting cookies may affect some website functions or prevent analytics from accurately measuring your visit.
+      </p>
+
+      <!-- Section 10 -->
+      <h2><span class="section-number">10</span> Google Analytics Opt-Out Options</h2>
+      <p>
+        You may limit certain analytics collection through browser settings, privacy controls, or available Google tools. Google also provides information about its available controls and choices through its support resources.
+      </p>
+      <p>
+        See <a href="https://support.google.com/analytics/" target="_blank" rel="noopener noreferrer">Google Analytics Help</a> for current information about Analytics controls and configuration.
+      </p>
+
+      <!-- Section 11 -->
+      <h2><span class="section-number">11</span> Do Not Track Signals</h2>
+      <p>
+        Some browsers provide a "Do Not Track" or similar privacy signal. Because browser implementations and standards vary, TrackMP does not currently represent that every such signal will automatically disable all analytics or third-party technologies.
+      </p>
+      <p>
+        Where legally required, TrackMP will implement applicable privacy-signal requirements.
+      </p>
+
+      <!-- Section 12 -->
+      <h2><span class="section-number">12</span> Privacy and Personal Information</h2>
+      <p>
+        Cookies and similar technologies may involve information that can be associated with a browser, device, or online activity. TrackMP's broader handling of personal information is described in the <a href="/privacy" class="policy-link">Privacy Policy</a>.
+      </p>
+      <p>
+        This Cookie Policy should therefore be read together with the Privacy Policy and, where applicable, the Terms of Use.
+      </p>
+
+      <!-- Section 13 -->
+      <h2><span class="section-number">13</span> Changes to This Cookie Policy</h2>
+      <p>
+        TrackMP may update this Cookie Policy when its technology, analytics configuration, security systems, third-party services, or legal requirements change.
+      </p>
+      <p>
+        The "Last updated" date identifies the most recent revision. We recommend reviewing this page periodically.
+      </p>
+
+      <!-- Section 14 - Contact -->
+      <h2><span class="section-number">14</span> Contact Us</h2>
+      <p>If you have questions about TrackMP's use of cookies or similar technologies, contact:</p>
+      <div class="contact-block">
+        <strong>[LEGAL ENTITY / OPERATOR NAME]</strong>
+        <p>
+          TrackMP<br>
+          India<br>
+          Email: <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a><br>
+          Address: [REGISTERED / BUSINESS ADDRESS]
+        </p>
+      </div>
+
+      <!-- Section 15 -->
+      <h2><span class="section-number">15</span> Related Policies</h2>
+      <div class="related-policies">
+        <a href="/privacy" class="policy-link">Privacy Policy</a>
+        <a href="/terms" class="policy-link">Terms of Use</a>
+        <a href="/methodology" class="policy-link">Data &amp; Editorial Methodology</a>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <span>© 2026 TrackMP. Replace all bracketed placeholders before publishing.</span>
+    <div class="footer-links">
+      <a href="/privacy">Privacy</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/terms">Terms</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/cookies">Cookies</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/contact">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>

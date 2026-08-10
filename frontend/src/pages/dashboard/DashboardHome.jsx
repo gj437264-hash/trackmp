@@ -446,15 +446,15 @@ export default function DashboardHome() {
     if (isRefresh) setRefreshing(true);
     
     try {
-      const s = { ...stats };
+      const s = {};
 
       // Fetch base stats with error handling
-      const [pResponse, cResponse] = await Promise.all([
-        api.get("/politicians").catch(() => ({ data: { items: [] } })),
+      const [statsResponse, cResponse] = await Promise.all([
+        api.get("/stats").catch(() => ({ data: { total_politicians: 0 } })),
         api.get("/ref/countries").catch(() => ({ data: { items: [] } })),
       ]);
 
-      s.politicians = pResponse.data?.items?.length || 0;
+      s.politicians = statsResponse.data?.total_politicians || 0;
       s.countries = cResponse.data?.items?.length || 0;
 
       // Fetch admin-only stats if user has super_admin role
@@ -480,7 +480,7 @@ export default function DashboardHome() {
       setLoading(false);
       if (isRefresh) setRefreshing(false);
     }
-  }, [user, stats]);
+  }, [user]);
 
   // ============================================================
   // EFFECTS: Initial load

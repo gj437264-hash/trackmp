@@ -1,0 +1,84 @@
+import React from "react";
+import { ImageIcon, Video, FileText, FileArchive } from "lucide-react";
+import { mediaIcon } from "../utils";
+import BioContent from "./BioContent";
+
+const ICONS = {
+  image: ImageIcon,
+  video: Video,
+  document: FileText,
+  default: FileArchive,
+};
+
+export default function Media({ bioHtml, media }) {
+  return (
+    <div>
+      <BioContent bioHtml={bioHtml} />
+
+      {(media || []).length > 0 && (
+        <div className="mt-8 w-full">
+          <h2 className="font-display font-bold text-2xl text-slate-800 mb-4 flex items-center gap-2">
+            <ImageIcon
+              className="text-purple-500"
+              size={24}
+              aria-hidden="true"
+            />
+            Attachments
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {media.map((m) => {
+              const kind = mediaIcon(m.file_type);
+
+              const Icon =
+                ICONS[
+                  kind === "image"
+                    ? "image"
+                    : kind === "video"
+                      ? "video"
+                      : kind === "file"
+                        ? "document"
+                        : "default"
+                ] || FileArchive;
+
+              return (
+                <a
+                  key={m.id}
+                  href={m.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-white/80 backdrop-blur-sm border border-slate-200/50 rounded-2xl p-4 flex flex-col items-center gap-2 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+                  data-testid={`media-${m.id}`}
+                >
+                  {m.file_type === "image" ? (
+                    <img
+                      src={m.url}
+                      alt={m.filename}
+                      loading="lazy"
+                      decoding="async"
+                      width={200}
+                      height={96}
+                      className="w-full h-24 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-24 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                      <Icon
+                        size={32}
+                        className="text-indigo-500"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
+
+                  <span className="text-xs text-slate-500 truncate w-full font-medium">
+                    {m.filename}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

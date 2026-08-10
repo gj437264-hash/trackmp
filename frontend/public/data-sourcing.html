@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Learn how TrackMP researches, sources, verifies, structures, publishes, and corrects information about politicians, promises, public records, and political accountability.">
+  <meta name="robots" content="index,follow">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="Data &amp; Editorial Methodology | TrackMP">
+  <meta property="og:description" content="How TrackMP researches, sources, verifies, structures, and corrects political information for transparency and accountability.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trackmp.com/methodology">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://trackmp.com/methodology">
+  
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
+  <title>Data &amp; Editorial Methodology | TrackMP</title>
+  
+  <style>
+    /* Root Variables - Matching TrackMP Design System */
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-strong: #eef1f5;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --accent: #059669;
+      --accent-light: #10b981;
+      --accent-dark: #047857;
+      --accent-gradient: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 16px/1.7 var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      border-bottom: 1px solid transparent;
+    }
+
+    a:hover {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent-light);
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* Skip to content link - accessibility */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      padding: 12px 24px;
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      z-index: 100;
+      font-weight: 600;
+      color: var(--text);
+      transition: top 0.3s ease;
+    }
+
+    .skip-link:focus {
+      top: 20px;
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .site-header .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-logo .logo-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .site-logo a {
+      color: var(--text);
+      border: none;
+    }
+
+    .site-logo a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .header-nav a {
+      color: var(--text-secondary);
+      border: none;
+      transition: color 0.2s ease;
+    }
+
+    .header-nav a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav a[aria-current="page"] {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Main Layout */
+    main {
+      max-width: 960px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .hero .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #d1fae5;
+    }
+
+    .hero .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 44px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+      margin: 16px 0 12px;
+      color: var(--text);
+    }
+
+    .hero h1 span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .intro {
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notice strong {
+      color: #92400e;
+    }
+
+    /* Content Section */
+    .content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .content .last-updated {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--border-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 40px 0 12px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content h2:first-child {
+      margin-top: 0;
+    }
+
+    .content h2 .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      background: #ecfdf5;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 8px;
+      color: var(--text);
+    }
+
+    .content p {
+      margin: 0 0 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .content ul {
+      margin: 0 0 16px 0;
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .content ul li {
+      margin: 6px 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .content ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .content .callout {
+      background: #ecfdf5;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .content .callout strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .content .callout.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+
+    .content .callout.warning strong {
+      color: #78350f;
+    }
+
+    .content .policy-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .content .policy-link::after {
+      content: '→';
+      transition: transform 0.2s ease;
+    }
+
+    .content .policy-link:hover::after {
+      transform: translateX(4px);
+    }
+
+    /* Code/technical references */
+    .content code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: var(--border-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    /* Flow Grid - Enhanced */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin: 24px 0 32px;
+    }
+
+    .step {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 12px;
+      text-align: center;
+      background: var(--border-light);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .step:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .step .step-number {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      background: #ecfdf5;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .step span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    /* Table Styles - Enhanced */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0 28px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+      font-size: 14px;
+    }
+
+    thead {
+      background: var(--border-light);
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--border-light);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .status-badge.completed {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-badge.in-progress {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-badge.promised {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.delayed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-badge.unverified {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    /* Contact Section */
+    .related-policies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .related-policies a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--border-light);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: none;
+      transition: all 0.2s ease;
+    }
+
+    .related-policies a:hover {
+      background: var(--surface);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Footer */
+    footer {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    footer .footer-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    footer .footer-links a {
+      color: var(--text-muted);
+      border: none;
+      font-size: 13px;
+      transition: color 0.2s ease;
+    }
+
+    footer .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    footer .footer-dot {
+      color: var(--border);
+    }
+
+    /* Animations */
+    @keyframes pulse-dot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      .site-header {
+        position: static;
+        background: var(--surface);
+        backdrop-filter: none;
+      }
+      
+      .hero::before {
+        display: none;
+      }
+      
+      .hero, .content {
+        box-shadow: none;
+        border-color: #ccc;
+      }
+      
+      .header-nav, .footer-links {
+        display: none;
+      }
+      
+      .table-wrap {
+        border: 1px solid #ccc;
+      }
+      
+      tr:hover td {
+        background: transparent;
+      }
+      
+      .step:hover {
+        transform: none;
+        box-shadow: none;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .site-header .container {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 16px;
+        font-size: 13px;
+      }
+
+      main {
+        margin-top: 24px;
+      }
+
+      .hero,
+      .content {
+        padding: 28px 20px;
+      }
+
+      .hero .intro {
+        font-size: 16px;
+      }
+
+      .content h2 {
+        font-size: 21px;
+        margin-top: 32px;
+      }
+
+      .content h2 .section-number {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding-top: 20px;
+      }
+
+      footer .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .related-policies {
+        flex-direction: column;
+      }
+
+      .related-policies a {
+        justify-content: center;
+      }
+
+      .flow {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      table {
+        font-size: 13px;
+        min-width: 500px;
+      }
+
+      th, td {
+        padding: 10px 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero,
+      .content {
+        padding: 20px 16px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .content h2 {
+        font-size: 19px;
+      }
+
+      .content ul {
+        padding-left: 16px;
+      }
+
+      .content ul li {
+        padding-left: 16px;
+        font-size: 14px;
+      }
+
+      .content .callout {
+        padding: 14px 16px;
+        font-size: 13px;
+      }
+
+      .flow {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .step {
+        padding: 12px 8px;
+      }
+
+      .step strong {
+        font-size: 13px;
+      }
+
+      .step span {
+        font-size: 11px;
+      }
+
+      table {
+        font-size: 12px;
+        min-width: 400px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .flow {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Reduced Motion Preference */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .site-logo .logo-dot {
+        animation: none;
+      }
+
+      .step:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip to content link -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header" role="banner" aria-label="Site header">
+    <div class="container">
+      <div class="site-logo">
+        <span class="logo-dot" aria-hidden="true"></span>
+        <a href="/">TrackMP</a>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/search">Explore</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/cookies">Cookies</a>
+        <a href="/methodology" aria-current="page">Methodology</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">Transparency &amp; Accountability</div>
+      <h1 id="hero-title">Data &amp; Editorial <span>Methodology</span></h1>
+      <p class="intro">
+        How TrackMP researches, sources, verifies, structures, evaluates, publishes, and corrects information about politicians, public records, political commitments, and accountability.
+      </p>
+      <div class="notice" role="note">
+        <strong>📋 Methodology is a living framework.</strong> TrackMP may refine its methods as data sources, technology, public records, evidence standards, and the platform evolve. Material changes will be reflected on this page.
+      </div>
+    </section>
+
+    <!-- Content -->
+    <article class="content">
+      <span class="last-updated">📅 Last updated: 6 August 2026</span>
+
+      <!-- Section 1 -->
+      <h2><span class="section-number">1</span> Our Purpose</h2>
+      <p>
+        TrackMP is a global political transparency, public-record research, and accountability platform. Its purpose is to make information about politicians, political commitments, public records, and related activity easier to discover, understand, compare, and independently verify.
+      </p>
+      <p>
+        TrackMP is not intended to replace official government records, court records, election authorities, legislative records, financial disclosures, or original reporting. Where practical, we provide source information so users can examine the underlying evidence themselves.
+      </p>
+
+      <!-- Section 2 - Flow -->
+      <h2><span class="section-number">2</span> Our Core Method</h2>
+      <p>TrackMP's general research workflow follows this principle:</p>
+      
+      <div class="flow" role="list" aria-label="Research workflow steps">
+        <div class="step" role="listitem">
+          <span class="step-number">01</span>
+          <strong>Source</strong>
+          <span>Find relevant evidence</span>
+        </div>
+        <div class="step" role="listitem">
+          <span class="step-number">02</span>
+          <strong>Collect</strong>
+          <span>Capture source data</span>
+        </div>
+        <div class="step" role="listitem">
+          <span class="step-number">03</span>
+          <strong>Verify</strong>
+          <span>Assess reliability</span>
+        </div>
+        <div class="step" role="listitem">
+          <span class="step-number">04</span>
+          <strong>Structure</strong>
+          <span>Normalize information</span>
+        </div>
+        <div class="step" role="listitem">
+          <span class="step-number">05</span>
+          <strong>Publish</strong>
+          <span>Present with context</span>
+        </div>
+        <div class="step" role="listitem">
+          <span class="step-number">06</span>
+          <strong>Correct</strong>
+          <span>Review new evidence</span>
+        </div>
+      </div>
+      
+      <p>
+        This workflow is not necessarily linear. New evidence can cause TrackMP to revisit an existing record, classification, date, source, or status.
+      </p>
+
+      <!-- Section 3 -->
+      <h2><span class="section-number">3</span> Sources We Use</h2>
+      <p>Depending on the subject and country, TrackMP may use information from:</p>
+      <ul>
+        <li>Official government websites and public records;</li>
+        <li>Parliamentary and legislative records;</li>
+        <li>Election authorities and official election results;</li>
+        <li>Official politician, candidate, party, campaign, or government communications;</li>
+        <li>Public financial disclosures, declarations, registers, and filings where legally and publicly available;</li>
+        <li>Court, regulatory, and other official records where publicly available;</li>
+        <li>Reputable journalism and established news organizations;</li>
+        <li>Public speeches, interviews, debates, press conferences, and published statements;</li>
+        <li>Publicly accessible documents, reports, datasets, and research;</li>
+        <li>Public social-media posts where relevant to the subject; and</li>
+        <li>Other publicly accessible sources that can be reasonably evaluated and attributed.</li>
+      </ul>
+      <p>
+        The exact sources available and appropriate for a politician or country will vary by jurisdiction.
+      </p>
+
+      <!-- Section 4 -->
+      <h2><span class="section-number">4</span> Source Evaluation</h2>
+      <p>TrackMP does not treat every source as equally authoritative. When evaluating information, we consider factors such as:</p>
+      <ul>
+        <li>Who published or controls the source;</li>
+        <li>Whether the source is primary or secondary;</li>
+        <li>Whether the information can be independently corroborated;</li>
+        <li>The date and historical context of the material;</li>
+        <li>Whether the source provides supporting documents or evidence;</li>
+        <li>Whether the information is attributed to a named source;</li>
+        <li>Potential conflicts of interest or political incentives;</li>
+        <li>Whether the source has a record of corrections or reliability; and</li>
+        <li>Whether the claim is presented as fact, opinion, allegation, forecast, or interpretation.</li>
+      </ul>
+
+      <div class="callout" role="note">
+        <strong>📌 Primary-source preference:</strong> Where an authoritative primary source is reasonably available, TrackMP generally prefers it over a secondary description of the same underlying fact.
+      </div>
+
+      <!-- Section 5 -->
+      <h2><span class="section-number">5</span> Verification and Corroboration</h2>
+      <p>
+        Verification means assessing whether the available evidence supports the information being presented. The level of verification depends on the nature and importance of the claim.
+      </p>
+      <p>
+        Where practical, TrackMP may compare multiple independent sources, check dates against official records, inspect original documents, or trace a claim back to its primary source.
+      </p>
+      <p>
+        Not every item can be independently verified. When evidence is incomplete or conflicting, TrackMP may qualify the information, preserve the uncertainty, identify the source, or refrain from presenting an unsupported conclusion.
+      </p>
+
+      <!-- Section 6 - Table -->
+      <h2><span class="section-number">6</span> Facts, Claims, Analysis, and Classifications</h2>
+      <p>TrackMP attempts to distinguish between different types of information:</p>
+      
+      <div class="table-wrap" role="table" aria-label="Information types and their meanings">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Fact / Record</strong></td>
+              <td>An item supported by a relevant public record or sufficiently reliable source.</td>
+            </tr>
+            <tr>
+              <td><strong>Claim / Statement</strong></td>
+              <td>A statement attributed to a politician, party, organization, journalist, or other source.</td>
+            </tr>
+            <tr>
+              <td><strong>Analysis</strong></td>
+              <td>Interpretation or contextualization derived from available evidence.</td>
+            </tr>
+            <tr>
+              <td><strong>Classification</strong></td>
+              <td>A TrackMP categorization applied using a defined methodology or data rule.</td>
+            </tr>
+            <tr>
+              <td><strong>Unconfirmed</strong></td>
+              <td>Information for which available evidence is insufficient to establish the underlying fact with reasonable confidence.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <p>
+        A classification or analytical output from TrackMP should not be mistaken for an official government determination unless the page explicitly identifies such an official determination.
+      </p>
+
+      <!-- Section 7 -->
+      <h2><span class="section-number">7</span> Politician Profiles</h2>
+      <p>
+        Politician profiles may contain structured information such as biography, office or role, political affiliation, election history, public positions, promises, wealth or asset information, relationships or affiliations, media references, and other relevant public-record information.
+      </p>
+      <p>
+        Profile fields may be updated independently. A profile can therefore contain information from different dates and sources, and users should check the displayed date and source context for individual records.
+      </p>
+
+      <!-- Section 8 -->
+      <h2><span class="section-number">8</span> Political Promises and Commitments</h2>
+      <p>
+        TrackMP may record promises, commitments, pledges, policy positions, campaign statements, legislative commitments, or other publicly stated objectives.
+      </p>
+      <p>
+        A commitment is more useful for accountability tracking when it can be associated with a specific statement, source, date, person or institution, and reasonably identifiable objective.
+      </p>
+      <p>
+        Vague political rhetoric, aspirational language, predictions, general values, or statements without a sufficiently identifiable commitment may not be treated as trackable promises.
+      </p>
+
+      <!-- Section 9 - Status Table -->
+      <h2><span class="section-number">9</span> Promise Status and Accountability Tracking</h2>
+      <p>
+        TrackMP may assign a status to a tracked commitment. Statuses are analytical classifications based on available evidence, not official certifications.
+      </p>
+      
+      <div class="table-wrap" role="table" aria-label="Promise status meanings">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>General meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="status-badge promised">Promised</span></td>
+              <td>A sufficiently identifiable commitment has been publicly made, but there is not yet enough evidence to classify meaningful implementation.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge in-progress">In Progress</span></td>
+              <td>Evidence indicates that meaningful work, implementation, legislation, funding, or another relevant action is underway.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td>Available evidence indicates that the defined commitment or material objective has been fulfilled.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge completed">Partially Completed</span></td>
+              <td>Some material portion of the commitment has been fulfilled, while significant elements remain incomplete.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge delayed">Delayed</span></td>
+              <td>Evidence indicates implementation was expected or initiated but has not progressed according to a relevant timeframe or commitment.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge delayed">Abandoned</span></td>
+              <td>Available evidence indicates the commitment has been formally or materially discontinued.</td>
+            </tr>
+            <tr>
+              <td><span class="status-badge unverified">Unable to Verify</span></td>
+              <td>Available evidence is insufficient, contradictory, inaccessible, or otherwise inadequate to make a reliable status determination.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Status is evidence-based, not political scoring</h3>
+      <p>
+        TrackMP's status should be based on evidence of implementation rather than whether TrackMP agrees with a politician or policy. A politically favorable or unfavorable position does not by itself determine whether a promise is fulfilled.
+      </p>
+
+      <h3>Context matters</h3>
+      <p>
+        Implementation may depend on legislative approval, courts, budgets, other government institutions, coalition arrangements, administrative processes, emergencies, or circumstances outside an individual's direct control. Where relevant, TrackMP should consider such context rather than attributing every outcome to a single politician.
+      </p>
+
+      <!-- Section 10 -->
+      <h2><span class="section-number">10</span> Wealth, Assets, and Financial Information</h2>
+      <p>
+        Where legally and publicly available, TrackMP may present wealth, asset, liability, income, or financial-declaration information from official filings and other credible public sources.
+      </p>
+      <p>
+        Financial figures are time-sensitive. TrackMP aims to preserve the relevant reporting period or declaration date and distinguish reported figures from later estimates or calculations.
+      </p>
+      <p>
+        TrackMP does not independently certify that an individual's declared assets or liabilities are complete or accurate unless an authoritative verification is explicitly documented.
+      </p>
+
+      <!-- Section 11 -->
+      <h2><span class="section-number">11</span> Relatives, Relationships, and Affiliations</h2>
+      <p>
+        TrackMP may include information about family relationships, professional relationships, political affiliations, organizational connections, or other relevant associations when they are materially relevant and supported by appropriate public sources.
+      </p>
+      <p>
+        A relationship or association does not by itself imply wrongdoing, influence, control, conflict of interest, or shared responsibility.
+      </p>
+      <p>
+        TrackMP aims to avoid unnecessary personal information and should distinguish documented relationships from inference or speculation.
+      </p>
+
+      <!-- Section 12 -->
+      <h2><span class="section-number">12</span> Dates and Historical Context</h2>
+      <p>
+        Political information is highly dependent on time. A politician may change offices, parties, positions, affiliations, wealth, or public statements over time.
+      </p>
+      <p>
+        TrackMP therefore aims to associate records with relevant dates or periods wherever practical. A statement made during a campaign, for example, should not automatically be presented as a current position years later.
+      </p>
+
+      <!-- Section 13 -->
+      <h2><span class="section-number">13</span> Automated Data and Human Review</h2>
+      <p>
+        TrackMP may use software, databases, APIs, automated extraction, search systems, machine-assisted processing, or other technology to collect, normalize, organize, or identify potentially relevant information.
+      </p>
+      <p>
+        Automation can introduce errors such as incorrect entity matching, duplicate records, stale information, missing context, or inaccurate extraction. Automated output should therefore be treated as a processing aid rather than an inherent guarantee of truth.
+      </p>
+      <p>
+        Where practical and appropriate, significant records or changes may be subject to human review before publication or correction.
+      </p>
+
+      <!-- Section 14 -->
+      <h2><span class="section-number">14</span> AI-Assisted Processing</h2>
+      <p>
+        TrackMP may use machine-learning or AI-assisted systems for tasks such as classification, summarization, entity matching, extraction, discovery, or workflow assistance.
+      </p>
+      <p>
+        AI-generated output is not treated as authoritative merely because an AI system produced it. TrackMP may require supporting sources or human review before relying on an AI-assisted result for a material public-facing claim.
+      </p>
+      <p>
+        Where an AI-assisted process produces an error, TrackMP may correct the resulting record when the issue is identified.
+      </p>
+
+      <!-- Section 15 -->
+      <h2><span class="section-number">15</span> Corrections and Challenges</h2>
+      <p>
+        TrackMP welcomes credible evidence that identifies an error, outdated record, missing context, incorrect attribution, broken source, or other material problem.
+      </p>
+      <p>
+        Corrections can be submitted through the relevant TrackMP correction or report mechanism.
+      </p>
+      <p>A strong correction request should, where possible, include:</p>
+      <ul>
+        <li>The TrackMP page or record being challenged;</li>
+        <li>A clear description of the suspected error;</li>
+        <li>The proposed correction;</li>
+        <li>A reliable supporting source or document;</li>
+        <li>The relevant date or reporting period; and</li>
+        <li>Any context needed to understand why the existing information may be incorrect.</li>
+      </ul>
+
+      <h3>How we evaluate corrections</h3>
+      <p>
+        TrackMP may assess the source's authority, date, relevance, authenticity, context, corroboration, and relationship to the original claim. We may contact a submitter for clarification or additional evidence.
+      </p>
+      <p>
+        Submitting a correction does not guarantee publication, deletion, or modification. TrackMP may retain a record of correction requests and decisions to maintain an editorial audit trail.
+      </p>
+
+      <!-- Section 16 -->
+      <h2><span class="section-number">16</span> Disputed or Unconfirmed Information</h2>
+      <p>
+        When credible sources materially disagree, TrackMP may present the disagreement rather than selecting one position without adequate evidence.
+      </p>
+      <p>
+        Where a claim cannot reasonably be verified, TrackMP may mark it as unconfirmed, qualify it, omit it, or explain the uncertainty. Allegations should not automatically be presented as established facts.
+      </p>
+
+      <!-- Section 17 -->
+      <h2><span class="section-number">17</span> What TrackMP Does Not Do</h2>
+      <p>TrackMP does not intend to:</p>
+      <ul>
+        <li>Present political opinions as established facts;</li>
+        <li>Invent sources, quotations, records, statistics, or evidence;</li>
+        <li>Present an allegation as proven merely because it has been widely repeated;</li>
+        <li>Intentionally manipulate a status solely to favor or disadvantage a politician or party;</li>
+        <li>Treat an AI-generated answer as a substitute for source evidence;</li>
+        <li>Infer criminality, corruption, dishonesty, or wrongdoing solely from an association, relationship, political position, or analytical classification; or</li>
+        <li>Claim that TrackMP's database is a complete record of all political activity worldwide.</li>
+      </ul>
+
+      <!-- Section 18 -->
+      <h2><span class="section-number">18</span> Political Neutrality and Editorial Independence</h2>
+      <p>
+        TrackMP is designed to apply its methodology consistently regardless of political party, ideology, nationality, office, or political popularity.
+      </p>
+      <p>
+        Consistency does not mean every record will contain identical evidence or the same number of sources. Different countries, offices, political systems, disclosure rules, and availability of public records create unavoidable differences in the underlying data.
+      </p>
+      <p>
+        TrackMP does not endorse political candidates or parties merely by publishing information about them.
+      </p>
+
+      <!-- Section 19 -->
+      <h2><span class="section-number">19</span> Public Information and Privacy</h2>
+      <p>
+        The fact that information is publicly available does not mean that every possible detail should be reproduced. TrackMP aims to focus on information that is relevant to public accountability, political transparency, public office, public records, or the subject being documented.
+      </p>
+      <p>
+        TrackMP should avoid unnecessary publication of sensitive personal information and should handle personal information in accordance with its <a href="/privacy" class="policy-link">Privacy Policy</a> and applicable law.
+      </p>
+
+      <!-- Section 20 -->
+      <h2><span class="section-number">20</span> Source Changes and Broken Links</h2>
+      <p>
+        Web pages, documents, social posts, databases, and other sources may be moved, deleted, changed, or become inaccessible after TrackMP records them.
+      </p>
+      <p>
+        Where practical, TrackMP may preserve relevant metadata such as source title, publication date, retrieval date, document details, or other identifying information. A broken external link does not necessarily mean that the underlying TrackMP record is incorrect, but it may reduce the ability to independently verify it.
+      </p>
+
+      <!-- Section 21 -->
+      <h2><span class="section-number">21</span> Limitations of the Methodology</h2>
+      <p>
+        No methodology can eliminate all errors. Limitations may include incomplete public records, inconsistent disclosure standards, inaccessible sources, language differences, translation issues, source bias, changing political circumstances, conflicting evidence, delayed reporting, technical errors, and limitations in automated processing.
+      </p>
+      <p>
+        TrackMP therefore treats its records as a research resource rather than an infallible or exhaustive authority.
+      </p>
+
+      <!-- Section 22 -->
+      <h2><span class="section-number">22</span> Methodology Changes</h2>
+      <p>
+        TrackMP may improve definitions, status categories, source standards, data models, verification processes, or other methodology components as the platform develops.
+      </p>
+      <p>
+        When a methodology change materially affects historical records or comparisons, TrackMP may update affected records or provide additional context where practical.
+      </p>
+
+      <!-- Section 23 -->
+      <h2><span class="section-number">23</span> How to Report a Methodology Concern</h2>
+      <p>
+        If you believe TrackMP has applied its methodology inconsistently or incorrectly, please submit a correction or methodology concern through the appropriate contact or correction form.
+      </p>
+      <p>
+        Include the affected page or record, the relevant methodology section, the issue you identified, and supporting evidence wherever possible.
+      </p>
+
+      <!-- Section 24 -->
+      <h2><span class="section-number">24</span> Related Policies</h2>
+      <div class="related-policies">
+        <a href="/privacy" class="policy-link">Privacy Policy</a>
+        <a href="/terms" class="policy-link">Terms of Use</a>
+        <a href="/cookies" class="policy-link">Cookie Policy</a>
+        <a href="/contact" class="policy-link">Contact TrackMP</a>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <span>© 2026 TrackMP. Data &amp; Editorial Methodology is a living framework and may be updated as TrackMP evolves.</span>
+    <div class="footer-links">
+      <a href="/privacy">Privacy</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/terms">Terms</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/cookies">Cookies</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/methodology">Methodology</a>
+    </div>
+  </footer>
+
+</body>
+</html>

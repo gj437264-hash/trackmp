@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="TrackMP Privacy Policy explains how TrackMP collects, uses, protects, and shares information.">
+  <meta name="robots" content="index,follow">
+  <title>Privacy Policy | TrackMP</title>
+  <style>
+    /* Root Variables - Matching TrackMP Design System */
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-strong: #eef1f5;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --accent: #059669;
+      --accent-light: #10b981;
+      --accent-dark: #047857;
+      --accent-gradient: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 16px/1.7 var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      border-bottom: 1px solid transparent;
+    }
+
+    a:hover {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent-light);
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .site-header .container {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-logo .logo-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .site-logo a {
+      color: var(--text);
+      border: none;
+    }
+
+    .site-logo a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .header-nav a {
+      color: var(--text-secondary);
+      border: none;
+      transition: color 0.2s ease;
+    }
+
+    .header-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* Main Layout */
+    main {
+      max-width: 920px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .hero .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #d1fae5;
+    }
+
+    .hero .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 44px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+      margin: 16px 0 12px;
+      color: var(--text);
+    }
+
+    .hero h1 span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .intro {
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notice strong {
+      color: #92400e;
+    }
+
+    /* Content Section */
+    .content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .content .last-updated {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--border-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 40px 0 12px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content h2:first-child {
+      margin-top: 0;
+    }
+
+    .content h2 .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      background: #ecfdf5;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 8px;
+      color: var(--text);
+    }
+
+    .content p {
+      margin: 0 0 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .content ul {
+      margin: 0 0 16px 0;
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .content ul li {
+      margin: 6px 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .content ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .content .callout {
+      background: #ecfdf5;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .content .callout strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .content .callout.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+
+    .content .callout.warning strong {
+      color: #78350f;
+    }
+
+    .content .policy-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .content .policy-link::after {
+      content: '→';
+      transition: transform 0.2s ease;
+    }
+
+    .content .policy-link:hover::after {
+      transform: translateX(4px);
+    }
+
+    /* Contact Section */
+    .contact-block {
+      background: var(--border-light);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 24px 0 0;
+      border: 1px solid var(--border);
+    }
+
+    .contact-block strong {
+      display: block;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .contact-block p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .contact-block a {
+      border-bottom: 1px solid transparent;
+    }
+
+    .contact-block a:hover {
+      border-bottom-color: var(--accent-light);
+    }
+
+    /* Footer */
+    footer {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    footer .footer-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    footer .footer-links a {
+      color: var(--text-muted);
+      border: none;
+      font-size: 13px;
+      transition: color 0.2s ease;
+    }
+
+    footer .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    footer .footer-dot {
+      color: var(--border);
+    }
+
+    /* Utility */
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .text-small {
+      font-size: 14px;
+    }
+
+    .gap-1 {
+      gap: 4px;
+    }
+
+    /* Animations */
+    @keyframes pulse-dot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .site-header .container {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 16px;
+        font-size: 13px;
+      }
+
+      main {
+        margin-top: 24px;
+      }
+
+      .hero,
+      .content {
+        padding: 28px 20px;
+      }
+
+      .hero .intro {
+        font-size: 16px;
+      }
+
+      .content h2 {
+        font-size: 21px;
+        margin-top: 32px;
+      }
+
+      .content h2 .section-number {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      .contact-block {
+        padding: 20px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding-top: 20px;
+      }
+
+      footer .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero,
+      .content {
+        padding: 20px 16px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .content h2 {
+        font-size: 19px;
+      }
+
+      .content ul {
+        padding-left: 16px;
+      }
+
+      .content ul li {
+        padding-left: 16px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header" role="banner">
+    <div class="container">
+      <div class="site-logo">
+        <span class="logo-dot"></span>
+        <a href="/">TrackMP</a>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/search">Explore</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">Legal &amp; Privacy</div>
+      <h1 id="hero-title">Privacy <span>Policy</span></h1>
+      <p class="intro">
+        This Privacy Policy explains how TrackMP collects, uses, protects, and shares information when you visit or interact with the TrackMP website and services.
+      </p>
+      <div class="notice">
+        <strong>📋 Draft for implementation and legal review.</strong> Replace bracketed placeholders before publication. This draft is designed around TrackMP's current setup and operation from India and should be reviewed by qualified legal counsel before going live.
+      </div>
+    </section>
+
+    <!-- Content -->
+    <article class="content">
+      <span class="last-updated">📅 Last updated: 6 August 2026</span>
+
+      <!-- Section 1 -->
+      <h2><span class="section-number">1</span> Who We Are</h2>
+      <p>
+        TrackMP is a public information and political accountability platform intended to help people research politicians, elections, political commitments, public records, and related information.
+      </p>
+      <p>
+        TrackMP is operated from India by <strong>[LEGAL ENTITY / OPERATOR NAME]</strong> ("TrackMP", "we", "us", or "our").
+      </p>
+      <p>
+        <strong>Privacy contact:</strong> <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a>
+      </p>
+
+      <!-- Section 2 -->
+      <h2><span class="section-number">2</span> Scope</h2>
+      <p>
+        This Privacy Policy applies to information processed through the TrackMP website, public pages, contact forms, report and correction forms, contributor access requests, and approved dashboard or administrative access. It does not govern third-party websites or services linked from TrackMP.
+      </p>
+
+      <!-- Section 3 -->
+      <h2><span class="section-number">3</span> Information We Collect</h2>
+
+      <h3>3.1 Information You Provide</h3>
+      <p>
+        Depending on the interaction, you may provide your name or display name, email/contact details, messages, reports, corrections, contributor-access information, account/authentication information, and other information you voluntarily submit.
+      </p>
+
+      <div class="callout">
+        <strong>🔒 Please avoid unnecessary personal information.</strong>
+        Do not include sensitive personal information about yourself or another person in a report or correction unless it is genuinely necessary for us to evaluate the submission.
+      </div>
+
+      <h3>3.2 Automatically Collected Information</h3>
+      <p>
+        When you visit TrackMP, technical and usage information may be collected automatically through our website infrastructure and analytics services, including browser/device characteristics, screen resolution, approximate geographic information, pages viewed, referring pages, interaction events, and technical information needed for security and reliability.
+      </p>
+
+      <h3>3.3 Public and Third-Party Information</h3>
+      <p>
+        TrackMP may collect, organize, analyze, and present information from publicly available and third-party sources concerning politicians, elections, political parties, public records, statements, commitments, financial disclosures, and related subjects.
+      </p>
+      <p>
+        Information displayed on TrackMP may relate to identifiable individuals. Public availability does not mean every item is necessarily complete, current, or independently verified. Our sourcing and correction practices are described in the <a href="/methodology" class="policy-link">Data &amp; Editorial Methodology</a>.
+      </p>
+
+      <!-- Section 4 -->
+      <h2><span class="section-number">4</span> How We Use Information</h2>
+      <ul>
+        <li>Operate, maintain, and secure TrackMP;</li>
+        <li>Provide public information and research functionality;</li>
+        <li>Respond to questions and communications;</li>
+        <li>Review reports, corrections, and source-related submissions;</li>
+        <li>Evaluate and administer contributor/dashboard access;</li>
+        <li>Detect spam, fraud, abuse, malicious activity, and automated attacks;</li>
+        <li>Understand website usage and improve content, navigation, and performance;</li>
+        <li>Diagnose technical problems and monitor reliability;</li>
+        <li>Maintain records and comply with applicable legal obligations; and</li>
+        <li>Exercise or defend legal rights where reasonably necessary.</li>
+      </ul>
+
+      <!-- Section 5 -->
+      <h2><span class="section-number">5</span> Google Analytics 4</h2>
+      <p>
+        TrackMP uses <strong>Google Analytics 4 (GA4)</strong> to understand website usage and improve the platform. Our web stream uses Google tag Measurement ID <strong><code>G-18EZD9W5GG</code></strong>.
+      </p>
+      <p>
+        Enhanced Measurement is currently enabled for page views, scrolls, outbound clicks, site search, supported video engagement, file downloads, and form interactions.
+      </p>
+      <p>
+        Analytics may process browser/device characteristics, approximate location information, page URLs and titles, referrer information, interaction events, and pseudonymous identifiers used to distinguish browser or device activity. TrackMP does not intentionally configure GA4 to receive the contents of contact, report, correction, or contributor-request forms.
+      </p>
+      <p>
+        <strong>Google Signals is currently disabled</strong> in TrackMP's GA4 configuration.
+      </p>
+      <p>
+        For Google's practices, see <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> and <a href="https://support.google.com/analytics/" target="_blank" rel="noopener noreferrer">Google Analytics Help</a>.
+      </p>
+
+      <!-- Section 6 -->
+      <h2><span class="section-number">6</span> Analytics Retention</h2>
+      <p>
+        TrackMP's current GA4 configuration uses a <strong>2-month event-data retention period</strong> and a <strong>14-month user-data retention period</strong> for the applicable GA4 data covered by those settings. "Reset on new user activity" is currently enabled.
+      </p>
+      <p>
+        These settings apply to relevant user-level and event-level Analytics data and should not be interpreted as meaning that every form of aggregated Analytics reporting disappears after the same period.
+      </p>
+
+      <!-- Section 7 -->
+      <h2><span class="section-number">7</span> Cookies and Similar Technologies</h2>
+      <p>
+        TrackMP and third-party services may use cookies, local storage, or similar technologies to operate the website, provide security, measure usage, and support technical preferences. Google Analytics may use analytics identifiers and related technologies to measure interactions.
+      </p>
+      <p>
+        Your browser may allow you to block or delete cookies. Blocking certain technologies may affect functionality or analytics measurement.
+      </p>
+
+      <!-- Section 8 -->
+      <h2><span class="section-number">8</span> Google reCAPTCHA v3</h2>
+      <p>
+        TrackMP uses <strong>Google reCAPTCHA v3</strong> to help protect forms and relevant functionality against spam, abuse, automated submissions, and malicious activity.
+      </p>
+      <p>
+        reCAPTCHA may process technical and interaction information needed to assess whether activity is likely to be automated or abusive. This processing is performed by Google and is subject to Google's privacy practices.
+      </p>
+      <p>
+        See <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Google Terms of Service</a>.
+      </p>
+
+      <!-- Section 9 -->
+      <h2><span class="section-number">9</span> Contact, Report, and Correction Forms</h2>
+      <p>
+        Information submitted through TrackMP forms may be reviewed by TrackMP personnel or authorized contributors to evaluate the request, verify information, communicate with the submitter, and improve or correct TrackMP records.
+      </p>
+      <p>
+        Submitting a correction or report does not guarantee that TrackMP will change or remove information. We may consider reliability, relevance, source quality, and supporting evidence before making a change.
+      </p>
+
+      <!-- Section 10 -->
+      <h2><span class="section-number">10</span> Contributor and Administrative Access</h2>
+      <p>
+        Ordinary visitors do not need an account. TrackMP may provide approved contributors or administrators with dashboard access after a request and review.
+      </p>
+      <p>
+        For this purpose, we may process account identifiers, contact information, authentication-related data, permissions, and security/activity logs. Access may be suspended or revoked when reasonably necessary to protect TrackMP, users, data, or record integrity.
+      </p>
+
+      <!-- Section 11 -->
+      <h2><span class="section-number">11</span> Information We Do Not Intentionally Send to GA4</h2>
+      <p>
+        TrackMP does not intentionally configure Google Analytics to collect message contents from contact, report, correction, or contributor-access forms. We also do not intentionally send passwords or authentication credentials to GA4.
+      </p>
+      <p>
+        Page URLs and titles are measured as part of normal analytics. We take reasonable steps to avoid placing unnecessary personal information in URLs, query parameters, page titles, or custom analytics parameters.
+      </p>
+
+      <!-- Section 12 -->
+      <h2><span class="section-number">12</span> Sharing and Disclosure</h2>
+      <p>
+        We may provide access to information to service providers reasonably necessary to operate TrackMP, including hosting, infrastructure, security, analytics, communications, database, and anti-abuse providers.
+      </p>
+      <p>
+        We may also disclose information when required by law or lawful process; to protect rights, safety, security, or property; to investigate fraud, abuse, or security incidents; in connection with a corporate transaction where permitted; or with your direction or authorization.
+      </p>
+
+      <!-- Section 13 -->
+      <h2><span class="section-number">13</span> International Processing</h2>
+      <p>
+        TrackMP is operated from India, but some service providers may process information in India or other countries. Where applicable, information may therefore be processed outside your country. We take reasonable steps to use providers and arrangements appropriate to the information and applicable legal requirements.
+      </p>
+
+      <!-- Section 14 -->
+      <h2><span class="section-number">14</span> Data Retention</h2>
+      <p>
+        We retain personal information only for as long as reasonably necessary for the purpose for which it was collected, to maintain records, resolve disputes, protect the service, comply with legal obligations, or otherwise as permitted by applicable law.
+      </p>
+      <p>
+        Retention varies by information type. A correction request, for example, may need to be retained to maintain an audit trail. Google Analytics retention is governed separately by the GA4 settings described above.
+      </p>
+
+      <!-- Section 15 -->
+      <h2><span class="section-number">15</span> Security</h2>
+      <p>
+        We use reasonable technical and organizational measures designed to protect information against unauthorized access, alteration, disclosure, loss, misuse, or destruction. No internet service can guarantee absolute security.
+      </p>
+
+      <!-- Section 16 -->
+      <h2><span class="section-number">16</span> Your Rights and Choices</h2>
+      <p>
+        Depending on your location and applicable law, you may have rights concerning your personal data, including access, correction, updating, deletion, withdrawal of consent where applicable, grievance handling, or other rights provided by law.
+      </p>
+      <p>
+        To make a privacy request, contact us using the details below. We may need sufficient information to verify the request. Available rights and remedies vary by applicable law.
+      </p>
+
+      <!-- Section 17 -->
+      <h2><span class="section-number">17</span> India Data Protection Framework</h2>
+      <p>
+        TrackMP is operated from India and is designed to maintain privacy practices consistent with applicable Indian data-protection requirements, including the Digital Personal Data Protection Act, 2023 and applicable rules and notifications under it, as and when relevant provisions apply to TrackMP.
+      </p>
+      <p>
+        We aim to provide clear information about personal data collected, processing purposes, and ways to contact us regarding privacy requests.
+      </p>
+      <p>
+        This policy is not a legal opinion and does not represent that every provision of Indian or foreign privacy law applies to TrackMP. Applicability depends on the facts, jurisdiction, and status of the operator and service.
+      </p>
+
+      <!-- Section 18 -->
+      <h2><span class="section-number">18</span> Children's Privacy</h2>
+      <p>
+        TrackMP is a public information and research platform. We do not intentionally design the service to collect children's personal information for unrelated purposes. If you believe a child has provided personal information to TrackMP in circumstances where it should not have been collected, please contact us.
+      </p>
+
+      <!-- Section 19 -->
+      <h2><span class="section-number">19</span> Third-Party Websites and Sources</h2>
+      <p>
+        TrackMP may link to government websites, political organizations, news organizations, social platforms, public databases, documents, or other third-party services. TrackMP does not control their privacy, security, availability, or content. Review their privacy policies before providing information to them.
+      </p>
+
+      <!-- Section 20 -->
+      <h2><span class="section-number">20</span> Changes to This Policy</h2>
+      <p>
+        We may update this Privacy Policy when TrackMP's functionality, technology, data practices, legal requirements, or service providers change. The "Last updated" date indicates the most recent revision.
+      </p>
+
+      <!-- Section 21 - Contact -->
+      <h2><span class="section-number">21</span> Contact Us</h2>
+      <div class="contact-block">
+        <strong>[LEGAL ENTITY / OPERATOR NAME]</strong>
+        <p>
+          TrackMP<br>
+          India<br>
+          Email: <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a><br>
+          Address: [REGISTERED / BUSINESS ADDRESS]
+        </p>
+      </div>
+
+      <!-- Section 22 -->
+      <h2><span class="section-number">22</span> Related Policies</h2>
+      <ul>
+        <li><a href="/terms" class="policy-link">Terms of Use</a></li>
+        <li><a href="/cookies" class="policy-link">Cookie Policy</a></li>
+        <li><a href="/methodology" class="policy-link">Data &amp; Editorial Methodology</a></li>
+      </ul>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <span>© 2026 TrackMP. Replace all bracketed placeholders before publishing.</span>
+    <div class="footer-links">
+      <a href="/privacy">Privacy</a>
+      <span class="footer-dot">·</span>
+      <a href="/terms">Terms</a>
+      <span class="footer-dot">·</span>
+      <a href="/contact">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>

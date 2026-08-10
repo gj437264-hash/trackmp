@@ -44,9 +44,8 @@ code, .font-mono, pre {
     --chart-4: 8 50% 47%;
     --chart-5: 20 20% 13%;
     --radius: 1rem;
-  /* Add this block directly below your existing :root block inside the
-   first `@layer base { :root { ... } }` in index.css — i.e. as a
-   sibling `.dark { ... }` selector, same @layer base. */
+  }
+
   .dark {
     --background: 20 18% 9%;
     --foreground: 36 30% 92%;
@@ -67,7 +66,6 @@ code, .font-mono, pre {
     --border: 36 15% 25%;
     --input: 36 15% 25%;
     --ring: 11 70% 58%;
-  }  
   }
 }
 
@@ -85,6 +83,11 @@ code, .font-mono, pre {
   ::selection {
     background: #C4432B;
     color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    border-radius: 0.5rem;
   }
 }
 
@@ -138,22 +141,18 @@ code, .font-mono, pre {
     @apply p-3 border-b border-slate-100 text-slate-700;
   }
 
-  /* Subtle gradient - best for smaller text */
   .gradient-subtle {
     @apply bg-gradient-to-r from-emerald-400 via-teal-400 to-indigo-400 bg-clip-text text-transparent;
   }
 
-  /* Dark gradient - best for dark backgrounds */
   .gradient-dark {
     @apply bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent;
   }
 
-  /* Primary gradient - your original */
   .gradient-primary {
     @apply bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent;
   }
 
-  /* New soft design components - keep your existing styles */
   .soft-card {
     @apply bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-soft;
   }
@@ -173,10 +172,6 @@ code, .font-mono, pre {
   }
   .soft-label {
     @apply text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2;
-  }
-
-  .gradient-primary {
-    @apply bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600;
   }
 
   .gradient-text {
@@ -229,6 +224,47 @@ code, .font-mono, pre {
   .stat-box-primary {
     @apply stat-box bg-gradient-to-r from-emerald-600 to-teal-600 text-white;
   }
+
+  /* Card hover transforms — GPU-friendly, no JS animation libraries needed */
+  .card-lift {
+    @apply transition-all duration-300 ease-out;
+    will-change: transform;
+  }
+  .card-lift:hover {
+    transform: translateY(-6px) scale(1.02);
+  }
+  .card-lift-sm:hover {
+    transform: translateY(-4px) scale(1.03);
+  }
+  .card-lift-lg:hover {
+    transform: translateY(-8px) scale(1.03);
+  }
+
+  /* Rank badges for leaderboards */
+  .rank-badge {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0;
+  }
+  .rank-gold {
+    @apply rank-badge bg-amber-100 text-amber-700 border border-amber-200;
+  }
+  .rank-silver {
+    @apply rank-badge bg-slate-100 text-slate-600 border border-slate-200;
+  }
+  .rank-bronze {
+    @apply rank-badge bg-orange-100 text-orange-700 border border-orange-200;
+  }
+
+  /* Shimmer skeleton loading */
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer-slide 1.5s ease-in-out infinite;
+  }
+
+  /* Error banner */
+  .error-banner {
+    @apply bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-5 py-4 text-sm font-medium;
+  }
 }
 
 /* New animations */
@@ -244,8 +280,8 @@ code, .font-mono, pre {
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.25; }
+    50% { transform: translateY(-14px) rotate(12deg); opacity: 0.55; }
   }
 
   @keyframes fade-slide-up {
@@ -258,9 +294,9 @@ code, .font-mono, pre {
     50% { background-position: 100% 50%; }
   }
 
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+  @keyframes shimmer-slide {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
   @keyframes scale-in {
@@ -268,17 +304,18 @@ code, .font-mono, pre {
     to { opacity: 1; transform: scale(1); }
   }
 
-  @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.25; }
-  50%      { transform: translateY(-14px) rotate(12deg); opacity: 0.55; }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
-  .animate-float {
-    animation-name: float;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .animate-float { animation: none; }
+
+  /* index.css / tailwind base layer */
+  @keyframes statbox-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .statbox-enter { animation: statbox-in 0.4s ease-out both; }
+
+  @keyframes ticker-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
   }
 
   .animate-pulse-slow {
@@ -303,7 +340,7 @@ code, .font-mono, pre {
   }
 
   .animate-shimmer {
-    animation: shimmer 3s linear infinite;
+    animation: shimmer-slide 3s linear infinite;
     background-size: 200% 100%;
   }
 
@@ -311,25 +348,23 @@ code, .font-mono, pre {
     animation: scale-in 300ms ease-out;
   }
 
-  /* Custom delay utilities for animations */
-  .animation-delay-100 {
-    animation-delay: 100ms;
+  .animate-marquee {
+    animation: marquee 120s linear infinite;
   }
-  .animation-delay-200 {
-    animation-delay: 200ms;
+
+  .animate-ticker-pulse {
+    animation: ticker-pulse 2s ease-in-out infinite;
   }
-  .animation-delay-300 {
-    animation-delay: 300ms;
-  }
-  .animation-delay-400 {
-    animation-delay: 400ms;
-  }
-  .animation-delay-500 {
-    animation-delay: 500ms;
-  }
-  .animation-delay-1000 {
-    animation-delay: 1000ms;
-  }
+
+  /* Animation delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+  .animation-delay-700 { animation-delay: 700ms; }
+  .animation-delay-1000 { animation-delay: 1000ms; }
+  .animation-delay-1400 { animation-delay: 1400ms; }
 
   /* Scrollbar styling */
   .scrollbar-thin {
@@ -362,6 +397,24 @@ code, .font-mono, pre {
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
   }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-pulse-slow,
+    .animate-swing,
+    .animate-marquee,
+    .animate-ticker-pulse,
+    .animate-shimmer,
+    .animate-gradient-shift {
+      animation: none !important;
+    }
+    .card-lift:hover,
+    .card-lift-sm:hover,
+    .card-lift-lg:hover {
+      transform: none !important;
+    }
+  }
 }
 
 @layer base {
@@ -370,20 +423,17 @@ code, .font-mono, pre {
   }
 }
 
-
 /* Force injected article content to take full available width */
 .article-rendered-content {
   width: 100% !important;
   max-width: 100% !important;
 }
 
-/* Override narrow inline style wrappers from uploaded HTML files */
 .article-rendered-content [style*="max-width"],
 .article-rendered-content [style*="width"] {
   max-width: 100% !important;
 }
 
-/* Ensure embedded images, tables, and wrappers don't overflow or shrink abnormally */
 .article-rendered-content img,
 .article-rendered-content table,
 .article-rendered-content iframe {

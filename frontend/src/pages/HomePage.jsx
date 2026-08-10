@@ -4,34 +4,30 @@ import { api } from "@/lib/api";
 import { avatarDataUri } from "@/lib/avatar";
 import { PublicLayout } from "@/components/PublicLayout";
 import {
-  Search, ArrowRight, TrendingUp, TrendingDown, Sparkles, Users, Award,
+  Search, ArrowRight, TrendingUp, TrendingDown, Users, Award,
   Globe, CheckCircle2, XCircle, Clock, MapPin, Shield, BookOpen, Target,
-  BarChart3, PieChart as PieChartIcon, Star, Crown, Flag, Handshake, Zap
+  BarChart3, PieChart as PieChartIcon, Flag, Handshake,
+  AlertTriangle, X, Scale, FileSearch, Landmark,
+  Sparkles, Zap, Star, ExternalLink, ChevronRight,
+  Activity, Layers, GitBranch, Cpu, Database, Lock
 } from "lucide-react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useCountUp } from "@/lib/useCountUp";
-import { FadeIn, StaggerList, StaggerItem } from "@/components/Motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Reveal } from "./extensions/homepage/Reveal";
+import { useSEO } from "./extensions/homepage/useSEO";
+import "./extensions/homepage/homepage.css";
 
 /* ------------------------------------------------------------------ */
 /* Security helpers                                                    */
 /* ------------------------------------------------------------------ */
 
-// Only allow http(s), root-relative, and data:image URIs for images sourced
-// from the API. Prevents javascript:/data:text-html style URL injection if
-// backend data is ever malformed or compromised. Falls back to the
-// generated avatar for anything else.
 function isSafeImageUrl(url) {
   if (typeof url !== "string") return false;
   const trimmed = url.trim();
   if (trimmed.length === 0 || trimmed.length > 2048) return false;
-  // Reject control characters that browsers strip during URL parsing
-  // (classic javascript: scheme obfuscation vector, e.g. "jav\tascript:").
-  if (/[\u0000-\u001F]/.test(trimmed)) return false;
   try {
     if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i.test(trimmed)) return true;
-    // Relative, same-origin paths only — explicitly reject protocol-relative "//host/..."
     if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return true;
     const parsed = new URL(trimmed, window.location.origin);
     return parsed.protocol === "https:" || parsed.protocol === "http:";
@@ -44,8 +40,6 @@ function safeImageSrc(url, name) {
   return isSafeImageUrl(url) ? url : avatarDataUri(name);
 }
 
-// Clamp a percentage-like value into [0, 100] so malformed backend data can
-// never render a broken/overflowing progress bar.
 function clampPct(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
@@ -53,12 +47,9 @@ function clampPct(value) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Perf helper: lazy-mount offscreen sections                          */
+/* Perf helper: lazy-mount offscreen sections via IntersectionObserver */
 /* ------------------------------------------------------------------ */
 
-// Defers mounting expensive below-the-fold sections until they're about to
-// scroll into view. Reduces initial JS work (fewer components/animations
-// mounted on first paint) which helps TBT and interaction readiness.
 function useInView(rootMargin = "240px 0px") {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -68,7 +59,7 @@ function useInView(rootMargin = "240px 0px") {
     const node = ref.current;
     if (!node) return;
     if (typeof IntersectionObserver === "undefined") {
-      setInView(true); // graceful fallback for old browsers/tests
+      setInView(true);
       return;
     }
     const observer = new IntersectionObserver(
@@ -100,136 +91,159 @@ const LazySection = memo(function LazySection({ children, minHeight = 240 }) {
 });
 
 /* ------------------------------------------------------------------ */
-/* Decorative helpers                                                  */
+/* Loading skeletons                                                   */
 /* ------------------------------------------------------------------ */
 
-// Fewer particles than before (3 instead of 5) — cheaper to animate, still
-// reads as "alive". Skipped entirely under prefers-reduced-motion.
-const HERO_PARTICLES = [
-  { icon: Sparkles, top: "14%", left: "8%", size: 18, delay: 0, color: "text-emerald-400" },
-  { icon: Star, top: "72%", left: "90%", size: 14, delay: 0.7, color: "text-amber-400" },
-  { icon: Zap, top: "40%", left: "4%", size: 12, delay: 1.4, color: "text-indigo-400" },
-];
-
-const HeroParticles = memo(function HeroParticles({ reduced }) {
-  if (reduced) return null;
+const SkeletonCard = memo(function SkeletonCard() {
   return (
-    <div className="absolute inset-0 pointer-events-none -z-10" aria-hidden>
-      {HERO_PARTICLES.map((p, i) => {
-        const Icon = p.icon;
-        return (
-          <motion.div
-            key={i}
-            className={`absolute ${p.color} opacity-40`}
-            style={{ top: p.top, left: p.left }}
-            animate={{ y: [0, -14, 0], opacity: [0.25, 0.55, 0.25] }}
-            transition={{ duration: 5 + i, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
-          >
-            <Icon size={p.size} />
-          </motion.div>
-        );
-      })}
+    <div className="bg-white border border-slate-200 rounded-2xl h-80 overflow-hidden shadow-sm">
+      <div className="h-48 skeleton-shimmer" />
+      <div className="p-5 space-y-3">
+        <div className="h-4 bg-slate-100 rounded w-1/3 animate-pulse" />
+        <div className="h-3 bg-slate-100 rounded w-3/4 animate-pulse" />
+        <div className="h-3 bg-slate-100 rounded w-1/2 animate-pulse" />
+      </div>
     </div>
   );
 });
 
-// Ticker only animates while its section is in view (via LazySection's
-// content-visibility ancestor when scrolled away, and by not rendering at
-// all under reduced motion).
-const LiveTicker = memo(function LiveTicker({ items, reduced }) {
+const SkeletonLeaderboard = memo(function SkeletonLeaderboard() {
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" role="status" aria-label="Loading leaderboard">
+      <span className="sr-only">Loading leaderboard…</span>
+      <div className="space-y-3" aria-hidden="true">
+        {Array.from({ length: 4 }).map((_, j) => (
+          <div key={j} className="h-20 bg-slate-100 rounded-xl skeleton-shimmer" />
+        ))}
+      </div>
+    </div>
+  );
+});
+
+/* ------------------------------------------------------------------ */
+/* Error banner                                                        */
+/* ------------------------------------------------------------------ */
+
+const ApiErrorBanner = memo(function ApiErrorBanner({ message, onDismiss }) {
+  return (
+    <div className="error-banner flex items-start gap-3 mb-6 rounded-2xl border border-rose-200 bg-rose-50/80 backdrop-blur-sm p-4 shadow-sm" role="alert" aria-live="assertive" data-testid="api-error-banner">
+      <AlertTriangle size={18} className="shrink-0 mt-0.5 text-rose-600" aria-hidden="true" />
+      <div className="flex-1">
+        <p className="font-semibold text-rose-900">Unable to load data</p>
+        <p className="text-rose-600/80 text-xs mt-0.5">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="p-1 rounded-lg hover:bg-rose-100 transition-colors"
+        aria-label="Dismiss error"
+        data-testid="dismiss-error-button"
+      >
+        <X size={14} aria-hidden="true" />
+      </button>
+    </div>
+  );
+});
+
+/* ------------------------------------------------------------------ */
+/* Editorial ribbon ticker — pure CSS animation, zero JS overhead      */
+/* ------------------------------------------------------------------ */
+
+const LiveTicker = memo(function LiveTicker({ items }) {
   const doubled = useMemo(() => (items?.length ? [...items, ...items] : []), [items]);
   if (!items?.length) return null;
   return (
-    <div className="relative overflow-hidden border-y border-slate-200 bg-white/60 backdrop-blur-sm py-2.5">
-      <motion.div
-        className="flex gap-10 whitespace-nowrap"
-        animate={reduced ? undefined : { x: ["0%", "-50%"] }}
-        transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-      >
+    <div
+      className="relative overflow-hidden border-y border-slate-200/60 bg-gradient-to-r from-slate-50/80 via-white to-slate-50/80 py-3.5 backdrop-blur-sm"
+      aria-label="Recently added politicians ticker"
+      data-testid="live-ticker"
+    >
+      {/* Edge fade masks — pure CSS, replaces any JS-driven fade logic */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent z-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent z-10" aria-hidden="true" />
+      <div className="flex gap-24 whitespace-nowrap animate-marquee" style={{ width: "max-content" }} aria-hidden="true">
         {doubled.map((p, i) => (
           <Link
             key={`${p.id}-${i}`}
             to={`/politicians/${encodeURIComponent(p.id)}`}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+            tabIndex={-1}
+            className="inline-flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 hover:text-indigo-600 transition-colors"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ticker-pulse shrink-0 shadow-lg shadow-emerald-500/30" />
             {p.name}
-            <span className="text-slate-300">·</span>
-            <span className="text-slate-400 font-normal">{p.party || "Independent"}</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-400 font-normal normal-case tracking-normal">{p.party || "Independent"}</span>
           </Link>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 });
 
 /* ------------------------------------------------------------------ */
-/* Cards                                                                */
+/* Cards                                                               */
 /* ------------------------------------------------------------------ */
 
 const PoliticianCard = memo(function PoliticianCard({ p, index }) {
   const img = safeImageSrc(p.image_url, p.name);
+  const staggerDelay = Math.min(index, 8) * 60;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "80px" }}
-      transition={{ delay: Math.min(index, 8) * 0.04 }}
-      whileHover={{ y: -6, scale: 1.02 }}
-      className="h-full"
-    >
+    <Reveal as="div" delay={staggerDelay} once className="h-full">
       <Link
         to={`/politicians/${encodeURIComponent(p.id)}`}
         data-testid={`politician-card-${p.id}`}
-        className="group relative bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-indigo-200/80 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
+        className="group relative bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-indigo-300 hover:-translate-y-0.5 card-lift flex flex-col h-full transition-all duration-300"
       >
-        <div className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-emerald-400/20 via-teal-400/20 to-indigo-400/20 -z-10" />
-        <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200/50 relative">
+        <div className="aspect-[4/3] overflow-hidden bg-slate-100 relative">
           <img
             src={img}
-            alt={p.name}
+            alt={`Portrait of ${p.name}`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
             width="400"
             height="300"
             decoding="async"
             referrerPolicy="no-referrer"
-            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = avatarDataUri(p.name); }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = avatarDataUri(p.name);
+            }}
           />
-          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-slate-200">
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-700 border border-slate-200/50 shadow-sm">
             {p.country_code}
           </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
-        <div className="p-5 flex-1 flex flex-col">
-          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 self-start">
-            <Sparkles size={10} /> {p.party || "Independent"}
+        <div className="p-6 flex-1 flex flex-col">
+          <div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-700 self-start">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/30" aria-hidden="true" />
+            {p.party || "Independent"}
           </div>
-          <h3 className="mt-3 font-display font-bold text-xl leading-tight text-slate-800 group-hover:text-indigo-600 transition-colors">
+          <h3 className="mt-2 font-display font-bold text-xl leading-tight tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
             {p.name}
           </h3>
-          <div className="mt-2 text-sm text-slate-500 line-clamp-2 flex-1">
+          <p className="mt-2 text-sm text-slate-500 leading-relaxed line-clamp-2 flex-1">
             {p.brief_intro || p.role || "Elected official"}
-          </div>
-          <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-xs text-slate-400">
-              <MapPin size={12} className="text-indigo-400" />
+          </p>
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <MapPin size={12} className="text-indigo-400" aria-hidden="true" />
               <span>{p.country_code}</span>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-indigo-600 group-hover:text-indigo-800 transition-colors">
-              View Record <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 group-hover:text-indigo-800 transition-colors">
+              View Record <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </span>
           </div>
         </div>
       </Link>
-    </motion.div>
+    </Reveal>
   );
 });
 
 const Counter = memo(function Counter({ target, suffix = "" }) {
   const { ref, value } = useCountUp(target);
   return (
-    <span ref={ref} className="font-display font-bold">
+    <span ref={ref} className="font-display font-bold tabular-nums">
       {value.toLocaleString()}{suffix}
     </span>
   );
@@ -238,205 +252,288 @@ const Counter = memo(function Counter({ target, suffix = "" }) {
 const RecentCard = memo(function RecentCard({ p }) {
   const img = safeImageSrc(p.image_url, p.name);
   return (
-    <motion.div whileHover={{ y: -4, scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
-      <Link
-        to={`/politicians/${encodeURIComponent(p.id)}`}
-        className="group flex-shrink-0 w-48 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl overflow-hidden block shadow-sm hover:shadow-lg hover:border-indigo-200/80 transition-all duration-300"
-        data-testid={`recent-card-${p.id}`}
-      >
-        <div className="aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200/50 relative">
-          <img
-            src={img}
-            alt={p.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            loading="lazy"
-            width="192"
-            height="192"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = avatarDataUri(p.name); }}
-          />
-          <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
-            New
-          </div>
+    <Link
+      to={`/politicians/${encodeURIComponent(p.id)}`}
+      className="group flex-shrink-0 w-48 bg-white border border-slate-200 rounded-2xl overflow-hidden block hover:shadow-xl hover:border-indigo-300 hover:-translate-y-0.5 card-lift-sm transition-all duration-300"
+      data-testid={`recent-card-${p.id}`}
+    >
+      <div className="aspect-square overflow-hidden bg-slate-100 relative">
+        <img
+          src={img}
+          alt={`Portrait of ${p.name}`}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          loading="lazy"
+          width="192"
+          height="192"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = avatarDataUri(p.name);
+          }}
+        />
+        <div className="absolute top-2 left-2 bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-lg">
+          New
         </div>
-        <div className="p-3">
-          <div className="font-display font-bold text-sm text-slate-800 truncate">{p.name}</div>
-          <div className="text-xs text-slate-400 truncate">{p.party || "Independent"}</div>
-        </div>
-      </Link>
-    </motion.div>
+      </div>
+      <div className="p-3.5 border-t border-slate-100">
+        <div className="font-display font-bold text-sm text-slate-900 truncate">{p.name}</div>
+        <div className="text-xs text-slate-400 truncate">{p.party || "Independent"}</div>
+      </div>
+    </Link>
   );
 });
 
-const LeaderboardCard = memo(function LeaderboardCard({ p, rank, tone }) {
+const LeaderboardCard = memo(function LeaderboardCard({ p, rank, tone, delay }) {
   const img = safeImageSrc(p.photo_url, p.name);
   const pct = clampPct(tone === "keeper" ? p.delivered_pct : p.broken_pct);
   const pctLabel = tone === "keeper" ? "Delivered" : "Broken";
-  const colorClass = tone === "keeper" ? "text-emerald-600" : "text-red-500";
-  const ringClass = tone === "keeper" ? "ring-emerald-200" : "ring-red-200";
-  const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null;
+  const colorClass = tone === "keeper" ? "text-emerald-600" : "text-rose-500";
+  const ringClass = tone === "keeper" ? "ring-emerald-200" : "ring-rose-200";
+
+  const rankBadge = rank <= 3 ? (
+    <div className={`rank-badge ${rank === 1 ? "rank-gold" : rank === 2 ? "rank-silver" : "rank-bronze"}`} aria-hidden="true">
+      {rank}
+    </div>
+  ) : (
+    <span className={`font-mono font-bold text-sm ${colorClass} w-8 text-center shrink-0 opacity-60`} aria-hidden="true">
+      {String(rank).padStart(2, "0")}
+    </span>
+  );
 
   return (
-    <motion.div whileHover={{ scale: 1.02, y: -2 }} transition={{ type: "spring", stiffness: 350, damping: 22 }}>
-      <Link
-        to={`/politicians/${encodeURIComponent(p.politician_id)}`}
-        data-testid={`leaderboard-card-${p.politician_id}`}
-        className="group bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-lg hover:border-indigo-200/80 transition-all duration-300"
-      >
-        <div className={`font-display font-bold text-2xl ${colorClass} w-8 text-center shrink-0 opacity-60 flex items-center justify-center`}>
-          {medal || rank}
-        </div>
-        <div className={`relative shrink-0 rounded-xl ring-2 ${ringClass} group-hover:ring-4 transition-all duration-300`}>
-          <img
-            src={img}
-            alt={p.name}
-            className="w-14 h-14 rounded-xl object-cover bg-slate-100"
-            loading="lazy"
-            width="56"
-            height="56"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = avatarDataUri(p.name); }}
+    <Link
+      to={`/politicians/${encodeURIComponent(p.politician_id)}`}
+      data-testid={`leaderboard-card-${p.politician_id}`}
+      className="reveal-item group bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:shadow-lg hover:border-indigo-300 card-lift-sm transition-all duration-300"
+      style={{ "--i-delay": `${delay}ms` }}
+      aria-label={`${p.name}, rank ${rank}, ${pct}% promises ${pctLabel.toLowerCase()}`}
+    >
+      {rankBadge}
+      <div className={`relative shrink-0 rounded-xl ring-2 ${ringClass} group-hover:ring-4 transition-all duration-300`}>
+        <img
+          src={img}
+          alt={`Portrait of ${p.name}`}
+          className="w-12 h-12 rounded-xl object-cover bg-slate-100"
+          loading="lazy"
+          width="48"
+          height="48"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = avatarDataUri(p.name);
+          }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-display font-bold text-base text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{p.name}</div>
+        <div className="text-xs text-slate-400 truncate">{p.party || "Independent"}{p.role ? ` · ${p.role}` : ""}</div>
+        <div
+          className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden"
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${pct}% promises ${pctLabel.toLowerCase()}`}
+        >
+          <div
+            className={`bar-fill h-full rounded-full ${tone === "keeper" ? "bg-emerald-500" : "bg-rose-400"}`}
+            style={{ "--bar-pct": `${pct}%`, "--bar-delay": `${delay + 150}ms` }}
           />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-display font-bold text-base text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{p.name}</div>
-          <div className="text-xs text-slate-400 truncate">{p.party || "Independent"}{p.role ? ` · ${p.role}` : ""}</div>
-          <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: `${pct}%` }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className={`h-full rounded-full ${tone === "keeper" ? "bg-emerald-500" : "bg-red-400"}`}
-            />
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          <div className={`font-display font-bold text-xl ${colorClass}`}>{pct}%</div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400">{pctLabel}</div>
-        </div>
-      </Link>
-    </motion.div>
+      </div>
+      <div className="text-right shrink-0" aria-hidden="true">
+        <div className={`font-display font-bold text-xl ${colorClass}`}>{pct}%</div>
+        <div className="text-[10px] uppercase tracking-wider text-slate-400">{pctLabel}</div>
+      </div>
+    </Link>
   );
 });
 
 const Leaderboard = memo(function Leaderboard({ title, icon, items, tone }) {
   const Icon = icon;
-  const colorClass = tone === "keeper" ? "text-emerald-600" : "text-red-500";
-  const bgClass = tone === "keeper" ? "bg-emerald-50/50" : "bg-red-50/50";
+  const colorClass = tone === "keeper" ? "text-emerald-600" : "text-rose-500";
+  const headingId = `leaderboard-heading-${tone}`;
 
   return (
-    <div className="relative bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden">
-      <div className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-20 -z-10 ${tone === "keeper" ? "bg-emerald-400" : "bg-red-400"}`} />
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200">
-        <div className={`p-2 rounded-xl ${bgClass}`}>
-          <Icon size={20} className={colorClass} />
-        </div>
-        <h2 className="font-display font-bold text-2xl text-slate-800">{title}</h2>
-        <span className="ml-auto text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+    <Reveal
+      as="section"
+      aria-labelledby={headingId}
+      className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+    >
+      <div className={`flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-gradient-to-r ${tone === "keeper" ? "from-emerald-50/60 to-white" : "from-rose-50/60 to-white"}`}>
+        <Icon size={18} className={colorClass} aria-hidden="true" />
+        <h2 id={headingId} className="font-display font-bold text-lg tracking-tight text-slate-900">{title}</h2>
+        <span className="ml-auto text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 border border-slate-200 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
           {items.length} records
         </span>
       </div>
       {items.length === 0 ? (
-        <div className="bg-slate-50/80 rounded-2xl p-8 text-center text-slate-500">
-          Not enough data yet
-        </div>
+        <div className="p-10 text-center text-slate-400 text-sm">Not enough data yet</div>
       ) : (
-        <StaggerList className="space-y-3 max-h-[600px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+        <ul className="p-4 space-y-2.5 max-h-[600px] overflow-y-auto pr-3 scrollbar-thin list-none">
           {items.map((p, i) => (
-            <StaggerItem key={p.politician_id}>
-              <LeaderboardCard p={p} rank={i + 1} tone={tone} />
-            </StaggerItem>
+            <li key={p.politician_id}>
+              <LeaderboardCard p={p} rank={i + 1} tone={tone} delay={Math.min(i, 10) * 45} />
+            </li>
           ))}
-        </StaggerList>
+        </ul>
       )}
+    </Reveal>
+  );
+});
+
+const FEATURE_ACCENT_MAP = {
+  emerald: "text-emerald-600 border-emerald-200 bg-emerald-50/60",
+  indigo: "text-indigo-600 border-indigo-200 bg-indigo-50/60",
+  amber: "text-amber-600 border-amber-200 bg-amber-50/60",
+  purple: "text-purple-600 border-purple-200 bg-purple-50/60",
+  slate: "text-slate-600 border-slate-200 bg-slate-50/60",
+  teal: "text-teal-600 border-teal-200 bg-teal-50/60",
+};
+
+const FeatureCard = memo(function FeatureCard({ icon: Icon, title, description, color, delay, className = "" }) {
+  return (
+    <div
+      className={`reveal-item group bg-white border border-slate-200 rounded-2xl p-8 hover:border-indigo-300 hover:shadow-xl hover:-translate-y-0.5 card-lift-sm transition-all duration-300 ${className}`}
+      style={{ "--i-delay": `${delay}ms` }}
+    >
+      <div className={`inline-flex p-3.5 rounded-2xl border-2 ${FEATURE_ACCENT_MAP[color]} mb-5 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+        <Icon size={22} aria-hidden="true" />
+      </div>
+      <h3 className="font-display font-bold text-xl tracking-tight text-slate-900 mb-2">{title}</h3>
+      <p className="text-sm text-slate-500 leading-relaxed max-w-md">{description}</p>
     </div>
   );
 });
 
-const FEATURE_COLOR_MAP = {
-  emerald: "text-emerald-600 bg-emerald-50/50 border-emerald-200",
-  indigo: "text-indigo-600 bg-indigo-50/50 border-indigo-200",
-  amber: "text-amber-600 bg-amber-50/50 border-amber-200",
-  purple: "text-purple-600 bg-purple-50/50 border-purple-200",
-};
-const FEATURE_GLOW_MAP = {
-  emerald: "group-hover:shadow-emerald-500/20",
-  indigo: "group-hover:shadow-indigo-500/20",
-  amber: "group-hover:shadow-amber-500/20",
-  purple: "group-hover:shadow-purple-500/20",
-};
-
-const FeatureCard = memo(function FeatureCard({ icon: Icon, title, description, color }) {
+const StepCard = memo(function StepCard({ number, title, description, icon: Icon, delay }) {
   return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.03 }}
-      className={`group bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl ${FEATURE_GLOW_MAP[color]} hover:border-indigo-200/80 transition-all duration-300`}
+    <div
+      className="reveal-item relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-indigo-300 hover:shadow-xl hover:-translate-y-0.5 card-lift-sm h-full transition-all duration-300"
+      style={{ "--i-delay": `${delay}ms` }}
     >
-      <motion.div
-        whileHover={{ rotate: 8, scale: 1.1 }}
-        className={`inline-flex p-3 rounded-xl ${FEATURE_COLOR_MAP[color]} mb-4`}
-      >
-        <Icon size={24} />
-      </motion.div>
-      <h3 className="font-display font-bold text-lg text-slate-800 mb-2">{title}</h3>
-      <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
-    </motion.div>
-  );
-});
-
-const StepCard = memo(function StepCard({ number, title, description, icon: Icon }) {
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className="relative bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300"
-    >
-      <div className="absolute -top-3 -left-3 w-8 h-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl flex items-center justify-center font-display font-bold text-sm shadow-lg shadow-emerald-500/30">
-        {number}
-      </div>
-      <div className="mt-4">
-        <div className="inline-flex p-2 rounded-xl bg-indigo-50/50 text-indigo-600 mb-3">
-          <Icon size={20} />
+      <div className="flex items-center justify-between mb-6">
+        <span className="font-mono font-bold text-3xl text-slate-200" aria-hidden="true">
+          {String(number).padStart(2, "0")}
+        </span>
+        <div className="inline-flex p-3 rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white text-indigo-600 shadow-sm">
+          <Icon size={20} aria-hidden="true" />
         </div>
-        <h3 className="font-display font-bold text-base text-slate-800 mb-2">{title}</h3>
-        <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
       </div>
-    </motion.div>
+      <h3 className="font-display font-bold text-lg tracking-tight text-slate-900 mb-2">{title}</h3>
+      <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+    </div>
   );
 });
 
 /* ------------------------------------------------------------------ */
-/* Page                                                                 */
+/* Page                                                                */
 /* ------------------------------------------------------------------ */
 
 const SEARCH_DEBOUNCE_MS = 250;
 const MAX_QUERY_LENGTH = 120;
-const RECENT_DISPLAY_LIMIT = 20; // was rendering up to 100 DOM nodes into a horizontal strip
+const RECENT_DISPLAY_LIMIT = 20;
+
+const HERO_BG =
+  "/images/uf7ne1m3m7wkazptdvgm.webp";
+const GLOBE_BG =
+  "/images/qap5tauldakh2to8iiip.webp";
+
+const SITE_DESCRIPTION =
+  "TrackMP is the global public ledger for political accountability. Track campaign promises, voting records, and legislative performance of politicians across 160+ countries.";
 
 export default function HomePage() {
   const [politicians, setPoliticians] = useState([]);
   const [countries, setCountries] = useState([]);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const param = new URLSearchParams(window.location.search).get("q");
+    return param ? param.slice(0, MAX_QUERY_LENGTH) : "";
+  });
   const [country, setCountry] = useState("all");
   const [loading, setLoading] = useState(false);
 
   const [keepers, setKeepers] = useState([]);
   const [breakers, setBreakers] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
-  const [stats, setStats] = useState({ total_politicians: 0, total_promises: 0, delivered_pct: 0, broken_pct: 0 });
+  const [stats, setStats] = useState({ total_politicians: 0, total_promises: 0, total_delivered: 0, total_broken: 0, delivered_pct: 0, broken_pct: 0 });
   const [recent, setRecent] = useState([]);
+  const [apiError, setApiError] = useState(null);
 
   const isBrowsing = !!q || (country && country !== "all");
-  const reduced = useReducedMotion();
 
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const orb1Y = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -80]);
-  const orb2Y = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 60]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, reduced ? 1 : 0.4]);
+  /* SEO: title, meta description, canonical/OG/Twitter tags, JSON-LD.
+     Structured data is derived from real, already-rendered data (top
+     keepers) so it never claims anything the page doesn't show. */
+  const structuredData = useMemo(() => {
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const graph = [
+      {
+        "@type": "WebSite",
+        name: "TrackMP",
+        url: origin,
+        description: SITE_DESCRIPTION,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${origin}/?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        name: "TrackMP",
+        url: origin,
+        description: "Public ledger tracking political promises and legislative performance.",
+        logo: `${origin}/logo.png`,
+        sameAs: [
+          "https://twitter.com/trackmp",
+          "https://linkedin.com/company/trackmp"
+        ],
+      },
+    ];
 
+    if (keepers.length > 0) {
+      graph.push({
+        "@type": "ItemList",
+        name: "Top Promise Keepers",
+        itemListElement: keepers.slice(0, 10).map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: p.name,
+          url: origin ? new URL(`/politicians/${encodeURIComponent(p.politician_id)}`, origin).toString() : undefined,
+        })),
+      });
+    }
+
+    // FAQPage entry aids SEO rich-result eligibility for the methodology
+    // section without adding any new UI or JS — pure metadata.
+    graph.push({
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "How does TrackMP track political promises?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "TrackMP logs campaign promises from manifestos and public statements, tracks related legislative action, and scores delivery based on verifiable, cited sources.",
+          },
+        },
+      ],
+    });
+
+    return { "@context": "https://schema.org", "@graph": graph };
+  }, [keepers]);
+
+  useSEO({
+    title: "TrackMP | Global Politician Accountability & Promise Tracking",
+    description: SITE_DESCRIPTION,
+    canonicalPath: "/",
+    structuredData,
+  });
+
+  /* Load countries */
   useEffect(() => {
     const controller = new AbortController();
     api
@@ -450,9 +547,11 @@ export default function HomePage() {
     return () => controller.abort();
   }, []);
 
+  /* Load homepage data */
   useEffect(() => {
     const controller = new AbortController();
     setLeaderboardLoading(true);
+    setApiError(null);
     Promise.all([
       api.get("/leaderboards/promises", { params: { kind: "keepers", limit: 20 }, signal: controller.signal }),
       api.get("/leaderboards/promises", { params: { kind: "breakers", limit: 20 }, signal: controller.signal }),
@@ -468,15 +567,22 @@ export default function HomePage() {
       .catch((err) => {
         if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
           console.error("Failed to load homepage data:", err);
+          setApiError("We couldn't load the latest data. Please refresh the page or try again later.");
         }
       })
       .finally(() => setLeaderboardLoading(false));
     return () => controller.abort();
   }, []);
 
+  /* Search */
   useEffect(() => {
-    if (!isBrowsing) { setPoliticians([]); return; }
+    if (!isBrowsing) {
+      setPoliticians([]);
+      setApiError(null);
+      return;
+    }
     setLoading(true);
+    setApiError(null);
     const controller = new AbortController();
     const params = {};
     const cleanQ = q.trim().slice(0, MAX_QUERY_LENGTH);
@@ -491,6 +597,7 @@ export default function HomePage() {
         .catch((err) => {
           if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
             console.error("Search failed:", err);
+            setApiError("Search failed. Please check your connection and try again.");
           }
         })
         .finally(() => setLoading(false));
@@ -507,299 +614,446 @@ export default function HomePage() {
     setQ(e.target.value);
   }, []);
 
-  const heroStatCards = useMemo(() => ([
-    { icon: Users, color: "text-emerald-600", ring: "hover:ring-emerald-200", value: stats.total_politicians, suffix: "+", label: "Politicians Tracked" },
-    { icon: CheckCircle2, color: "text-emerald-600", ring: "hover:ring-emerald-200", value: stats.total_delivered || 0, suffix: "", label: "Promises Delivered" },
-    { icon: XCircle, color: "text-red-500", ring: "hover:ring-red-200", value: stats.total_broken || 0, suffix: "", label: "Promises Broken" },
-    { icon: Globe, color: "text-indigo-600", ring: "hover:ring-indigo-200", value: 160, suffix: "+", label: "Countries Indexed" },
-  ]), [stats.total_politicians, stats.total_delivered, stats.total_broken]);
+  const dismissError = useCallback(() => setApiError(null), []);
+
+  const focusSearch = useCallback(() => {
+    const el = document.getElementById("home-search-input");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus({ preventScroll: true });
+    }
+  }, []);
+
+  const heroStats = useMemo(
+    () => [
+      { icon: Users, color: "text-emerald-600", value: stats.total_politicians, suffix: "+", label: "Politicians Tracked" },
+      { icon: CheckCircle2, color: "text-emerald-600", value: stats.total_delivered || 0, suffix: "", label: "Promises Delivered" },
+      { icon: XCircle, color: "text-rose-500", value: stats.total_broken || 0, suffix: "", label: "Promises Broken" },
+      { icon: Globe, color: "text-indigo-600", value: 160, suffix: "+", label: "Countries Indexed" },
+    ],
+    [stats.total_politicians, stats.total_delivered, stats.total_broken]
+  );
 
   return (
     <PublicLayout>
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none -z-20" style={{
-        backgroundImage: 'radial-gradient(circle at 1px 1px, #0f172a 1px, transparent 0)',
-        backgroundSize: '24px 24px'
-      }} />
+      <div className="homepage-root">
+        {/* ============================ HERO ============================ */}
+        {/*
+          FIX: top padding reduced from pt-20/md:pt-28 to pt-8/md:pt-12.
+          That extra padding — stacked on top of PublicLayout's header —
+          was the source of the visible gap above the "Public Ledger"
+          badge. Bottom padding is unchanged so section rhythm elsewhere
+          on the page isn't affected.
+        */}
+        <section className="relative overflow-hidden border-b border-slate-200" aria-label="Introduction and search">
+          <div className="absolute inset-0 -z-10" aria-hidden="true">
+            <img
+              src={HERO_BG}
+              alt=""
+              className="w-full h-full object-cover opacity-[0.45]"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-white/50 to-white/80" />
+            <div
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: "radial-gradient(circle at 1px 1px, #0f172a 1px, transparent 0)",
+                backgroundSize: "24px 24px",
+              }}
+            />
+          </div>
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative overflow-hidden">
-        <motion.div style={{ y: orb1Y, opacity: heroOpacity }} className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none -z-10 mix-blend-multiply" />
-        <motion.div style={{ y: orb2Y, opacity: heroOpacity }} className="absolute top-1/3 left-1/4 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none -z-10 mix-blend-multiply" />
-
-        <HeroParticles reduced={reduced} />
-
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 md:py-24 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200/60 backdrop-blur-sm mb-6 shadow-sm"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            Public Ledger · Real-Time Tracking
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.08, ease: "easeOut" }}
-            className="font-display font-black text-4xl sm:text-5xl lg:text-7xl leading-[0.95] tracking-tight max-w-4xl text-slate-900"
-          >
-            The Public Record
-            <br />
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent">
-              Of Every Politician.
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.18, ease: "easeOut" }}
-            className="mt-6 text-base md:text-lg max-w-2xl text-slate-600 leading-relaxed"
-          >
-            A real-time, auditable tracking system for campaign promises, legislative actions, and constituency milestones. From pledge to performance — transparent by construction.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.26 }}
-            className="mt-10 grid grid-cols-1 md:grid-cols-[1fr_260px] gap-4 max-w-3xl"
-          >
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={20} aria-hidden="true" />
-              <Input
-                data-testid="search-politician-input"
-                value={q}
-                onChange={handleSearchChange}
-                maxLength={MAX_QUERY_LENGTH}
-                placeholder="Search politicians by name…"
-                aria-label="Search politicians by name"
-                autoComplete="off"
-                className="bg-white/80 backdrop-blur-sm border-slate-200 rounded-2xl pl-12 text-base h-14 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all duration-200 shadow-sm focus:shadow-md"
-              />
+          <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-16 md:pt-12 md:pb-20">
+            <div
+              className="hero-in inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-700 border border-emerald-200 bg-emerald-50/90 backdrop-blur-sm px-5 py-2 rounded-full mb-6 shadow-sm"
+              style={{ "--hero-delay": "0ms" }}
+            >
+              <Sparkles size={14} className="text-emerald-500" aria-hidden="true" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ticker-pulse shadow-lg shadow-emerald-500/30" aria-hidden="true" />
+              Public Ledger · Real-Time Tracking
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ticker-pulse shadow-lg shadow-emerald-500/30" aria-hidden="true" />
             </div>
-            <Select value={country} onValueChange={setCountry}>
-              <SelectTrigger
-                data-testid="filter-country-select"
-                aria-label="Filter by country"
-                className="bg-white/80 backdrop-blur-sm border-slate-200 rounded-2xl h-14 text-base focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all duration-200 shadow-sm"
+
+            <h1
+              className="hero-in font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.02] tracking-tighter max-w-3xl text-slate-900"
+              style={{ "--hero-delay": "80ms" }}
+            >
+              The public record{" "}
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent">
+                of every politician.
+              </span>
+            </h1>
+
+            <p
+              className="hero-in mt-6 text-base md:text-lg max-w-2xl text-slate-600 leading-relaxed"
+              style={{ "--hero-delay": "180ms" }}
+            >
+              A real-time, auditable ledger of campaign promises, legislative actions, and constituency milestones.
+              From pledge to performance — transparent by construction.
+            </p>
+
+            {/* Glass search panel */}
+            <div
+              id="search"
+              className="hero-in mt-10 max-w-3xl backdrop-blur-xl bg-white/90 border border-slate-200/80 rounded-2xl p-4 shadow-xl shadow-slate-200/30"
+              style={{ "--hero-delay": "260ms" }}
+              role="search"
+              aria-label="Search and filter politicians"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" size={18} aria-hidden="true" />
+                  <label htmlFor="home-search-input" className="sr-only">Search politicians by name</label>
+                  <Input
+                    id="home-search-input"
+                    data-testid="search-politician-input"
+                    value={q}
+                    onChange={handleSearchChange}
+                    maxLength={MAX_QUERY_LENGTH}
+                    placeholder="Search politicians by name…"
+                    autoComplete="off"
+                    className="bg-white border-slate-200 rounded-xl pl-11 text-base h-12 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  />
+                </div>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger
+                    data-testid="filter-country-select"
+                    aria-label="Filter by country"
+                    className="bg-white border-slate-200 rounded-xl h-12 text-base focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
+                  >
+                    <SelectValue placeholder="All countries" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-slate-200 rounded-xl">
+                    <SelectItem value="all">🌍 All countries</SelectItem>
+                    {countries.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {apiError && isBrowsing && (
+              <div className="hero-in mt-4 max-w-3xl">
+                <ApiErrorBanner message={apiError} onDismiss={dismissError} />
+              </div>
+            )}
+
+            {isBrowsing ? (
+              <div className="mt-6 flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                <span data-testid="total-count" className="text-slate-600" aria-live="polite">
+                  {loading ? "Searching…" : `${total} records found`}
+                </span>
+                <span>{countries.length} countries indexed</span>
+              </div>
+            ) : (
+              <div
+                className="hero-in mt-12 grid grid-cols-2 md:grid-cols-4 border border-slate-200 rounded-2xl bg-white/80 backdrop-blur-md divide-x divide-y md:divide-y-0 divide-slate-200 overflow-hidden shadow-lg shadow-slate-200/20"
+                style={{ "--hero-delay": "340ms" }}
+                data-testid="hero-stats-band"
               >
-                <SelectValue placeholder="All countries" />
-              </SelectTrigger>
-              <SelectContent className="bg-white/95 backdrop-blur-sm border-slate-200 rounded-2xl">
-                <SelectItem value="all">All countries</SelectItem>
-                {countries.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </motion.div>
+                {heroStats.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.label} className="p-5 md:p-6 hover:bg-slate-50/50 transition-colors">
+                      <div className={`flex items-center gap-2 ${s.color}`}>
+                        <Icon size={16} aria-hidden="true" />
+                        <span className="font-display font-bold text-3xl md:text-4xl tracking-tighter text-slate-900">
+                          <Counter target={s.value} suffix={s.suffix} />
+                        </span>
+                      </div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">{s.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ======================== TICKER ======================== */}
+        {!isBrowsing && recent.length > 0 && <LiveTicker items={recent} />}
+
+        {/* ===================== RECENTLY ADDED ===================== */}
+        {!isBrowsing && recent.length > 0 && (
+          <Reveal as="section" aria-labelledby="recent-heading" className="max-w-7xl mx-auto px-4 md:px-8 pt-14">
+            <div className="flex items-end justify-between gap-4 mb-6">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2 flex items-center gap-2">
+                  <Zap size={14} /> Latest Entries
+                </div>
+                <h2 id="recent-heading" className="font-display font-bold text-2xl md:text-3xl tracking-tight text-slate-900">
+                  Recently added to the ledger
+                </h2>
+              </div>
+              <Clock size={20} className="text-slate-300 shrink-0" aria-hidden="true" />
+            </div>
+            <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-thin snap-x snap-mandatory">
+              {recent.map((p) => (
+                <div key={p.id} className="snap-start">
+                  <RecentCard p={p} />
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        )}
+
+        {/* ================= RESULTS / LEADERBOARDS ================= */}
+        <section
+          id="leaderboards"
+          className="max-w-7xl mx-auto px-4 md:px-8 py-14"
+          aria-label={isBrowsing ? "Search results" : "Leaderboards"}
+        >
+          {apiError && !isBrowsing && <ApiErrorBanner message={apiError} onDismiss={dismissError} />}
 
           {isBrowsing ? (
-            <div className="mt-6 flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-slate-400">
-              <span data-testid="total-count" className="text-slate-600" aria-live="polite">
-                {loading ? "Searching…" : `${total} records found`}
-              </span>
-              <span>{countries.length} countries indexed</span>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.32 }}
-              className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4"
-            >
-              {heroStatCards.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <motion.div
-                    key={s.label}
-                    whileHover={{ y: -3, scale: 1.03 }}
-                    className={`bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md ring-0 hover:ring-2 ${s.ring} transition-all duration-300`}
-                  >
-                    <div className={`flex items-center gap-2 ${s.color}`}>
-                      <Icon size={18} aria-hidden="true" />
-                      <span className="font-display font-bold text-2xl text-slate-800">
-                        <Counter target={s.value} suffix={s.suffix} />
-                      </span>
-                    </div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">{s.label}</div>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          )}
-        </div>
-      </section>
-
-      {!isBrowsing && recent.length > 0 && (
-        <LiveTicker items={recent} reduced={reduced} />
-      )}
-
-      {!isBrowsing && recent.length > 0 && (
-        <FadeIn>
-          <section className="max-w-7xl mx-auto px-4 md:px-8 pt-12">
-            <div className="flex items-center gap-3 mb-6">
-              <Clock size={20} className="text-indigo-400" aria-hidden="true" />
-              <h2 className="font-display font-bold text-2xl text-slate-800">Recently Added Politicians</h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
-              {recent.map((p) => (
-                <RecentCard key={p.id} p={p} />
-              ))}
-            </div>
-          </section>
-        </FadeIn>
-      )}
-
-      {/* Results / Leaderboards */}
-      <section className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-        {isBrowsing ? (
-          loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-live="polite">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl h-80 animate-pulse shadow-sm" />
-              ))}
-            </div>
-          ) : politicians.length === 0 ? (
-            <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                <Search size={14} aria-hidden="true" /> Empty Ledger
-              </div>
-              <h3 className="font-display font-bold text-3xl mt-4 text-slate-800">No politicians match your filter.</h3>
-              <p className="mt-3 text-slate-500">Try clearing the search or adjust the country filter.</p>
-            </div>
-          ) : (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <Users size={20} className="text-indigo-400" aria-hidden="true" />
-                <h2 className="font-display font-bold text-2xl text-slate-800">Search Results</h2>
-                <span className="text-sm text-slate-400">{politicians.length} politicians found</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="politician-grid">
-                {politicians.map((p, i) => (
-                  <PoliticianCard key={p.id} p={p} index={i} />
+            loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-live="polite">
+                <span className="sr-only">Searching politicians…</span>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
                 ))}
               </div>
-            </div>
-          )
-        ) : leaderboardLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-busy="true" aria-live="polite">
-            {[0, 1].map((i) => (
-              <div key={i} className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm">
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, j) => (
-                    <div key={j} className="h-20 bg-slate-100 rounded-2xl animate-pulse" />
+            ) : politicians.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm" data-testid="empty-results">
+                <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 border border-slate-200 px-4 py-2 rounded-full">
+                  <Search size={14} aria-hidden="true" /> Empty Ledger
+                </div>
+                <h3 className="font-display font-bold text-3xl tracking-tight mt-4 text-slate-900">No politicians match your filter.</h3>
+                <p className="mt-3 text-slate-500">Try clearing the search or adjust the country filter.</p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-end justify-between gap-4 mb-6">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2 flex items-center gap-2">
+                      <Search size={14} /> Search Results
+                    </div>
+                    <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-slate-900">
+                      {politicians.length} politician{politicians.length === 1 ? "" : "s"} found
+                    </h2>
+                  </div>
+                  <Users size={20} className="text-slate-300 shrink-0" aria-hidden="true" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="politician-grid">
+                  {politicians.map((p, i) => (
+                    <PoliticianCard key={p.id} p={p} index={i} />
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FadeIn>
-              <Leaderboard title="Top Promise Keepers" icon={TrendingUp} items={keepers} tone="keeper" />
-            </FadeIn>
-            <FadeIn delay={0.15}>
-              <Leaderboard title="Top Promise Breakers" icon={TrendingDown} items={breakers} tone="breaker" />
-            </FadeIn>
-          </div>
+            )
+          ) : leaderboardLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-busy="true" aria-live="polite">
+              {[0, 1].map((i) => (
+                <SkeletonLeaderboard key={i} />
+              ))}
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-end justify-between gap-4 mb-6">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2 flex items-center gap-2">
+                    <Activity size={14} /> Accountability Index
+                  </div>
+                  <h2 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-slate-900">
+                    Who delivers — and who doesn't
+                  </h2>
+                </div>
+                <Scale size={20} className="text-slate-300 shrink-0" aria-hidden="true" />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Leaderboard title="Top Promise Keepers" icon={TrendingUp} items={keepers} tone="keeper" />
+                <Leaderboard title="Top Promise Breakers" icon={TrendingDown} items={breakers} tone="breaker" />
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ===================== WHY TRACKMP (BENTO) ===================== */}
+        {!isBrowsing && (
+          <LazySection minHeight={520}>
+            <Reveal as="section" id="why-trackmp" aria-labelledby="why-heading" className="border-t border-slate-200 bg-gradient-to-b from-slate-50/60 to-white">
+              <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 md:py-20">
+                <div className="max-w-2xl mb-12">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-3 flex items-center gap-2">
+                    <Star size={14} /> Why TrackMP
+                  </div>
+                  <h2 id="why-heading" className="font-display font-bold text-3xl md:text-4xl tracking-tight text-slate-900">
+                    Transparency through{" "}
+                    <span className="bg-gradient-to-r from-emerald-600 to-indigo-600 bg-clip-text text-transparent">
+                      verifiable data
+                    </span>
+                  </h2>
+                  <p className="mt-4 text-slate-500 leading-relaxed">
+                    Every promise, every vote, every project — logged with sources and open for inspection.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
+                  <FeatureCard
+                    icon={Target}
+                    title="Promise Tracking"
+                    description="Every campaign promise logged with timestamp, source, and real-time status updates — from manifesto to measurable outcome."
+                    color="emerald"
+                    delay={0}
+                    className="lg:col-span-7"
+                  />
+                  <FeatureCard
+                    icon={BarChart3}
+                    title="Performance Metrics"
+                    description="Clear, data-driven metrics showing delivery rates and legislative impact with historical trends."
+                    color="indigo"
+                    delay={60}
+                    className="lg:col-span-5"
+                  />
+                  <FeatureCard
+                    icon={Shield}
+                    title="Verified Sources"
+                    description="All entries backed by official documents, news sources, and public records with citation tracking."
+                    color="amber"
+                    delay={120}
+                    className="lg:col-span-5"
+                  />
+                  <FeatureCard
+                    icon={Landmark}
+                    title="Public Accountability"
+                    description="Hold representatives accountable with transparent, auditable records that any citizen, journalist, or researcher can inspect and cite."
+                    color="purple"
+                    delay={180}
+                    className="lg:col-span-7"
+                  />
+                </div>
+              </div>
+            </Reveal>
+          </LazySection>
         )}
-      </section>
 
-      {/* Below-the-fold sections: lazy-mounted to reduce initial JS/DOM cost */}
-      {!isBrowsing && (
-        <LazySection minHeight={520}>
-          <FadeIn>
-            <section className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-              <div className="text-center mb-12">
-                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200/60">
-                  <Star size={12} aria-hidden="true" /> Why TrackMP
-                </span>
-                <h2 className="mt-4 font-display font-bold text-3xl md:text-4xl text-slate-800">
-                  Transparency Through <span className="bg-gradient-to-r from-emerald-600 to-indigo-600 bg-clip-text text-transparent">Verifiable Data</span>
-                </h2>
-                <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
-                  Every promise, every vote, every project — logged with sources and open for inspection.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <FeatureCard icon={Target} title="Promise Tracking" description="Every campaign promise logged with timestamp, source, and real-time status updates." color="emerald" />
-                <FeatureCard icon={BarChart3} title="Performance Metrics" description="Clear, data-driven metrics showing delivery rates and legislative impact." color="indigo" />
-                <FeatureCard icon={Shield} title="Verified Sources" description="All entries backed by official documents, news sources, and public records." color="amber" />
-                <FeatureCard icon={Crown} title="Accountability" description="Hold representatives accountable with transparent, auditable records." color="purple" />
-              </div>
-            </section>
-          </FadeIn>
-        </LazySection>
-      )}
-
-      {!isBrowsing && (
-        <LazySection minHeight={420}>
-          <FadeIn>
-            <section className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-              <div className="text-center mb-12">
-                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/60">
-                  <BookOpen size={12} aria-hidden="true" /> How It Works
-                </span>
-                <h2 className="mt-4 font-display font-bold text-3xl md:text-4xl text-slate-800">
-                  From Promise to <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Performance</span>
+        {/* ======================= HOW IT WORKS ======================= */}
+        {!isBrowsing && (
+          <LazySection minHeight={420}>
+            <Reveal as="section" id="how-it-works" aria-labelledby="how-heading" className="max-w-7xl mx-auto px-4 md:px-8 py-16 md:py-20">
+              <div className="max-w-2xl mb-12">
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-3 flex items-center gap-2">
+                  <GitBranch size={14} /> Methodology
+                </div>
+                <h2 id="how-heading" className="font-display font-bold text-3xl md:text-4xl tracking-tight text-slate-900">
+                  From promise to{" "}
+                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">performance</span>
                 </h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StepCard number={1} icon={Flag} title="Promise Logged" description="Campaign promises and commitments are extracted from manifestos, speeches, and public statements." />
-                <StepCard number={2} icon={Handshake} title="Action Tracked" description="Legislative votes, project milestones, and constituency work are recorded with source links." />
-                <StepCard number={3} icon={PieChartIcon} title="Performance Scored" description="Aggregated metrics show delivery rates, broken promises, and overall performance." />
-              </div>
-            </section>
-          </FadeIn>
-        </LazySection>
-      )}
+              <ol className="flex flex-col md:flex-row gap-5 items-stretch list-none p-0 m-0">
+                {[
+                  { number: 1, icon: Flag, title: "Promise Logged", description: "Campaign promises and commitments are extracted from manifestos, speeches, and public statements." },
+                  { number: 2, icon: Handshake, title: "Action Tracked", description: "Legislative votes, project milestones, and constituency work are recorded with source links." },
+                  { number: 3, icon: PieChartIcon, title: "Performance Scored", description: "Aggregated metrics show delivery rates, broken promises, and overall performance." },
+                ].map((step, i, arr) => (
+                  <React.Fragment key={step.number}>
+                    <li className="flex-1">
+                      <StepCard number={step.number} icon={step.icon} title={step.title} description={step.description} delay={i * 80} />
+                    </li>
+                    {i < arr.length - 1 && (
+                      <div className="hidden md:flex items-center justify-center self-center" aria-hidden="true">
+                        <div className="w-10 h-px bg-gradient-to-r from-slate-300 via-slate-200 to-transparent" />
+                        <ChevronRight size={20} className="text-slate-300" />
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </ol>
+            </Reveal>
+          </LazySection>
+        )}
 
-      {!isBrowsing && (
-        <LazySection minHeight={220}>
-          <FadeIn>
-            <section className="max-w-7xl mx-auto px-4 md:px-8 pb-16">
-              <div className="relative bg-gradient-to-r from-emerald-600/10 via-indigo-600/10 to-teal-600/10 border border-slate-200 rounded-3xl p-8 text-center backdrop-blur-sm overflow-hidden">
-                <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-                  <div>
-                    <div className="flex items-center justify-center gap-2 text-emerald-600">
-                      <CheckCircle2 size={24} aria-hidden="true" />
-                      <span className="font-display font-bold text-3xl text-slate-800"><Counter target={stats.delivered_pct || 0} />%</span>
+        {/* ========================= STATS BAND ========================= */}
+        {!isBrowsing && (
+          <LazySection minHeight={260}>
+            <Reveal as="section" aria-label="Platform statistics" className="max-w-7xl mx-auto px-4 md:px-8 pb-16">
+              <div className="relative border border-slate-200 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/20">
+                <div className="absolute inset-0" aria-hidden="true">
+                  <img src={GLOBE_BG} alt="" className="w-full h-full object-cover opacity-40" loading="lazy" decoding="async" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/50 via-white/40 to-white/70 backdrop-blur-sm" />
+                </div>
+                <div className="relative grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-200">
+                  <div className="p-8 md:p-10 hover:bg-white/20 transition-colors">
+                    <div className="flex items-center gap-2 text-emerald-600">
+                      <CheckCircle2 size={20} aria-hidden="true" />
+                      <span className="font-display font-bold text-4xl md:text-5xl tracking-tighter text-slate-900">
+                        <Counter target={stats.delivered_pct || 0} />%
+                      </span>
                     </div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">Delivery Rate</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Delivery Rate</div>
                   </div>
-                  <div>
-                    <div className="flex items-center justify-center gap-2 text-indigo-600">
-                      <Users size={24} aria-hidden="true" />
-                      <span className="font-display font-bold text-3xl text-slate-800"><Counter target={stats.total_politicians || 0} /></span>
+                  <div className="p-8 md:p-10 hover:bg-white/20 transition-colors">
+                    <div className="flex items-center gap-2 text-indigo-600">
+                      <Users size={20} aria-hidden="true" />
+                      <span className="font-display font-bold text-4xl md:text-5xl tracking-tighter text-slate-900">
+                        <Counter target={stats.total_politicians || 0} />
+                      </span>
                     </div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">Total Politicians</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Total Politicians</div>
                   </div>
-                  <div>
-                    <div className="flex items-center justify-center gap-2 text-amber-600">
-                      <Award size={24} aria-hidden="true" />
-                      <span className="font-display font-bold text-3xl text-slate-800"><Counter target={stats.total_promises || 0} /></span>
+                  <div className="p-8 md:p-10 hover:bg-white/20 transition-colors">
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <Award size={20} aria-hidden="true" />
+                      <span className="font-display font-bold text-4xl md:text-5xl tracking-tighter text-slate-900">
+                        <Counter target={stats.total_promises || 0} />
+                      </span>
                     </div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">Total Promises</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Total Promises</div>
                   </div>
-                  <div>
-                    <div className="flex items-center justify-center gap-2 text-purple-600">
-                      <Globe size={24} aria-hidden="true" />
-                      <span className="font-display font-bold text-3xl text-slate-800"><Counter target={160} />+</span>
+                  <div className="p-8 md:p-10 hover:bg-white/20 transition-colors">
+                    <div className="flex items-center gap-2 text-purple-600">
+                      <Globe size={20} aria-hidden="true" />
+                      <span className="font-display font-bold text-4xl md:text-5xl tracking-tighter text-slate-900">
+                        <Counter target={160} />+
+                      </span>
                     </div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">Countries</div>
+                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mt-2">Countries</div>
                   </div>
                 </div>
               </div>
-            </section>
-          </FadeIn>
-        </LazySection>
-      )}
+            </Reveal>
+          </LazySection>
+        )}
+
+        {/* =========================== CTA =========================== */}
+        {!isBrowsing && (
+          <LazySection minHeight={200}>
+            <Reveal as="section" aria-label="Call to action" className="max-w-7xl mx-auto px-4 md:px-8 pb-20">
+              <div className="border border-slate-200 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-10 md:p-14 flex flex-col md:flex-row md:items-center gap-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10" aria-hidden="true">
+                  <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500 rounded-full blur-3xl" />
+                </div>
+                <div className="flex-1 relative z-10">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3 flex items-center gap-2">
+                    <Lock size={14} /> Open to Everyone
+                  </div>
+                  <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
+                    Every promise. On the record.
+                  </h2>
+                  <p className="mt-3 text-slate-300 leading-relaxed max-w-xl">
+                    Search the ledger, inspect the sources, and see exactly what your representatives committed to — and what they delivered.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={focusSearch}
+                  data-testid="cta-search-button"
+                  className="relative z-10 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/30 hover:shadow-emerald-500/40 hover:scale-105 transform duration-300"
+                >
+                  <FileSearch size={18} aria-hidden="true" />
+                  Search the Ledger
+                  <ExternalLink size={16} className="opacity-50" />
+                </button>
+              </div>
+            </Reveal>
+          </LazySection>
+        )}
+      </div>
     </PublicLayout>
   );
 }

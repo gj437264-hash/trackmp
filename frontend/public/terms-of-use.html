@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="TrackMP Terms of Use explain the rules and conditions for accessing and using the TrackMP platform for political transparency and research.">
+  <meta name="robots" content="index,follow">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="Terms of Use | TrackMP">
+  <meta property="og:description" content="Understand the rules and conditions for accessing and using the TrackMP platform.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trackmp.com/terms">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://trackmp.com/terms">
+  
+  <!-- Security Headers (implemented via meta tags) -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
+  <title>Terms of Use | TrackMP</title>
+  
+  <style>
+    /* Root Variables - Matching TrackMP Design System */
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-strong: #eef1f5;
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --accent: #059669;
+      --accent-light: #10b981;
+      --accent-dark: #047857;
+      --accent-gradient: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --radius-lg: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 16px/1.7 var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      border-bottom: 1px solid transparent;
+    }
+
+    a:hover {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent-light);
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* Skip to content link - accessibility */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      padding: 12px 24px;
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      z-index: 100;
+      font-weight: 600;
+      color: var(--text);
+      transition: top 0.3s ease;
+    }
+
+    .skip-link:focus {
+      top: 20px;
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .site-header .container {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-logo .logo-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    .site-logo a {
+      color: var(--text);
+      border: none;
+    }
+
+    .site-logo a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .header-nav a {
+      color: var(--text-secondary);
+      border: none;
+      transition: color 0.2s ease;
+    }
+
+    .header-nav a:hover {
+      color: var(--accent);
+    }
+
+    .header-nav a[aria-current="page"] {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Main Layout */
+    main {
+      max-width: 920px;
+      margin: 48px auto 80px;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .hero .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #ecfdf5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #d1fae5;
+    }
+
+    .hero .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 44px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+      margin: 16px 0 12px;
+      color: var(--text);
+    }
+
+    .hero h1 span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .intro {
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius);
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .notice strong {
+      color: #92400e;
+    }
+
+    /* Content Section */
+    .content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 56px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .content .last-updated {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--border-light);
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 40px 0 12px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content h2:first-child {
+      margin-top: 0;
+    }
+
+    .content h2 .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      background: #ecfdf5;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 8px;
+      color: var(--text);
+    }
+
+    .content p {
+      margin: 0 0 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .content ul {
+      margin: 0 0 16px 0;
+      padding-left: 24px;
+      list-style: none;
+    }
+
+    .content ul li {
+      margin: 6px 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .content ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .content .callout {
+      background: #ecfdf5;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      margin: 20px 0 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .content .callout strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .content .callout.warning {
+      background: #fffbeb;
+      border-left-color: #f59e0b;
+    }
+
+    .content .callout.warning strong {
+      color: #78350f;
+    }
+
+    .content .policy-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .content .policy-link::after {
+      content: '→';
+      transition: transform 0.2s ease;
+    }
+
+    .content .policy-link:hover::after {
+      transform: translateX(4px);
+    }
+
+    /* Code/technical references */
+    .content code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: var(--border-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    /* Contact Section */
+    .contact-block {
+      background: var(--border-light);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 24px 0 0;
+      border: 1px solid var(--border);
+    }
+
+    .contact-block strong {
+      display: block;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .contact-block p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .contact-block a {
+      border-bottom: 1px solid transparent;
+    }
+
+    .contact-block a:hover {
+      border-bottom-color: var(--accent-light);
+    }
+
+    /* Related Policies Section */
+    .related-policies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .related-policies a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--border-light);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: none;
+      transition: all 0.2s ease;
+    }
+
+    .related-policies a:hover {
+      background: var(--surface);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Footer */
+    footer {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    footer .footer-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    footer .footer-links a {
+      color: var(--text-muted);
+      border: none;
+      font-size: 13px;
+      transition: color 0.2s ease;
+    }
+
+    footer .footer-links a:hover {
+      color: var(--accent);
+    }
+
+    footer .footer-dot {
+      color: var(--border);
+    }
+
+    /* Animations */
+    @keyframes pulse-dot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      .site-header {
+        position: static;
+        background: var(--surface);
+        backdrop-filter: none;
+      }
+      
+      .hero::before {
+        display: none;
+      }
+      
+      .hero, .content {
+        box-shadow: none;
+        border-color: #ccc;
+      }
+      
+      .header-nav, .footer-links {
+        display: none;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .site-header .container {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 16px;
+        font-size: 13px;
+      }
+
+      main {
+        margin-top: 24px;
+      }
+
+      .hero,
+      .content {
+        padding: 28px 20px;
+      }
+
+      .hero .intro {
+        font-size: 16px;
+      }
+
+      .content h2 {
+        font-size: 21px;
+        margin-top: 32px;
+      }
+
+      .content h2 .section-number {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+
+      .contact-block {
+        padding: 20px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding-top: 20px;
+      }
+
+      footer .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .related-policies {
+        flex-direction: column;
+      }
+
+      .related-policies a {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero,
+      .content {
+        padding: 20px 16px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .content h2 {
+        font-size: 19px;
+      }
+
+      .content ul {
+        padding-left: 16px;
+      }
+
+      .content ul li {
+        padding-left: 16px;
+        font-size: 14px;
+      }
+
+      .content .callout {
+        padding: 14px 16px;
+        font-size: 13px;
+      }
+    }
+
+    /* Reduced Motion Preference */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .site-logo .logo-dot {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip to content link -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header" role="banner" aria-label="Site header">
+    <div class="container">
+      <div class="site-logo">
+        <span class="logo-dot" aria-hidden="true"></span>
+        <a href="/">TrackMP</a>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/search">Explore</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms" aria-current="page">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">Legal &amp; Platform Rules</div>
+      <h1 id="hero-title">Terms of <span>Use</span></h1>
+      <p class="intro">
+        These Terms of Use explain the rules that apply when you access or use TrackMP, including its public information, research, reporting, correction, and contributor features.
+      </p>
+      <div class="notice" role="note">
+        <strong>📋 Draft for implementation and legal review.</strong> Replace bracketed placeholders before publication. This draft is tailored to TrackMP's current operating model and should be reviewed by qualified legal counsel before going live.
+      </div>
+    </section>
+
+    <!-- Content -->
+    <article class="content">
+      <span class="last-updated">📅 Last updated: 6 August 2026</span>
+
+      <!-- Section 1 -->
+      <h2><span class="section-number">1</span> Acceptance of These Terms</h2>
+      <p>
+        By accessing or using TrackMP, you agree to these Terms of Use and our <a href="/privacy" class="policy-link">Privacy Policy</a>. If you do not agree with these Terms, please do not use the website.
+      </p>
+      <p>
+        These Terms apply to visitors, users who submit information through TrackMP forms, and approved contributors or administrators, subject to any additional terms that may apply to their specific access.
+      </p>
+
+      <!-- Section 2 -->
+      <h2><span class="section-number">2</span> About TrackMP</h2>
+      <p>
+        TrackMP is a public information and political accountability platform operated from India. It is designed to help people research politicians, elections, political commitments, public records, political activity, and related information.
+      </p>
+      <p>
+        TrackMP may aggregate, organize, contextualize, and present information obtained from public records, official sources, public statements, news reports, documents, and other sources.
+      </p>
+
+      <!-- Section 3 -->
+      <h2><span class="section-number">3</span> Informational and Research Purpose</h2>
+      <p>
+        TrackMP is provided primarily for public information, research, transparency, and accountability purposes. Unless expressly stated otherwise, TrackMP does not provide legal, financial, investment, political-campaign, or other professional advice.
+      </p>
+      <p>
+        Information on TrackMP should not be treated as a substitute for reviewing the underlying source material, official records, or professional advice where appropriate.
+      </p>
+
+      <!-- Section 4 -->
+      <h2><span class="section-number">4</span> Accuracy, Completeness, and Timeliness</h2>
+      <p>
+        We aim to make TrackMP useful, accurate, well-sourced, and current. However, political and public-record information can change, may be incomplete, may be disputed, and may contain errors in the original source.
+      </p>
+      <p>
+        TrackMP does not warrant that every item of information is accurate, complete, current, error-free, or suitable for a particular purpose.
+      </p>
+      <div class="callout" role="note">
+        <strong>⚠️ Important:</strong> A TrackMP profile, classification, score, status, timeline, or summary should not be treated as an official government record unless it expressly identifies and links to the relevant official source.
+      </div>
+
+      <!-- Section 5 -->
+      <h2><span class="section-number">5</span> Sources and Attribution</h2>
+      <p>
+        Where appropriate, TrackMP may identify or link to sources used to compile information. Source links and citations are provided to improve transparency and enable users to conduct their own research.
+      </p>
+      <p>
+        The existence of a source link does not necessarily mean that TrackMP endorses the source, its publisher, or every statement contained in it.
+      </p>
+
+      <!-- Section 6 -->
+      <h2><span class="section-number">6</span> Editorial Independence</h2>
+      <p>
+        TrackMP may apply its own data models, categories, methodologies, classifications, calculations, and editorial judgments when organizing public information.
+      </p>
+      <p>
+        TrackMP's presentation of information, including labels, timelines, classifications, promise tracking, or other analytical outputs, may differ from the characterization used by a politician, political party, government body, news organization, or other source.
+      </p>
+      <p>
+        Where a methodology materially affects an output, users should consult the relevant <a href="/methodology" class="policy-link">Data &amp; Editorial Methodology</a>.
+      </p>
+
+      <!-- Section 7 -->
+      <h2><span class="section-number">7</span> Corrections and Reports</h2>
+      <p>
+        TrackMP may provide forms for reporting suspected errors, requesting corrections, or providing additional sources.
+      </p>
+      <p>
+        A submission does not automatically establish that information is inaccurate or require TrackMP to make a change. We may review the evidence, source quality, context, date, relevance, and other available information before deciding whether to modify a record.
+      </p>
+      <p>
+        We may retain information about correction requests when reasonably necessary to maintain an audit trail, investigate disputes, or protect the integrity of TrackMP's records.
+      </p>
+
+      <!-- Section 8 -->
+      <h2><span class="section-number">8</span> User Submissions</h2>
+      <p>If you submit information, documents, links, comments, reports, corrections, or other material to TrackMP ("User Submission"), you represent that:</p>
+      <ul>
+        <li>You have the right to submit the material;</li>
+        <li>Your submission does not knowingly contain false, fraudulent, or misleading information;</li>
+        <li>You are not knowingly violating another person's rights by submitting it;</li>
+        <li>You will not submit malicious code, malware, or harmful content; and</li>
+        <li>You will not use a TrackMP form to harass, threaten, impersonate, defame, or unlawfully target another person.</li>
+      </ul>
+      <p>
+        You remain responsible for your User Submission. You grant TrackMP a non-exclusive, worldwide, royalty-free license to use, reproduce, store, review, adapt, format, publish, display, and distribute your submission to the extent reasonably necessary to operate TrackMP, evaluate a report or correction, maintain records, and provide the platform's public-information functions.
+      </p>
+      <p>
+        Where a submission is intended to be confidential, do not assume that submitting it through a public website automatically creates a confidentiality obligation unless TrackMP expressly states otherwise.
+      </p>
+
+      <!-- Section 9 -->
+      <h2><span class="section-number">9</span> Prohibited Uses</h2>
+      <p>You must not use TrackMP to:</p>
+      <ul>
+        <li>Violate applicable law or regulation;</li>
+        <li>Attempt to gain unauthorized access to the website, dashboard, databases, accounts, APIs, or infrastructure;</li>
+        <li>Probe, scan, test, or circumvent security measures without authorization;</li>
+        <li>Interfere with the availability, integrity, or performance of TrackMP;</li>
+        <li>Introduce malware, ransomware, malicious scripts, or other harmful code;</li>
+        <li>Submit spam, automated abuse, fraudulent reports, or intentionally deceptive information;</li>
+        <li>Impersonate TrackMP, its personnel, contributors, public officials, or other individuals;</li>
+        <li>Use automated scraping, crawling, extraction, or bulk collection in a manner that bypasses technical restrictions or imposes unreasonable load;</li>
+        <li>Attempt to identify, collect, or exploit non-public personal information about users or contributors;</li>
+        <li>Use TrackMP to harass, threaten, stalk, or unlawfully target any person; or</li>
+        <li>Use the service in a manner that materially compromises its security or legitimate operation.</li>
+      </ul>
+
+      <!-- Section 10 -->
+      <h2><span class="section-number">10</span> Automated Access and Data Extraction</h2>
+      <p>
+        TrackMP may publish publicly accessible pages and structured information. Public accessibility does not grant unlimited permission to crawl, scrape, mirror, reproduce, or commercially redistribute the entire service.
+      </p>
+      <p>
+        Automated access must respect applicable law, technical restrictions, reasonable rate limits, and instructions communicated through the website or its technical infrastructure.
+      </p>
+      <p>
+        TrackMP may restrict automated traffic that creates excessive load, circumvents controls, interferes with service availability, or appears abusive.
+      </p>
+
+      <!-- Section 11 -->
+      <h2><span class="section-number">11</span> Intellectual Property</h2>
+      <p>
+        Except for third-party materials, public-domain material, or content submitted by users, TrackMP and its licensors retain rights in the website's software, original design, branding, editorial presentation, databases, compilations, graphics, and other original materials to the extent protected by applicable law.
+      </p>
+      <p>
+        TrackMP's compilation and organization of information may be protected even where individual underlying facts or public records are not exclusively owned by TrackMP.
+      </p>
+      <p>
+        You may access and use TrackMP for lawful personal, educational, research, journalistic, or other legitimate purposes, subject to these Terms and applicable law.
+      </p>
+
+      <!-- Section 12 -->
+      <h2><span class="section-number">12</span> Third-Party Content and Links</h2>
+      <p>
+        TrackMP may display or link to third-party content, including government records, political-party material, news articles, social-media content, documents, databases, and external websites.
+      </p>
+      <p>
+        TrackMP does not control third-party content and does not guarantee its accuracy, availability, security, or continued existence. Third-party services are governed by their own terms and policies.
+      </p>
+
+      <!-- Section 13 -->
+      <h2><span class="section-number">13</span> Political Content and Public Figures</h2>
+      <p>
+        TrackMP may publish information concerning politicians, candidates, political parties, public officials, elections, public commitments, and other matters of public interest.
+      </p>
+      <p>
+        Information concerning public figures may include criticism, comparisons, historical records, assessments, or summaries based on publicly available evidence. TrackMP aims to distinguish sourced facts from analysis or methodology-driven outputs where reasonably practicable.
+      </p>
+      <p>
+        Nothing in these Terms should be interpreted as an endorsement of any political candidate, party, ideology, campaign, or political position by TrackMP.
+      </p>
+
+      <!-- Section 14 -->
+      <h2><span class="section-number">14</span> No Guarantee of Availability</h2>
+      <p>
+        TrackMP may be changed, interrupted, suspended, limited, or discontinued at any time. We do not guarantee that the website will always be available, uninterrupted, secure, or free from errors.
+      </p>
+      <p>
+        We may perform maintenance, security updates, database changes, migrations, or other operational work that temporarily affects availability.
+      </p>
+
+      <!-- Section 15 -->
+      <h2><span class="section-number">15</span> Contributor and Administrative Access</h2>
+      <p>
+        TrackMP does not provide ordinary public user accounts. We may grant dashboard or contributor access to selected individuals after an application or request.
+      </p>
+      <p>
+        Approved users must keep authentication credentials confidential, use only their authorized account, and promptly report suspected unauthorized access or compromise.
+      </p>
+      <p>
+        Contributor access is a privilege, not a guaranteed entitlement. TrackMP may limit, suspend, or revoke access when reasonably necessary, including for security, misuse, inactivity, inaccurate submissions, conflicts of interest, or violation of these Terms.
+      </p>
+
+      <!-- Section 16 -->
+      <h2><span class="section-number">16</span> Account Security</h2>
+      <p>
+        You are responsible for activities performed through credentials assigned to you, except where unauthorized use results from circumstances outside your reasonable control and is promptly reported.
+      </p>
+      <p>
+        Do not share passwords, authentication tokens, recovery codes, or other access credentials with another person.
+      </p>
+
+      <!-- Section 17 -->
+      <h2><span class="section-number">17</span> Privacy</h2>
+      <p>
+        Our collection and use of personal information is described in the <a href="/privacy" class="policy-link">TrackMP Privacy Policy</a>. By using TrackMP, you acknowledge that information may be processed as described there.
+      </p>
+
+      <!-- Section 18 -->
+      <h2><span class="section-number">18</span> Google Analytics and reCAPTCHA</h2>
+      <p>
+        TrackMP uses Google Analytics 4 for website measurement and Google reCAPTCHA v3 for anti-abuse and security purposes. These services are operated by Google and may be subject to separate Google terms and policies.
+      </p>
+      <p>
+        See our <a href="/privacy" class="policy-link">Privacy Policy</a> for additional information about these technologies.
+      </p>
+
+      <!-- Section 19 -->
+      <h2><span class="section-number">19</span> Disclaimers</h2>
+      <p>
+        To the maximum extent permitted by applicable law, TrackMP is provided on an "as is" and "as available" basis.
+      </p>
+      <p>
+        We disclaim warranties and representations that are not expressly stated in these Terms, including, where legally permitted, implied warranties concerning merchantability, fitness for a particular purpose, accuracy, availability, non-infringement, or uninterrupted operation.
+      </p>
+      <p>
+        Nothing in these Terms excludes or limits a warranty, liability, or consumer protection right that cannot lawfully be excluded or limited under applicable law.
+      </p>
+
+      <!-- Section 20 -->
+      <h2><span class="section-number">20</span> Limitation of Liability</h2>
+      <p>
+        To the maximum extent permitted by applicable law, TrackMP and its operator, personnel, contributors, and service providers will not be responsible for indirect, incidental, special, consequential, exemplary, or punitive losses arising from or related to use of the website, including reliance on information published on TrackMP.
+      </p>
+      <p>
+        Where liability cannot be excluded, it will be limited to the extent permitted by applicable law.
+      </p>
+
+      <!-- Section 21 -->
+      <h2><span class="section-number">21</span> Indemnity</h2>
+      <p>
+        To the extent permitted by applicable law, you agree to be responsible for claims, losses, liabilities, damages, costs, and reasonable expenses arising from your unlawful use of TrackMP, violation of these Terms, unauthorized use of another person's rights, or User Submission that violates these Terms or applicable law.
+      </p>
+
+      <!-- Section 22 -->
+      <h2><span class="section-number">22</span> Suspension and Termination</h2>
+      <p>
+        We may restrict, suspend, or terminate access to TrackMP or specific features where reasonably necessary to protect the platform, users, infrastructure, data, or legal rights, or where a user violates these Terms.
+      </p>
+      <p>
+        Provisions that by their nature should survive termination, including intellectual-property rights, disclaimers, limitations of liability, indemnity obligations, and dispute-related provisions, will continue to apply to the extent permitted by law.
+      </p>
+
+      <!-- Section 23 -->
+      <h2><span class="section-number">23</span> Changes to These Terms</h2>
+      <p>
+        We may update these Terms when TrackMP's features, technology, practices, legal requirements, or services change. The "Last updated" date identifies the latest revision.
+      </p>
+      <p>
+        Continued use of TrackMP after updated Terms become effective constitutes acceptance of the revised Terms to the extent permitted by law.
+      </p>
+
+      <!-- Section 24 -->
+      <h2><span class="section-number">24</span> Governing Law and Jurisdiction</h2>
+      <p>
+        These Terms are intended to be governed by the laws of India, subject to any mandatory rights or protections that apply to a user under the laws that cannot legally be excluded.
+      </p>
+      <p>
+        Subject to applicable law, disputes relating to these Terms or TrackMP will be subject to the jurisdiction of the competent courts in <strong>[CITY / STATE, INDIA]</strong>.
+      </p>
+
+      <!-- Section 25 -->
+      <h2><span class="section-number">25</span> Severability</h2>
+      <p>
+        If any provision of these Terms is found to be invalid, unlawful, or unenforceable, that provision will be interpreted or limited to the minimum extent necessary, and the remaining provisions will continue in effect to the extent permitted by law.
+      </p>
+
+      <!-- Section 26 -->
+      <h2><span class="section-number">26</span> No Waiver</h2>
+      <p>
+        Failure to enforce a provision of these Terms does not constitute a waiver of the right to enforce it later.
+      </p>
+
+      <!-- Section 27 - Contact -->
+      <h2><span class="section-number">27</span> Contact Us</h2>
+      <p>For questions about these Terms, contact:</p>
+      <div class="contact-block">
+        <strong>[LEGAL ENTITY / OPERATOR NAME]</strong>
+        <p>
+          TrackMP<br>
+          India<br>
+          Email: <a href="mailto:[LEGAL EMAIL]">[LEGAL EMAIL]</a><br>
+          Address: [REGISTERED / BUSINESS ADDRESS]
+        </p>
+      </div>
+
+      <!-- Section 28 -->
+      <h2><span class="section-number">28</span> Related Policies</h2>
+      <div class="related-policies">
+        <a href="/privacy" class="policy-link">Privacy Policy</a>
+        <a href="/cookies" class="policy-link">Cookie Policy</a>
+        <a href="/methodology" class="policy-link">Data &amp; Editorial Methodology</a>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <span>© 2026 TrackMP. Replace all bracketed placeholders before publishing.</span>
+    <div class="footer-links">
+      <a href="/privacy">Privacy</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/terms">Terms</a>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <a href="/contact">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>

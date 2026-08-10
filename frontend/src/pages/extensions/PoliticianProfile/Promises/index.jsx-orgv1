@@ -1,0 +1,46 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { CheckCircle2, ExternalLink } from "lucide-react";
+import PromiseProgress from "./PromiseProgress";
+import PromiseCard from "./PromiseCard";
+import AddPromiseDialog from "./AddPromiseDialog";
+
+export default function Promises({ promises, politicianId, isAuthed, user, onPromisesChange }) {
+  const list = promises || [];
+
+  return (
+    <div>
+      <PromiseProgress promises={list} />
+      <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <h2 className="font-display font-bold text-2xl text-slate-800 flex items-center gap-2">
+          <CheckCircle2 className="text-indigo-500" size={24} aria-hidden="true" /> Promises
+        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/how-promises-are-tracked" className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
+            How we track promises <ExternalLink size={12} aria-hidden="true" />
+          </Link>
+          {isAuthed && (
+            <AddPromiseDialog politicianId={politicianId} onAdded={(promise) => onPromisesChange([promise, ...list])} />
+          )}
+        </div>
+      </div>
+      {list.length === 0 ? (
+        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 rounded-2xl p-10 text-center text-slate-500">
+          No promises logged yet
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {list.map((pr) => (
+            <PromiseCard
+              key={pr.id}
+              promise={pr}
+              currentUser={user}
+              onDelete={(pid) => onPromisesChange(list.filter((x) => x.id !== pid))}
+              onUpdate={(updated) => onPromisesChange(list.map((x) => (x.id === updated.id ? updated : x)))}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

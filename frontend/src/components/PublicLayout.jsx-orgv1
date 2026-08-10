@@ -1,21 +1,7 @@
 import React, { useCallback, useMemo, useState, memo, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth, hasRole } from "@/context/AuthContext";
-import {
-  Menu,
-  X,
-  Globe,
-  ChevronDown,
-  Newspaper,
-  MessageCircle,
-  PieChart,
-  Mail,
-  FileEdit,
-  Shield,
-  ScrollText,
-  Cookie,
-  Database,
-} from "lucide-react";
+import { Menu, X, Globe, ChevronDown, Newspaper, MessageCircle, PieChart } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 // Static configurations - moved outside component
@@ -31,25 +17,6 @@ const ABOUT_DROPDOWN = [
   { to: "/budget-analysis", label: "Budget Analysis", icon: PieChart },
 ];
 
-// Footer link groups
-const FOOTER_EXPLORE = [...NAV_ITEMS, ...ABOUT_DROPDOWN];
-
-const FOOTER_INVOLVED = [
-  { to: "/contact", label: "Contact Us", icon: Mail },
-  { to: "/submit-update", label: "Submit an Update", icon: FileEdit },
-];
-
-// NOTE: these are static files served from /public, not SPA routes -
-// they must use plain <a> tags (full navigation), not <Link>.
-// URLs below are the pretty paths handled by Nginx (see nginx location
-// blocks) which serve the real .html files without changing the URL bar.
-const FOOTER_LEGAL = [
-  { href: "/privacy", label: "Privacy Policy", icon: Shield },
-  { href: "/terms", label: "Terms of Use", icon: ScrollText },
-  { href: "/cookies", label: "Cookie Policy", icon: Cookie },
-  { href: "/data-sourcing", label: "Data Sourcing", icon: Database },
-];
-
 // Memoized sub-components for better performance
 const Logo = memo(() => (
   <Link to="/" className="flex items-center gap-3 group" data-testid="brand-link">
@@ -61,7 +28,8 @@ const Logo = memo(() => (
     </span>
   </Link>
 ));
-Logo.displayName = "Logo";
+
+Logo.displayName = 'Logo';
 
 const NavLink = memo(({ to, label, isActive, onClick }) => {
   const active = isActive(to);
@@ -70,7 +38,7 @@ const NavLink = memo(({ to, label, isActive, onClick }) => {
       to={to}
       data-testid={`nav-${label.toLowerCase()}`}
       aria-current={active ? "page" : undefined}
-      className={`relative px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${
+      className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${
         active
           ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-soft-emerald"
           : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100"
@@ -81,7 +49,8 @@ const NavLink = memo(({ to, label, isActive, onClick }) => {
     </Link>
   );
 });
-NavLink.displayName = "NavLink";
+
+NavLink.displayName = 'NavLink';
 
 // Optimized background orbs with reduced GPU impact
 const BackgroundOrbs = memo(() => (
@@ -91,15 +60,8 @@ const BackgroundOrbs = memo(() => (
     <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-amber-400/10 dark:bg-amber-400/20 rounded-full blur-3xl animate-pulse-slow [animation-delay:2s] mix-blend-multiply dark:mix-blend-screen will-change-transform" />
   </div>
 ));
-BackgroundOrbs.displayName = "BackgroundOrbs";
 
-// Footer column heading - small utility component to keep markup DRY
-const FooterHeading = memo(({ children }) => (
-  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
-    {children}
-  </h3>
-));
-FooterHeading.displayName = "FooterHeading";
+BackgroundOrbs.displayName = 'BackgroundOrbs';
 
 function PublicLayoutInner({ children }) {
   const { user, logout } = useAuth();
@@ -120,48 +82,46 @@ function PublicLayoutInner({ children }) {
         ticking = true;
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Close mobile menu on escape key
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === "Escape" && open) {
+      if (e.key === 'Escape' && open) {
         setOpen(false);
       }
     };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [open]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [open]);
 
-  // Close mobile menu on route change (prevents a stale open menu after nav)
-  useEffect(() => {
-    setOpen(false);
-  }, [location.pathname]);
-
   const isActive = useCallback(
-    (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path)),
+    (path) => path === "/" ? location.pathname === "/" : location.pathname.startsWith(path),
     [location.pathname]
   );
 
-  const aboutActive = useMemo(() => ABOUT_DROPDOWN.some((item) => isActive(item.to)), [isActive]);
+  const aboutActive = useMemo(
+    () => ABOUT_DROPDOWN.some((item) => isActive(item.to)),
+    [isActive]
+  );
 
   const mobileNavItems = useMemo(() => [...NAV_ITEMS, ...ABOUT_DROPDOWN], []);
 
-  const toggleOpen = useCallback(() => setOpen((prev) => !prev), []);
+  const toggleOpen = useCallback(() => setOpen(prev => !prev), []);
   const closeMenu = useCallback(() => setOpen(false), []);
 
   const handleLogout = useCallback(() => {
@@ -170,26 +130,20 @@ function PublicLayoutInner({ children }) {
   }, [logout]);
 
   // Memoized user role check
-  const isAdmin = useMemo(() => user && hasRole(user, "super_admin", "admin"), [user]);
-
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const isAdmin = useMemo(
+    () => user && hasRole(user, "super_admin", "admin"),
+    [user]
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 relative transition-colors duration-300">
-      {/* Skip link - accessibility + SEO best practice, visually hidden until focused */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-emerald-600 focus:text-white focus:text-sm focus:font-bold"
-      >
-        Skip to main content
-      </a>
-
       <BackgroundOrbs />
 
-      <header
-        className={`border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 transition-shadow duration-300 ${
-          isScrolled ? "shadow-md dark:shadow-slate-900/50" : "shadow-sm dark:shadow-none"
+      <header 
+        className={`border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-40 transition-shadow duration-300 ${
+          isScrolled ? 'shadow-md dark:shadow-slate-900/50' : 'shadow-sm dark:shadow-none'
         }`}
+        style={{ backdropFilter: 'blur(8px)' }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-8 h-16">
           <Logo />
@@ -197,7 +151,12 @@ function PublicLayoutInner({ children }) {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
             {NAV_ITEMS.map((item) => (
-              <NavLink key={item.to} to={item.to} label={item.label} isActive={isActive} />
+              <NavLink
+                key={item.to}
+                to={item.to}
+                label={item.label}
+                isActive={isActive}
+              />
             ))}
 
             <DropdownMenu.Root>
@@ -210,6 +169,7 @@ function PublicLayoutInner({ children }) {
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100"
                   }`}
                   aria-haspopup="true"
+                  aria-expanded={undefined}
                 >
                   About <ChevronDown size={14} aria-hidden="true" />
                 </button>
@@ -298,8 +258,8 @@ function PublicLayoutInner({ children }) {
 
         {/* Mobile Navigation */}
         {open && (
-          <div
-            id="mobile-nav-menu"
+          <div 
+            id="mobile-nav-menu" 
             className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm px-4 py-4 flex flex-col gap-2 max-h-[calc(100vh-4rem)] overflow-y-auto"
             ref={menuRef}
             role="dialog"
@@ -361,99 +321,37 @@ function PublicLayoutInner({ children }) {
         )}
       </header>
 
-      <main id="main-content" className="flex-1 animate-fade-slide-up relative z-10">
+      <main className="flex-1 animate-fade-slide-up relative z-10">
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-10">
-            {/* Brand column */}
-            <div>
-              <Link to="/" className="inline-flex items-center gap-3 group" data-testid="footer-brand-link">
-                <div className="w-8 h-8 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl grid place-items-center text-white font-black text-lg shadow-soft-emerald">
-                  T
-                </div>
-                <span className="font-display font-black text-lg uppercase tracking-tight text-slate-800 dark:text-slate-100">
-                  Track<span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent">MP</span>
-                </span>
-              </Link>
-              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                A public, independently maintained transparency ledger tracking the promises, votes, and spending
-                records of elected representatives.
-              </p>
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div className="font-display font-bold text-lg uppercase tracking-tight text-slate-800 dark:text-slate-100">
+              Track<span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent">MP</span>
             </div>
-
-            {/* Explore column */}
-            <div>
-              <FooterHeading>Explore</FooterHeading>
-              <ul className="flex flex-col gap-2.5">
-                {FOOTER_EXPLORE.map((item) => (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Get involved column */}
-            <div>
-              <FooterHeading>Get Involved</FooterHeading>
-              <ul className="flex flex-col gap-2.5">
-                {FOOTER_INVOLVED.map((item) => (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      data-testid={`footer-${item.label.toLowerCase().replace(/\s+/g, "-")}-link`}
-                      className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Legal column - static /public pages, plain <a> for full navigation */}
-            <div>
-              <FooterHeading>Legal</FooterHeading>
-              <ul className="flex flex-col gap-2.5">
-                {FOOTER_LEGAL.map((item) => (
-                  <li key={item.href}>
-                    <a
-                      href={item.href}
-                      data-testid={`footer-${item.label.toLowerCase().replace(/\s+/g, "-")}-link`}
-                      className="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200"
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
+              Public Politician Transparency Ledger
             </div>
           </div>
-
-          {/* Bottom bar */}
-          <div className="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <Link
+              to="/contact"
+              className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+              data-testid="footer-contact-link"
+            >
+              Contact Us
+            </Link>
+            <Link
+              to="/submit-update"
+              className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+              data-testid="footer-submit-update-link"
+            >
+              Submit an Update
+            </Link>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              © {currentYear} TrackMP · Open Record
-            </div>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              {FOOTER_LEGAL.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
-                >
-                  {item.label}
-                </a>
-              ))}
+              © {new Date().getFullYear()} · Open Record
             </div>
           </div>
         </div>

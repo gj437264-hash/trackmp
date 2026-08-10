@@ -85,6 +85,9 @@ export default function PoliticiansList() {
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
+        if (stateId) params.state_id = stateId;
+        if (cityId) params.city_id = cityId;
+        if (party) params.party = party;
         const { data } = await api.get("/admin/politicians/filter-options");
         setFilterOptions(data);
       } catch (error) {
@@ -108,9 +111,6 @@ export default function PoliticiansList() {
       if (verified !== "all") params.verified = verified === "verified";
       if (countryCode) params.country_code = countryCode;
       if (role) params.role = role;
-      if (stateId) params.state_id = stateId;
-      if (cityId) params.city_id = cityId;
-      if (party) params.party = party;
       const { data } = await api.get("/admin/politicians", { params });
       setItems(data.items || []);
       setTotal(data.total ?? data.items?.length ?? 0);
@@ -222,7 +222,7 @@ export default function PoliticiansList() {
   };
 
   const handleSelectItem = (id) => {
-    setSelectedItems(prev =>
+    setSelectedItems(prev => 
       prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
     );
   };
@@ -230,10 +230,10 @@ export default function PoliticiansList() {
   const handleBulkVerify = async () => {
     if (selectedItems.length === 0) return;
     if (!window.confirm(`Verify ${selectedItems.length} politician${selectedItems.length > 1 ? "s" : ""}?`)) return;
-
+    
     setBulkActionLoading(true);
     try {
-      await Promise.all(selectedItems.map(id =>
+      await Promise.all(selectedItems.map(id => 
         api.patch(`/politicians/${id}/verify`, { verified: true })
       ));
       toast.success(`${selectedItems.length} politician${selectedItems.length > 1 ? "s" : ""} verified successfully.`);
@@ -247,8 +247,8 @@ export default function PoliticiansList() {
   };
 
   const SortHeader = ({ colKey, label }) => (
-    <th
-      onClick={() => toggleSort(colKey)}
+    <th 
+      onClick={() => toggleSort(colKey)} 
       className="cursor-pointer select-none hover:text-emerald-600 transition-colors group"
     >
       <span className="inline-flex items-center gap-1.5">
@@ -321,19 +321,19 @@ export default function PoliticiansList() {
                 </>
               )}
             </button>
-            <button
+            <button 
+              data-testid="new-politician-btn" 
+              onClick={() => nav("/dashboard/politicians/new")} 
+              className="btn-soft-primary px-4 py-2.5"
+            >
+              <Plus size={16} className="mr-2" /> New Politician
+            </button>
+	    <button
               data-testid="find-duplicates-btn"
               onClick={() => nav("/dashboard/politicians/duplicates")}
               className="btn-soft-secondary text-xs px-4 py-2.5"
             >
               <Copy size={14} className="mr-2" /> Find Duplicates
-            </button>
-            <button
-              data-testid="new-politician-btn"
-              onClick={() => nav("/dashboard/politicians/new")}
-              className="btn-soft-primary px-4 py-2.5"
-            >
-              <Plus size={16} className="mr-2" /> New Politician
             </button>
           </div>
         </div>
@@ -358,7 +358,7 @@ export default function PoliticiansList() {
               </button>
             )}
           </div>
-
+          
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -374,7 +374,7 @@ export default function PoliticiansList() {
                 </span>
               )}
             </button>
-
+            
             {activeFilterCount > 0 && (
               <button
                 onClick={clearAllFilters}
@@ -419,8 +419,8 @@ export default function PoliticiansList() {
                       data-testid={`filter-${tab.key}`}
                       onClick={() => updateParams({ verified: tab.key, page: 1 })}
                       className={`flex-1 text-xs font-bold px-3 py-1.5 rounded-md transition-all ${
-                        verified === tab.key
-                          ? "bg-emerald-500 text-white shadow-sm"
+                        verified === tab.key 
+                          ? "bg-emerald-500 text-white shadow-sm" 
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -449,7 +449,21 @@ export default function PoliticiansList() {
                   ))}
                 </select>
               </div>
+	      </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <PoliticianAdvancedFilters
+                  countryCode={countryCode}
+                  stateId={stateId}
+                  cityId={cityId}
+                  party={party}
+                  parties={filterOptions.parties}
+                  onChange={updateParams}
+                />
+              </div>
+            </div>
+          )}
+              
               {/* Role Filter */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1.5">
@@ -467,17 +481,6 @@ export default function PoliticiansList() {
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-              <PoliticianAdvancedFilters
-                countryCode={countryCode}
-                stateId={stateId}
-                cityId={cityId}
-                party={party}
-                parties={filterOptions.parties}
-                onChange={updateParams}
-              />
             </div>
           </div>
         )}
@@ -628,8 +631,8 @@ export default function PoliticiansList() {
                     />
                   </td>
                   <td className="font-medium">
-                    <Link
-                      to={`/dashboard/politicians/${p.id}`}
+                    <Link 
+                      to={`/dashboard/politicians/${p.id}`} 
                       className="hover:text-emerald-600 transition-colors flex items-center gap-2"
                     >
                       <User size={14} className="text-slate-400" />
@@ -653,8 +656,8 @@ export default function PoliticiansList() {
                       data-testid={`toggle-verified-${p.id}`}
                       onClick={() => toggleVerified(p)}
                       className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-lg transition-all ${
-                        p.verified
-                          ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+                        p.verified 
+                          ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-100" 
                           : "text-amber-700 bg-amber-50 hover:bg-amber-100"
                       }`}
                       title="Click to toggle verified status"
@@ -669,9 +672,9 @@ export default function PoliticiansList() {
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-1.5">
-                      <Link
-                        to={`/politicians/${p.id}`}
-                        className="btn-soft-secondary p-2 rounded-lg"
+                      <Link 
+                        to={`/politicians/${p.id}`} 
+                        className="btn-soft-secondary p-2 rounded-lg" 
                         title="View public page"
                       >
                         <ExternalLink size={14} />
@@ -684,9 +687,9 @@ export default function PoliticiansList() {
                       >
                         <Edit size={14} />
                       </button>
-                      <button
-                        data-testid={`delete-politician-${p.id}`}
-                        onClick={() => del(p)}
+                      <button 
+                        data-testid={`delete-politician-${p.id}`} 
+                        onClick={() => del(p)} 
                         className="btn-soft-danger p-2 rounded-lg"
                         title="Delete politician"
                       >
@@ -733,7 +736,7 @@ export default function PoliticiansList() {
                 } else {
                   pageNum = page - 2 + i;
                 }
-
+                
                 return (
                   <button
                     key={pageNum}

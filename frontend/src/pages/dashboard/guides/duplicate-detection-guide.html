@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrackMP — Duplicate Politician Detection: Offline Precompute Guide</title>
+<style>
+  :root {
+    --emerald: #10b981;
+    --indigo: #6366f1;
+    --amber: #f59e0b;
+    --slate: #1e293b;
+    --bg: #f8fafc;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--slate);
+    margin: 0;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 24px 100px; }
+  header {
+    background: linear-gradient(135deg, var(--indigo), var(--emerald));
+    color: white;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 1.8rem; }
+  header p { margin: 0; opacity: 0.9; }
+  h2 {
+    margin-top: 48px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--emerald);
+    color: var(--indigo);
+  }
+  h3 { color: var(--slate); margin-top: 28px; }
+  .toc {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-top: -60px;
+    position: relative;
+    z-index: 2;
+  }
+  .toc ol { margin: 0; padding-left: 20px; }
+  .toc a { color: var(--indigo); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 4px 24px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 16px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  code { font-family: "SF Mono", Consolas, Monaco, monospace; }
+  p code, li code {
+    background: #e2e8f0;
+    color: #0f172a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--amber);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    letter-spacing: 0.03em;
+  }
+  .badge.fix { background: #ef4444; }
+  .badge.file { background: var(--indigo); }
+  .note {
+    border-left: 4px solid var(--emerald);
+    background: #ecfdf5;
+    padding: 12px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .warn {
+    border-left: 4px solid #ef4444;
+    background: #fef2f2;
+    padding: 12px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+  th { color: var(--indigo); }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--emerald);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  footer { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 60px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Duplicate Politician Detection — From 504 to Offline Precompute</h1>
+  <p>TrackMP backend · FastAPI + MongoDB · full incident-to-fix walkthrough</p>
+</header>
+
+<div class="wrap">
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#problem">The Problem</a></li>
+    <li><a href="#solution">The Solution: Offline Precompute</a></li>
+    <li><a href="#index">Step 1 — Add the Compound Index</a></li>
+    <li><a href="#script">Step 2 — Standalone Compute Script</a></li>
+    <li><a href="#env-fix">Fixing the ModuleNotFoundError</a></li>
+    <li><a href="#rename-fix">Fixing the renameCollection Error</a></li>
+    <li><a href="#route">Step 3 — Replacement Route (Cache Reader)</a></li>
+    <li><a href="#deploy">Step 4 — Deploy &amp; Verify</a></li>
+    <li><a href="#timer">Step 5 — Automate with systemd Timer</a></li>
+    <li><a href="#sanity">Sanity-Checking Results</a></li>
+    <li><a href="#reference">Command Reference</a></li>
+  </ol>
+</div>
+
+<h2 id="problem">1. The Problem</h2>
+<div class="card">
+<p>The original <code>/api/admin/politicians/duplicates</code> route ran a live MongoDB aggregation
+(grouping by normalized name) plus an O(n²) Python pairwise comparison inside every
+name-group — all synchronously inside the HTTP request/response cycle.</p>
+<p>With 500,000+ politician rows this exceeded nginx's <code>proxy_read_timeout</code>,
+producing a <strong>504 Gateway Timeout</strong>. It would only get worse heading toward
+2M+ rows.</p>
+<div class="warn">
+<strong>Root cause:</strong> two expensive operations stacked on one request — a full-collection
+aggregation with no index on the grouping field, and unbounded O(n²) comparison work, both
+blocking the request thread until nginx gave up.
+</div>
+</div>
+
+<h2 id="solution">2. The Solution: Offline Precompute</h2>
+<div class="card">
+<p>Move the expensive computation out of the request cycle entirely — same pattern already
+used for TrackMP's SEO pipeline (<code>seo_tasks</code> + systemd timers + atomic writes):</p>
+<table>
+<tr><th>Piece</th><th>Role</th></tr>
+<tr><td><code>standalone_compute_duplicate_v2.py</code></td><td>Runs the aggregation + matching offline, writes results to a <code>duplicate_candidates</code> collection</td></tr>
+<tr><td><code>duplicate_finder.py</code> (route)</td><td>Becomes a trivial paginated read against the precomputed collection — fast at any scale</td></tr>
+<tr><td>systemd timer</td><td>Reruns the script nightly (or on demand) so results stay fresh</td></tr>
+</table>
+<p>Also fixed: grouping key changed from <code>name</code> alone to <code>(name, country_code)</code>,
+shrinking group sizes and cutting the O(n²) workload — cross-country name collisions usually
+aren't real duplicates anyway.</p>
+</div>
+
+<h2 id="index">3. Step 1 — Add the Compound Index</h2>
+<div class="card">
+<p>Do this once, regardless of everything else below:</p>
+<pre><code>mongosh
+use trackmp
+db.politicians.createIndex({ name: 1, country_code: 1 })</code></pre>
+</div>
+
+<h2 id="script">4. Step 2 — Standalone Compute Script</h2>
+<div class="card">
+<span class="badge file">FILE: /opt/trackmp/backend/standalone_compute_duplicate_v2.py</span>
+<p>Run manually or via timer. Bypasses nginx/FastAPI entirely — no request timeout to hit.
+Includes an <code>n &gt; 300</code> safety valve so a pathologically large name/country group
+gets flagged for manual review instead of hanging the whole run, and writes results via an
+atomic rename so the live route never sees a half-written table.</p>
+<pre><code>"""
+Standalone offline job: computes duplicate politician clusters and
+writes them into `duplicate_candidates`. Run manually or via systemd timer.
+Bypasses nginx/FastAPI entirely, so there's no request timeout to hit.
+
+Usage:
+    python standalone_compute_duplicate_v2.py [--country US] [--min-matches 1]
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import logging
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+
+# Load .env explicitly by path so this works no matter what directory
+# you run the script from.
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+MONGO_URL = os.environ["MONGO_URL"]
+DB_NAME = os.environ["DB_NAME"]
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger("compute_duplicates")
+
+_GEO_FIELDS = ["country_code", "state_id", "city_id", "constituency_id"]
+_BATCH_SIZE = 500
+
+
+class _UnionFind:
+    def __init__(self, n: int):
+        self.parent = list(range(n))
+
+    def find(self, x: int) -> int:
+        while self.parent[x] != x:
+            x = self.parent[x]
+        return x
+
+    def union(self, a: int, b: int) -> None:
+        ra, rb = self.find(a), self.find(b)
+        if ra != rb:
+            self.parent[rb] = ra
+
+
+def _pairwise_match(a: dict, b: dict) -> list[str]:
+    matched = []
+    for field in _GEO_FIELDS:
+        va, vb = a.get(field), b.get(field)
+        if va and vb and va == vb:
+            matched.append(field)
+    return matched
+
+
+async def compute(db, country_code: str | None, min_matches: int) -> list[dict]:
+    match_stage: dict = {"deleted": {"$ne": True}}  # adjust to match your NOT_DELETED filter exactly
+    if country_code:
+        match_stage["country_code"] = country_code.strip().upper()
+
+    pipeline = [
+        {"$match": match_stage},
+        {"$addFields": {
+            "_norm_name": {"$trim": {"input": {"$toLower": {"$ifNull": ["$name", ""]}}}},
+        }},
+        {"$match": {"_norm_name": {"$ne": ""}}},
+        {"$group": {
+            "_id": {"name": "$_norm_name", "country_code": "$country_code"},
+            "count": {"$sum": 1},
+            "docs": {"$push": {
+                "id": {"$toString": "$_id"},
+                "name": "$name",
+                "party": "$party",
+                "role": "$role",
+                "country_code": "$country_code",
+                "state_id": "$state_id",
+                "city_id": "$city_id",
+                "constituency_id": "$constituency_id",
+                "verified": "$verified",
+                "image_url": "$image_url",
+            }},
+        }},
+        {"$match": {"count": {"$gte": 2}}},
+    ]
+
+    log.info("Running duplicate aggregation (country=%s, min_matches=%s)...",
+              country_code or "ALL", min_matches)
+    cursor = db.politicians.aggregate(pipeline, allowDiskUse=True, batchSize=200)
+
+    clusters = []
+    groups_seen = 0
+    async for group in cursor:
+        groups_seen += 1
+        docs = group["docs"]
+        n = len(docs)
+
+        if n > 300:
+            log.warning("Skipping O(n^2) match for oversized group %r (%d records) — "
+                        "flagging for manual review instead.", group["_id"], n)
+            clusters.append({
+                "name": docs[0]["name"],
+                "country_code": group["_id"]["country_code"],
+                "matched_fields": ["__manual_review__"],
+                "score": 1,
+                "members": docs,
+            })
+            continue
+
+        uf = _UnionFind(n)
+        pair_reasons: dict[tuple, list[str]] = {}
+        for i in range(n):
+            for j in range(i + 1, n):
+                matched = _pairwise_match(docs[i], docs[j])
+                if len(matched) >= min_matches:
+                    uf.union(i, j)
+                    pair_reasons[(i, j)] = matched
+
+        cluster_members: dict[int, list[int]] = {}
+        for i in range(n):
+            cluster_members.setdefault(uf.find(i), []).append(i)
+
+        for member_indexes in cluster_members.values():
+            if len(member_indexes) < 2:
+                continue
+            reasons: set[str] = set()
+            for (i, j), fields in pair_reasons.items():
+                if i in member_indexes and j in member_indexes:
+                    reasons.update(fields)
+            clusters.append({
+                "name": docs[member_indexes[0]]["name"],
+                "country_code": group["_id"]["country_code"],
+                "matched_fields": sorted(reasons),
+                "score": 1 + len(reasons),
+                "members": [docs[i] for i in member_indexes],
+            })
+
+        if groups_seen % _BATCH_SIZE == 0:
+            log.info("Processed %d name-groups so far...", groups_seen)
+            await asyncio.sleep(0)
+
+    clusters.sort(key=lambda c: (-c["score"], (c["name"] or "").lower()))
+    log.info("Done. %d name-groups scanned, %d duplicate clusters found.", groups_seen, len(clusters))
+    return clusters
+
+
+async def resolve_geo_names(db, clusters: list[dict]) -> None:
+    from bson import ObjectId
+    from bson.errors import InvalidId
+
+    def safe_oid(id_):
+        if not id_:
+            return None
+        try:
+            return ObjectId(id_)
+        except (InvalidId, TypeError):
+            return None
+
+    state_cache, city_cache, const_cache = {}, {}, {}
+    for cluster in clusters:
+        for m in cluster["members"]:
+            sid, cid, kid = m.get("state_id"), m.get("city_id"), m.get("constituency_id")
+            if sid and sid not in state_cache:
+                oid = safe_oid(sid)
+                doc = await db.states.find_one({"_id": oid}) if oid else None
+                state_cache[sid] = doc.get("name") if doc else None
+            if cid and cid not in city_cache:
+                oid = safe_oid(cid)
+                doc = await db.cities.find_one({"_id": oid}) if oid else None
+                city_cache[cid] = doc.get("name") if doc else None
+            if kid and kid not in const_cache:
+                oid = safe_oid(kid)
+                doc = await db.constituencies.find_one({"_id": oid}) if oid else None
+                const_cache[kid] = doc.get("name") if doc else None
+            m["state_name"] = state_cache.get(sid)
+            m["city_name"] = city_cache.get(cid)
+            m["constituency_name"] = const_cache.get(kid)
+
+
+async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--country", default=None)
+    parser.add_argument("--min-matches", type=int, default=1)
+    args = parser.parse_args()
+
+    client = AsyncIOMotorClient(MONGO_URL)
+    db = client[DB_NAME]
+
+    try:
+        clusters = await compute(db, args.country, args.min_matches)
+        await resolve_geo_names(db, clusters)
+
+        now = datetime.now(timezone.utc)
+        for c in clusters:
+            c["computed_at"] = now
+
+        tmp_name = "duplicate_candidates_tmp"
+        await db[tmp_name].drop()
+        if clusters:
+            await db[tmp_name].insert_many(clusters)
+        await db[tmp_name].create_index([("score", -1), ("name", 1)])
+        await db[tmp_name].create_index("country_code")
+
+        # renameCollection must be issued against the admin database,
+        # regardless of which DB the collections live in.
+        await client.admin.command({
+            "renameCollection": f"{DB_NAME}.{tmp_name}",
+            "to": f"{DB_NAME}.duplicate_candidates",
+            "dropTarget": True,
+        })
+        log.info("Wrote %d clusters to duplicate_candidates.", len(clusters))
+    finally:
+        client.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+</div>
+
+<h2 id="env-fix">5. Fixing the ModuleNotFoundError</h2>
+<div class="card">
+<span class="badge fix">ISSUE HIT DURING DEPLOY</span>
+<p><code>ModuleNotFoundError: No module named 'config'</code> — the script originally guessed at
+a <code>config</code> module with <code>MONGO_URI</code>/<code>MONGO_DB_NAME</code>. TrackMP's
+actual <code>.env</code> uses <code>MONGO_URL</code> and <code>DB_NAME</code> instead. Fixed by
+loading <code>.env</code> directly with <code>python-dotenv</code> (already reflected in the
+script above).</p>
+<pre><code># confirm python-dotenv is installed
+pip show python-dotenv || pip install python-dotenv
+
+# script must live at backend root, not inside addon_routes/
+mv /opt/trackmp/backend/addon_routes/standalone_compute_duplicate.py \
+   /opt/trackmp/backend/standalone_compute_duplicate_v2.py</code></pre>
+<div class="note">
+<code>addon_routes/</code> is for FastAPI routers only — this is a standalone CLI script and
+belongs at <code>backend/</code> root, next to <code>server.py</code>.
+</div>
+</div>
+
+<h2 id="rename-fix">6. Fixing the renameCollection Error</h2>
+<div class="card">
+<span class="badge fix">ISSUE HIT DURING DEPLOY</span>
+<p><code>pymongo.errors.OperationFailure: renameCollection may only be run against the admin database.</code></p>
+<p>The aggregation and write succeeded fully (162,049 clusters computed) — only the final
+atomic rename failed, because MongoDB requires <code>renameCollection</code> to be issued
+against the <code>admin</code> database specifically, not whichever database the collections
+live in.</p>
+<table>
+<tr><th>Before</th><th>After</th></tr>
+<tr><td><code>await db.command({"renameCollection": ...})</code></td>
+<td><code>await client.admin.command({"renameCollection": ..., "dropTarget": True})</code></td></tr>
+</table>
+<p>Added <code>"dropTarget": True</code> too, so the rename atomically replaces the old
+<code>duplicate_candidates</code> in one step (no gap where the collection doesn't exist),
+letting you drop the separate <code>.drop()</code> call beforehand.</p>
+</div>
+
+<h2 id="route">7. Step 3 — Replacement Route (Cache Reader)</h2>
+<div class="card">
+<span class="badge file">FILE: /opt/trackmp/backend/addon_routes/duplicate_finder.py</span>
+<p>Fully replaces the old live-aggregation route. Now a plain indexed <code>find()</code> —
+sub-millisecond regardless of how large <code>politicians</code> grows.</p>
+<pre><code>"""
+Duplicate politician detection — reads from precomputed results.
+
+The actual duplicate-matching (cascading name -> country -> state -> city
+-> constituency comparison) now runs OFFLINE via
+`standalone_compute_duplicate_v2.py`, which writes its results into the
+`duplicate_candidates` collection. This route just serves that precomputed
+data with pagination, so it stays fast (indexed find, no aggregation)
+regardless of how large the `politicians` collection grows.
+
+To refresh the results, run the standalone script manually or via its
+systemd timer:
+    /opt/trackmp/backend/venv/bin/python3 standalone_compute_duplicate_v2.py
+
+This endpoint is READ-ONLY: it never modifies any politician record. It
+is gated behind the same `require_section("politicians")` dependency used
+by every other admin politician route, so access control matches the
+rest of the admin panel.
+"""
+from __future__ import annotations
+
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
+
+from routes import get_db, require_section
+
+router = APIRouter(prefix="/api")
+
+_MAX_LIMIT = 100
+
+
+@router.get("/admin/politicians/duplicates")
+async def find_duplicate_politicians(
+    country_code: Optional[str] = Query(
+        None,
+        max_length=2,
+        description="Restrict results to one country.",
+    ),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=_MAX_LIMIT),
+    user: dict = Depends(require_section("politicians")),
+):
+    db = get_db()
+
+    match: dict = {}
+    if country_code:
+        match["country_code"] = country_code.strip().upper()
+
+    total = await db.duplicate_candidates.count_documents(match)
+    cursor = (
+        db.duplicate_candidates
+        .find(match, {"_id": 0})
+        .sort([("score", -1), ("name", 1)])
+        .skip((page - 1) * limit)
+        .limit(limit)
+    )
+    items = await cursor.to_list(limit)
+    computed_at = items[0]["computed_at"] if items else None
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "computed_at": computed_at,
+    }</code></pre>
+<div class="warn">
+Removed vs. the original: <code>_UnionFind</code>, <code>_pairwise_match</code>,
+<code>_safe_oid</code>, <code>_GEO_FIELDS</code>, the live aggregation pipeline, and the
+<code>min_matches</code> query param (matching threshold is now baked in at script-run time).
+If the frontend was sending <code>min_matches</code>, FastAPI won't error — it'll just be
+silently ignored. Check: <code>grep -rn "min_matches" /opt/trackmp/frontend/src/</code>
+</div>
+</div>
+
+<h2 id="deploy">8. Step 4 — Deploy &amp; Verify</h2>
+<div class="card">
+<p><span class="step-num">1</span>Back up and replace the route file:</p>
+<pre><code>cd /opt/trackmp/backend
+cp addon_routes/duplicate_finder.py addon_routes/duplicate_finder.py.bak
+# paste the new content into addon_routes/duplicate_finder.py</code></pre>
+
+<p><span class="step-num">2</span>Syntax check:</p>
+<pre><code>python3 -c "import ast; ast.parse(open('addon_routes/duplicate_finder.py').read())"</code></pre>
+
+<p><span class="step-num">3</span>Confirm the router is still registered:</p>
+<pre><code>grep -n "duplicate_finder" server.py</code></pre>
+
+<p><span class="step-num">4</span>Run the standalone script (populates the cache):</p>
+<pre><code>python3 -c "import ast; ast.parse(open('standalone_compute_duplicate_v2.py').read())"
+python3 standalone_compute_duplicate_v2.py
+# or scoped to one country:
+python3 standalone_compute_duplicate_v2.py --country US --min-matches 2</code></pre>
+
+<p><span class="step-num">5</span>Restart the backend and check logs:</p>
+<pre><code>systemctl restart trackmp-backend   # use your actual unit name
+journalctl -u trackmp-backend -n 30 --no-pager</code></pre>
+
+<p><span class="step-num">6</span>Curl-test end to end:</p>
+<pre><code>curl -s "http://localhost:8001/api/admin/politicians/duplicates?page=1&limit=20" \
+  -H "Authorization: Bearer &lt;your admin token&gt;" | python3 -m json.tool</code></pre>
+</div>
+
+<h2 id="timer">9. Step 5 — Automate with systemd Timer</h2>
+<div class="card">
+<span class="badge file">FILE: /etc/systemd/system/duplicate-scan.service</span>
+<pre><code>[Unit]
+Description=Recompute politician duplicate candidates
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/trackmp/backend
+ExecStart=/opt/trackmp/backend/venv/bin/python3 standalone_compute_duplicate_v2.py
+User=www-data</code></pre>
+
+<span class="badge file">FILE: /etc/systemd/system/duplicate-scan.timer</span>
+<pre><code>[Unit]
+Description=Nightly duplicate scan
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target</code></pre>
+
+<pre><code>systemctl daemon-reload
+systemctl enable --now duplicate-scan.timer
+systemctl list-timers | grep duplicate-scan</code></pre>
+
+<p>To run it on demand at any time (e.g. right after a data cleanup pass):</p>
+<pre><code>sudo -u www-data /opt/trackmp/backend/venv/bin/python3 \
+  /opt/trackmp/backend/standalone_compute_duplicate_v2.py</code></pre>
+</div>
+
+<h2 id="sanity">10. Sanity-Checking Results</h2>
+<div class="card">
+<p>A very high cluster count (e.g. 162,049) is worth spot-checking before trusting it on the
+dashboard — with <code>--min-matches 1</code>, common names sharing just a country will cluster
+even if they're different people. Bump to <code>--min-matches 2</code> for stricter matching.</p>
+<pre><code>sudo -u www-data /opt/trackmp/backend/venv/bin/python3 - <<'EOF'
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
+from dotenv import load_dotenv
+load_dotenv("/opt/trackmp/backend/.env")
+
+async def main():
+    client = AsyncIOMotorClient(os.environ["MONGO_URL"])
+    db = client[os.environ["DB_NAME"]]
+    total = await db.duplicate_candidates.count_documents({})
+    print("total clusters:", total)
+    async for c in db.duplicate_candidates.find({}, {"_id": 0}).sort("score", -1).limit(5):
+        print(c["name"], c["country_code"], c["matched_fields"], "members:", len(c["members"]))
+    client.close()
+
+asyncio.run(main())
+EOF</code></pre>
+</div>
+
+<h2 id="reference">11. Command Reference (quick lookup)</h2>
+<div class="card">
+<table>
+<tr><th>Purpose</th><th>Command</th></tr>
+<tr><td>Create compound index</td><td><code>db.politicians.createIndex({ name: 1, country_code: 1 })</code></td></tr>
+<tr><td>Check dotenv installed</td><td><code>pip show python-dotenv</code></td></tr>
+<tr><td>Syntax check any script</td><td><code>python3 -c "import ast; ast.parse(open('FILE').read())"</code></td></tr>
+<tr><td>Run compute script</td><td><code>python3 standalone_compute_duplicate_v2.py</code></td></tr>
+<tr><td>Run scoped to one country</td><td><code>python3 standalone_compute_duplicate_v2.py --country US --min-matches 2</code></td></tr>
+<tr><td>Restart backend</td><td><code>systemctl restart trackmp-backend</code></td></tr>
+<tr><td>Tail backend logs</td><td><code>journalctl -u trackmp-backend -n 30 --no-pager</code></td></tr>
+<tr><td>Curl-test route</td><td><code>curl -s "http://localhost:8001/api/admin/politicians/duplicates?page=1&amp;limit=20" -H "Authorization: Bearer &lt;token&gt;"</code></td></tr>
+<tr><td>Reload systemd units</td><td><code>systemctl daemon-reload</code></td></tr>
+<tr><td>Enable + start timer</td><td><code>systemctl enable --now duplicate-scan.timer</code></td></tr>
+<tr><td>List active timers</td><td><code>systemctl list-timers</code></td></tr>
+<tr><td>Check for stray frontend param</td><td><code>grep -rn "min_matches" /opt/trackmp/frontend/src/</code></td></tr>
+</table>
+</div>
+
+</div>
+
+<footer>TrackMP internal engineering notes · Duplicate detection precompute pipeline</footer>
+
+</body>
+</html>
